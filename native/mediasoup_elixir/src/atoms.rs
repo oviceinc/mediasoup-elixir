@@ -1,0 +1,27 @@
+rustler::rustler_atoms! {
+    atom ok;
+    atom error;
+    atom terminated;
+    atom on_new_router;
+    atom on_close;
+    atom on_dead;
+    atom on_router_close;
+    atom on_sctp_state_change;
+    atom on_ice_state_change;
+    atom on_dtls_state_change;
+    atom on_ice_selected_tuple_change;
+    atom on_new_producer;
+    atom on_new_consumer;
+    atom on_worker_close;
+    atom on_new_transport;
+    atom on_new_rtp_observer;
+    atom on_pause;
+    atom on_resume;
+    atom on_video_orientation_change;
+    atom on_score;
+    atom on_producer_pause;
+    atom on_producer_resume;
+    atom on_producer_close;
+    atom on_transport_close;
+    atom on_layers_change;
+}
