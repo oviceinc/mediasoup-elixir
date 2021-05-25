@@ -1,15 +1,15 @@
 use crate::atoms;
-use crate::json_serde::{json_encode, JsonDecoder, JsonSerdeWrap};
+use crate::json_serde::JsonSerdeWrap;
 use crate::webrtc_transport::WebRtcTransportStruct;
 use crate::RouterRef;
 use futures_lite::future;
 use mediasoup::data_structures::TransportListenIp;
 use mediasoup::producer::ProducerId;
-use mediasoup::router::{Router, RouterId};
-use mediasoup::rtp_parameters::RtpCapabilities;
+use mediasoup::router::{Router, RouterDump, RouterId};
+use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized};
 use mediasoup::sctp_parameters::NumSctpStreams;
 use mediasoup::webrtc_transport::{TransportListenIps, WebRtcTransportOptions};
-use rustler::{Encoder, Env, Error, NifStruct, ResourceArc, Term};
+use rustler::{Env, Error, NifResult, NifStruct, ResourceArc, Term};
 use serde::{Deserialize, Serialize};
 
 #[derive(NifStruct)]
@@ -27,81 +27,82 @@ impl RouterStruct {
     }
 }
 
-pub fn router_id<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let router: ResourceArc<RouterRef> = args[0].decode()?;
-    let router = match router.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(json_encode(&router.id().to_string(), env))
+#[rustler::nif]
+pub fn router_id(router: ResourceArc<RouterRef>) -> NifResult<String> {
+    let router = router
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(router.id().to_string())
 }
-pub fn router_close<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let router: ResourceArc<RouterRef> = args[0].decode()?;
+#[rustler::nif]
+pub fn router_close(router: ResourceArc<RouterRef>) -> NifResult<(rustler::Atom,)> {
     router.close();
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }
-pub fn create_webrtc_transport<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let router: ResourceArc<RouterRef> = args[0].decode()?;
-    let router = match router.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let option: SerWebRtcTransportOptions = args[1].decode()?;
+#[rustler::nif]
+pub fn router_create_webrtc_transport(
+    router: ResourceArc<RouterRef>,
+    option: SerWebRtcTransportOptions,
+) -> NifResult<(rustler::Atom, WebRtcTransportStruct)> {
+    let router = router
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
     let option = option.to_option().map_err(|e| Error::RaiseAtom(e))?;
 
-    let r = match future::block_on(async move {
+    let transport = future::block_on(async move {
         return router.create_webrtc_transport(option).await;
-    }) {
-        Ok(transport) => (atoms::ok(), WebRtcTransportStruct::from(transport)).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(), WebRtcTransportStruct::from(transport)))
 }
 
-pub fn router_rtp_capabilities<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let router: ResourceArc<RouterRef> = args[0].decode()?;
-    let router = match router.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn router_rtp_capabilities(
+    router: ResourceArc<RouterRef>,
+) -> NifResult<JsonSerdeWrap<RtpCapabilitiesFinalized>> {
+    let router = router
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    Ok(json_encode(router.rtp_capabilities(), env))
+    Ok(JsonSerdeWrap::new(router.rtp_capabilities().clone()))
 }
 
-pub fn router_can_consume<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let router: ResourceArc<RouterRef> = args[0].decode()?;
-    let router = match router.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let producer_id: ProducerId = JsonDecoder::decode(args[1])?;
-    let rtp_capabilities: RtpCapabilities = JsonDecoder::decode(args[2])?;
+#[rustler::nif]
+pub fn router_can_consume(
+    router: ResourceArc<RouterRef>,
+    producer_id: JsonSerdeWrap<ProducerId>,
+    rtp_capabilities: JsonSerdeWrap<RtpCapabilities>,
+) -> NifResult<bool> {
+    let router = router
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    let producer_id = *producer_id;
+    let rtp_capabilities = rtp_capabilities.clone();
 
     let can_consume = router.can_consume(&producer_id, &rtp_capabilities);
-    Ok(rustler::Encoder::encode(&can_consume, env))
+    Ok(can_consume)
 }
-pub fn router_dump<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let router: ResourceArc<RouterRef> = args[0].decode()?;
-    let router = match router.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-
+#[rustler::nif]
+pub fn router_dump(router: ResourceArc<RouterRef>) -> NifResult<JsonSerdeWrap<RouterDump>> {
+    let router = router
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
     let dump = future::block_on(async move {
         return router.dump().await;
     })
-    .map_err(|e| Error::RaiseTerm(Box::new(format!("{}", e))))?;
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok(json_encode(&dump, env))
+    Ok(JsonSerdeWrap::new(dump))
 }
 
-pub fn router_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let router: ResourceArc<RouterRef> = args[0].decode()?;
-    let router = match router.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let pid: rustler::Pid = args[1].decode()?;
+#[rustler::nif]
+pub fn router_event(
+    router: ResourceArc<RouterRef>,
+    pid: rustler::LocalPid,
+) -> NifResult<(rustler::Atom,)> {
+    let router = router
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     crate::reg_callback!(pid, router, on_close);
     crate::reg_callback!(pid, router, on_worker_close);
@@ -137,7 +138,7 @@ pub fn router_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Err
     }
     */
 
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -157,7 +158,7 @@ impl SerNumSctpStreams {
 }
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-struct SerWebRtcTransportOptions {
+pub struct SerWebRtcTransportOptions {
     listen_ips: Vec<TransportListenIp>,
     #[serde(skip_serializing_if = "Option::is_none")]
     enable_udp: Option<bool>,

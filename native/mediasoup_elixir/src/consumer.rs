@@ -1,12 +1,14 @@
 use crate::atoms;
-use crate::json_serde::{json_encode, JsonSerdeWrap};
+use crate::json_serde::JsonSerdeWrap;
 use crate::send_msg_from_other_thread;
 use crate::ConsumerRef;
 use futures_lite::future;
-use mediasoup::consumer::{Consumer, ConsumerId, ConsumerLayers};
+use mediasoup::consumer::{
+    Consumer, ConsumerDump, ConsumerId, ConsumerLayers, ConsumerScore, ConsumerStats,
+};
 use mediasoup::producer::ProducerId;
 use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
-use rustler::{Encoder, Env, Error, NifStruct, ResourceArc, Term};
+use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.Consumer"]
@@ -29,211 +31,193 @@ impl ConsumerStruct {
     }
 }
 
-pub fn consumer_id<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(json_encode(&consumer.id(), env))
+#[rustler::nif]
+pub fn consumer_id(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerId>> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(consumer.id()))
 }
-pub fn consumer_close<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
+#[rustler::nif]
+pub fn consumer_close(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
     consumer.close();
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }
-pub fn consumer_closed<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(consumer.closed().encode(env))
-}
-
-pub fn consumer_paused<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(consumer.paused().encode(env))
+#[rustler::nif]
+pub fn consumer_closed(consumer: ResourceArc<ConsumerRef>) -> NifResult<bool> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(consumer.closed())
 }
 
-pub fn consumer_producer_paused<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(consumer.producer_paused().encode(env))
-}
-pub fn consumer_priority<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(consumer.priority().encode(env))
-}
-pub fn consumer_score<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(json_encode(&consumer.score(), env))
-}
-pub fn consumer_preferred_layers<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(json_encode(&consumer.preferred_layers(), env))
-}
-pub fn consumer_current_layers<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(json_encode(&consumer.current_layers(), env))
+#[rustler::nif]
+pub fn consumer_paused(consumer: ResourceArc<ConsumerRef>) -> NifResult<bool> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(consumer.paused())
 }
 
-pub fn consumer_get_stats<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn consumer_producer_paused(consumer: ResourceArc<ConsumerRef>) -> NifResult<bool> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(consumer.producer_paused())
+}
+#[rustler::nif]
+pub fn consumer_priority(consumer: ResourceArc<ConsumerRef>) -> NifResult<u8> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(consumer.priority())
+}
+#[rustler::nif]
+pub fn consumer_score(
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<JsonSerdeWrap<ConsumerScore>> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(consumer.score()))
+}
+#[rustler::nif]
+pub fn consumer_preferred_layers(
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<JsonSerdeWrap<Option<ConsumerLayers>>> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(consumer.preferred_layers()))
+}
+#[rustler::nif]
+pub fn consumer_current_layers(
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<JsonSerdeWrap<Option<ConsumerLayers>>> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(consumer.current_layers()))
+}
+
+#[rustler::nif]
+pub fn consumer_get_stats(
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<JsonSerdeWrap<ConsumerStats>> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
     let status = future::block_on(async move {
         return consumer.get_stats().await;
     })
-    .map_err(|e| Error::RaiseTerm(Box::new(format!("{}", e))))?;
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok(json_encode(&status, env))
+    Ok(JsonSerdeWrap::new(status))
 }
-pub fn consumer_pause<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn consumer_pause(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    future::block_on(async move {
         return consumer.pause().await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    return Ok(r);
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    return Ok((atoms::ok(),));
 }
-pub fn consumer_resume<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn consumer_resume(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    future::block_on(async move {
         return consumer.resume().await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    return Ok(r);
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    return Ok((atoms::ok(),));
 }
 
-pub fn consumer_set_preferred_layers<'a>(
-    env: Env<'a>,
-    args: &[Term<'a>],
-) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let layer: JsonSerdeWrap<ConsumerLayers> = args[1].decode()?;
+#[rustler::nif]
+pub fn consumer_set_preferred_layers(
+    consumer: ResourceArc<ConsumerRef>,
+    layer: JsonSerdeWrap<ConsumerLayers>,
+) -> NifResult<(Atom,)> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    future::block_on(async move {
         return consumer.set_preferred_layers(*layer).await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    return Ok(r);
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    return Ok((atoms::ok(),));
 }
 
-pub fn consumer_set_priority<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let priority: u8 = args[1].decode()?;
-    let r = match future::block_on(async move {
+#[rustler::nif]
+pub fn consumer_set_priority(
+    consumer: ResourceArc<ConsumerRef>,
+    priority: u8,
+) -> NifResult<(Atom,)> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    future::block_on(async move {
         return consumer.set_priority(priority).await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    return Ok(r);
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    return Ok((atoms::ok(),));
 }
-pub fn consumer_unset_priority<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn consumer_unset_priority(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    future::block_on(async move {
         return consumer.unset_priority().await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    return Ok(r);
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    return Ok((atoms::ok(),));
 }
 
-pub fn consumer_request_key_frame<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn consumer_request_key_frame(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    future::block_on(async move {
         return consumer.request_key_frame().await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    return Ok(r);
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    return Ok((atoms::ok(),));
 }
 
-pub fn consumer_dump<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn consumer_dump(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerDump>> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     let dump = future::block_on(async move {
         return consumer.dump().await;
     })
-    .map_err(|e| Error::RaiseTerm(Box::new(format!("{}", e))))?;
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok(json_encode(&dump, env))
+    Ok(JsonSerdeWrap::new(dump))
 }
 
-pub fn consumer_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let consumer: ResourceArc<ConsumerRef> = args[0].decode()?;
-    let consumer = match consumer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let pid: rustler::Pid = args[1].decode()?;
+#[rustler::nif]
+pub fn consumer_event(
+    consumer: ResourceArc<ConsumerRef>,
+    pid: rustler::LocalPid,
+) -> NifResult<(Atom,)> {
+    let consumer = consumer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     crate::reg_callback!(pid, consumer, on_close);
     crate::reg_callback!(pid, consumer, on_pause);
@@ -267,5 +251,5 @@ pub fn consumer_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, E
             .detach();
     }
 
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }

@@ -1,15 +1,20 @@
 use crate::atoms;
 use crate::consumer::ConsumerStruct;
-use crate::json_serde::{json_encode, JsonDecoder, JsonSerdeWrap};
+use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerStruct;
 use crate::{send_msg_from_other_thread, WebRtcTransportRef};
 use futures_lite::future;
 use mediasoup::consumer::{ConsumerLayers, ConsumerOptions};
+use mediasoup::data_structures::{
+    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, SctpState, TransportTuple,
+};
 use mediasoup::producer::{ProducerId, ProducerOptions};
 use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
-use mediasoup::webrtc_transport::{WebRtcTransport, WebRtcTransportRemoteParameters};
-use rustler::{Encoder, Env, Error, NifStruct, ResourceArc, Term};
+use mediasoup::webrtc_transport::{
+    WebRtcTransport, WebRtcTransportDump, WebRtcTransportRemoteParameters, WebRtcTransportStat,
+};
+use rustler::{Atom, Env, Error, NifResult, NifStruct, ResourceArc, Term};
 use serde::{Deserialize, Serialize};
 
 #[derive(NifStruct)]
@@ -27,215 +32,214 @@ impl WebRtcTransportStruct {
     }
 }
 
-pub fn webrtc_transport_id<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(transport.id().to_string().encode(env))
+#[rustler::nif]
+pub fn webrtc_transport_id(transport: ResourceArc<WebRtcTransportRef>) -> NifResult<String> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(transport.id().to_string())
 }
-pub fn webrtc_transport_close<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    transport.close();
-    Ok((atoms::ok(),).encode(env))
-}
-pub fn webrtc_transport_consume<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
 
-    let ser_option: SerConsumerOptions = args[1].decode()?;
+#[rustler::nif]
+pub fn webrtc_transport_close(transport: ResourceArc<WebRtcTransportRef>) -> NifResult<(Atom,)> {
+    transport.close();
+    Ok((atoms::ok(),))
+}
+
+#[rustler::nif]
+pub fn webrtc_transport_consume(
+    transport: ResourceArc<WebRtcTransportRef>,
+    ser_option: SerConsumerOptions,
+) -> NifResult<(Atom, ConsumerStruct)> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+
     let option = ConsumerOptions::from(ser_option);
 
-    let r = match future::block_on(async move {
+    let r = future::block_on(async move {
         return transport.consume(option).await;
-    }) {
-        Ok(consumer) => (atoms::ok(), ConsumerStruct::from(consumer)).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
-}
-pub fn webrtc_transport_connect<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let option: WebRtcTransportRemoteParameters = JsonDecoder::decode(args[1])?;
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    let r = match future::block_on(async move {
-        return transport.connect(option).await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    Ok((atoms::ok(), ConsumerStruct::from(r)))
 }
-pub fn webrtc_transport_produce<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let option: SerProducerOptions = args[1].decode()?;
+
+#[rustler::nif]
+pub fn webrtc_transport_connect(
+    transport: ResourceArc<WebRtcTransportRef>,
+    option: JsonSerdeWrap<WebRtcTransportRemoteParameters>,
+) -> NifResult<(Atom,)> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    let option: WebRtcTransportRemoteParameters = option.clone();
+
+    future::block_on(async move {
+        return transport.connect(option).await;
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(),))
+}
+
+#[rustler::nif]
+pub fn webrtc_transport_produce(
+    transport: ResourceArc<WebRtcTransportRef>,
+    option: SerProducerOptions,
+) -> NifResult<(Atom, ProducerStruct)> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
     let option = ProducerOptions::from(option);
 
-    let r = match future::block_on(async move {
+    let producer = future::block_on(async move {
         return transport.produce(option).await;
-    }) {
-        Ok(producer) => (atoms::ok(), ProducerStruct::from(producer)).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(), ProducerStruct::from(producer)))
 }
 
-pub fn webrtc_transport_ice_candidates<'a>(
-    env: Env<'a>,
-    args: &[Term<'a>],
-) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    return Ok(json_encode(transport.ice_candidates(), env));
-}
-pub fn webrtc_transport_ice_role<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    return Ok(json_encode(&transport.ice_role(), env));
+#[rustler::nif]
+pub fn webrtc_transport_ice_candidates(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<std::vec::Vec<mediasoup::data_structures::IceCandidate>>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.ice_candidates().clone()))
 }
 
-pub fn webrtc_transport_set_max_incoming_bitrate<'a>(
-    env: Env<'a>,
-    args: &[Term<'a>],
-) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let bitrate: u32 = args[1].decode()?;
+#[rustler::nif]
+pub fn webrtc_transport_ice_role(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<IceRole>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.ice_role()))
+}
 
-    let r = match future::block_on(async move {
+#[rustler::nif]
+pub fn webrtc_transport_set_max_incoming_bitrate(
+    transport: ResourceArc<WebRtcTransportRef>,
+    bitrate: u32,
+) -> NifResult<(Atom,)> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+
+    future::block_on(async move {
         return transport.set_max_incoming_bitrate(bitrate).await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(),))
 }
 
-pub fn webrtc_transport_ice_state<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    return Ok(json_encode(&transport.ice_state(), env));
+#[rustler::nif]
+pub fn webrtc_transport_ice_state(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<IceState>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.ice_state()))
 }
-pub fn webrtc_transport_restart_ice<'a>(
-    env: Env<'a>,
-    args: &[Term<'a>],
-) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
 
-    let r = match future::block_on(async move {
+#[rustler::nif]
+pub fn webrtc_transport_restart_ice(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<(Atom, JsonSerdeWrap<IceParameters>)> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+
+    let ice_parameter = future::block_on(async move {
         return transport.restart_ice().await;
-    }) {
-        Ok(ice_parameter) => (atoms::ok(), json_encode(&ice_parameter, env)).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+
+    Ok((atoms::ok(), JsonSerdeWrap::new(ice_parameter)))
 }
 
-pub fn webrtc_transport_get_stats<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn webrtc_transport_get_stats(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<std::vec::Vec<WebRtcTransportStat>>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     let status = future::block_on(async move {
         return transport.get_stats().await;
     })
-    .map_err(|e| Error::RaiseTerm(Box::new(format!("{}", e))))?;
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok(json_encode(&status, env))
+    Ok(JsonSerdeWrap::new(status))
 }
 
-pub fn webrtc_transport_dump<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn webrtc_transport_dump(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<WebRtcTransportDump>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    let dump = future::block_on(async move {
         return transport.dump().await;
-    }) {
-        Ok(dump) => json_encode(&dump, env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    return Ok(r);
-}
-pub fn webrtc_transport_ice_selected_tuple<'a>(
-    env: Env<'a>,
-    args: &[Term<'a>],
-) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    return Ok(json_encode(&transport.ice_selected_tuple(), env));
-}
-pub fn webrtc_transport_dtls_parameters<'a>(
-    env: Env<'a>,
-    args: &[Term<'a>],
-) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    return Ok(json_encode(&transport.dtls_parameters(), env));
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+
+    Ok(JsonSerdeWrap::new(dump))
 }
 
-pub fn webrtc_transport_dtls_state<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    return Ok(json_encode(&transport.dtls_state(), env));
-}
-pub fn webrtc_transport_sctp_state<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    return Ok(json_encode(&transport.sctp_state(), env));
+#[rustler::nif]
+pub fn webrtc_transport_ice_selected_tuple(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<Option<TransportTuple>>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.ice_selected_tuple()))
 }
 
-pub fn webrtc_transport_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let transport: ResourceArc<WebRtcTransportRef> = args[0].decode()?;
-    let transport = match transport.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let pid: rustler::Pid = args[1].decode()?;
+#[rustler::nif]
+pub fn webrtc_transport_dtls_parameters(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<DtlsParameters>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.dtls_parameters()))
+}
+
+#[rustler::nif]
+pub fn webrtc_transport_dtls_state(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<DtlsState>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.dtls_state()))
+}
+#[rustler::nif]
+pub fn webrtc_transport_sctp_state(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<Option<SctpState>>> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.sctp_state()))
+}
+
+#[rustler::nif]
+pub fn webrtc_transport_event(
+    transport: ResourceArc<WebRtcTransportRef>,
+    pid: rustler::LocalPid,
+) -> NifResult<(Atom,)> {
+    let transport = transport
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     //    crate::reg_callback!(env, transport, on_close);
 
@@ -290,12 +294,12 @@ pub fn webrtc_transport_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Ter
             .detach();
     }
 
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct SerConsumerOptions {
+pub struct SerConsumerOptions {
     producer_id: ProducerId,
     rtp_capabilities: RtpCapabilities,
     paused: Option<bool>,
@@ -320,7 +324,7 @@ impl From<SerConsumerOptions> for ConsumerOptions {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct SerProducerOptions {
+pub struct SerProducerOptions {
     pub id: Option<ProducerId>,
     pub kind: MediaKind,
     pub rtp_parameters: RtpParameters,

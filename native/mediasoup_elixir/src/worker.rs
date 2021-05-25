@@ -1,17 +1,17 @@
 use crate::atoms;
-use crate::json_serde::{json_encode, JsonSerdeWrap};
+use crate::json_serde::JsonSerdeWrap;
 use crate::router::RouterStruct;
 use crate::{send_msg_from_other_thread, WorkerRef};
 use futures_lite::future;
 use mediasoup::router::RouterOptions;
 use mediasoup::rtp_parameters::RtpCodecCapability;
 use mediasoup::worker::{
-    Worker, WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
+    Worker, WorkerDtlsFiles, WorkerDump, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
     WorkerUpdateSettings,
 };
 use mediasoup::worker_manager::WorkerManager;
 use once_cell::sync::Lazy;
-use rustler::{Encoder, Env, Error, NifResult, NifStruct, ResourceArc, Term};
+use rustler::{Env, Error, NifResult, NifStruct, ResourceArc, Term};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -32,82 +32,86 @@ impl WorkerStruct {
 }
 static WORKER_MANAGER: Lazy<Mutex<WorkerManager>> = Lazy::new(|| Mutex::new(WorkerManager::new()));
 
-pub fn worker_id<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let worker: ResourceArc<WorkerRef> = args[0].decode()?;
-    let worker = match worker.unwrap() {
-        Some(w) => w,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(json_encode(&worker.id(), env))
+#[rustler::nif]
+pub fn worker_id(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerId>> {
+    match worker.unwrap() {
+        Some(w) => return Ok(JsonSerdeWrap::new(w.id())),
+        None => return Err(Error::Term(Box::new(atoms::terminated()))),
+    }
 }
-pub fn worker_close<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let worker: ResourceArc<WorkerRef> = args[0].decode()?;
+#[rustler::nif]
+pub fn worker_close(worker: ResourceArc<WorkerRef>) -> NifResult<(rustler::Atom,)> {
     worker.close();
-    Ok((atoms::ok(),).encode(env))
+    return Ok((atoms::ok(),));
 }
-pub fn create_router<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let worker: ResourceArc<WorkerRef> = args[0].decode()?;
-    let worker = match worker.unwrap() {
-        Some(w) => w,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let option: SerRouterOptions = args[1].decode()?;
+
+#[rustler::nif]
+pub fn worker_create_router(
+    worker: ResourceArc<WorkerRef>,
+    option: SerRouterOptions,
+) -> NifResult<(rustler::Atom, RouterStruct)> {
+    let worker = worker
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+
     let option = option.to_option()?;
 
-    let r = match future::block_on(async move {
+    let router = future::block_on(async move {
         return worker.create_router(option).await;
-    }) {
-        Ok(router) => (atoms::ok(), RouterStruct::from(router)).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+
+    Ok((atoms::ok(), RouterStruct::from(router)))
 }
-pub fn worker_dump<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let worker: ResourceArc<WorkerRef> = args[0].decode()?;
-    let worker = match worker.unwrap() {
-        Some(w) => w,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+
+#[rustler::nif]
+pub fn worker_dump(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerDump>> {
+    let worker = worker
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     let dump = future::block_on(async move {
         return worker.dump().await;
     })
-    .map_err(|e| Error::RaiseTerm(Box::new(format!("{}", e))))?;
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok(json_encode(&dump, env))
+    Ok(JsonSerdeWrap::new(dump))
 }
-pub fn worker_closed<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let worker: ResourceArc<WorkerRef> = args[0].decode()?;
-    let worker = match worker.unwrap() {
-        Some(w) => w,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(json_encode(&worker.closed(), env))
+#[rustler::nif]
+pub fn worker_closed(worker: ResourceArc<WorkerRef>) -> Result<bool, Error> {
+    let worker = worker
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+
+    Ok(worker.closed())
 }
-pub fn worker_update_settings<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let worker: ResourceArc<WorkerRef> = args[0].decode()?;
-    let worker = match worker.unwrap() {
-        Some(w) => w,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let settings: SerWorkerUpdateSettings = args[1].decode()?;
+#[rustler::nif]
+pub fn worker_update_settings(
+    worker: ResourceArc<WorkerRef>,
+    settings: SerWorkerUpdateSettings,
+) -> NifResult<(rustler::Atom,)> {
+    let worker = worker
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+
     let settings = settings.to_setting()?;
 
     future::block_on(async move {
         return worker.update_settings(settings).await;
     })
-    .map_err(|e| Error::RaiseTerm(Box::new(format!("{}", e))))?;
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }
 
-pub fn worker_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let worker: ResourceArc<WorkerRef> = args[0].decode()?;
-    let worker = match worker.unwrap() {
-        Some(w) => w,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let pid: rustler::Pid = args[1].decode()?;
+#[rustler::nif]
+pub fn worker_event(
+    worker: ResourceArc<WorkerRef>,
+    pid: rustler::LocalPid,
+) -> NifResult<(rustler::Atom,)> {
+    let worker = worker
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     /* TODO: Can not create multiple instance for disposable
     {
@@ -134,43 +138,38 @@ pub fn worker_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Err
             .detach();
     }
 
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }
 
-pub fn create_worker_no_arg<'a>(env: Env<'a>, _args: &[Term<'a>]) -> Result<Term<'a>, Error> {
+#[rustler::nif(name = "create_worker")]
+pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, WorkerStruct)> {
+    let settings = WorkerSettings::default();
     let worker_manager = WORKER_MANAGER
         .lock()
         .map_err(|_e| Error::RaiseAtom("worker_manager lock error"))?;
-    let r = match future::block_on(async move {
-        return worker_manager
-            .create_worker(WorkerSettings::default())
-            .await;
-    }) {
-        Ok(worker) => (atoms::ok(), WorkerStruct::from(worker)).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+
+    let worker = future::block_on(async move { worker_manager.create_worker(settings).await })
+        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(), WorkerStruct::from(worker)))
 }
 
-pub fn create_worker<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let settings: SerWorkerSettings = args[0].decode()?;
+#[rustler::nif]
+pub fn create_worker(settings: SerWorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
     let settings = settings.to_setting()?;
     let worker_manager = WORKER_MANAGER
         .lock()
         .map_err(|_e| Error::RaiseAtom("worker_manager lock error"))?;
 
-    let r = match future::block_on(async move {
+    let worker = future::block_on(async move {
         return worker_manager.create_worker(settings).await;
-    }) {
-        Ok(worker) => (atoms::ok(), WorkerStruct::from(worker)).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(), WorkerStruct::from(worker)))
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-struct SerRouterOptions {
+pub struct SerRouterOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub media_codecs: Option<Vec<RtpCodecCapability>>,
 }
@@ -188,7 +187,7 @@ impl SerRouterOptions {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-struct SerWorkerUpdateSettings {
+pub struct SerWorkerUpdateSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_level: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -212,7 +211,7 @@ impl SerWorkerUpdateSettings {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-struct SerWorkerSettings {
+pub struct SerWorkerSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_level: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

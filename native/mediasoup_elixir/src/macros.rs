@@ -6,12 +6,12 @@ macro_rules! define_rustler_serde_by_json {
     ) => {
         impl<'a> rustler::Encoder for $struct_name {
             fn encode<'b>(&self, env: Env<'b>) -> Term<'b> {
-                return crate::json_serde::JsonEncoder::encode(self, env);
+                return crate::json_serde::json_encode(self, env);
             }
         }
         impl<'a> rustler::Decoder<'a> for $struct_name {
             fn decode(term: Term<'a>) -> rustler::NifResult<Self> {
-                return crate::json_serde::JsonDecoder::decode(term);
+                return crate::json_serde::json_decode(term);
             }
         }
     };

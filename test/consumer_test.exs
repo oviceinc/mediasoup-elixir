@@ -743,6 +743,9 @@ defmodule ConsumerTest do
   } do
     {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
 
+    IO.inspect(WebRtcTransport.dump(transport_1)["producerIds"])
+    IO.inspect(WebRtcTransport.dump(transport_2)["consumerIds"])
+
     {:ok, video_consumer} =
       WebRtcTransport.consume(transport_2, %{
         producerId: video_producer.id,
@@ -753,10 +756,12 @@ defmodule ConsumerTest do
         }
       })
 
-      # TODO:
-#    Consumer.set_priority(video_consumer, 2)
-#    assert Consumer.priority(video_consumer) == 2
-#    Consumer.unset_priority(video_consumer)
-#    assert Consumer.priority(video_consumer) == 1
+      ## TODO: This test is unstable for unknown reason "Consumer not found"
+      IO.inspect(WebRtcTransport.dump(transport_1)["producerIds"])
+      IO.inspect(WebRtcTransport.dump(transport_2)["consumerIds"])
+      {:ok} = Consumer.set_priority(video_consumer, 2)
+    assert Consumer.priority(video_consumer) == 2
+    Consumer.unset_priority(video_consumer)
+    assert Consumer.priority(video_consumer) == 1
   end
 end

@@ -1,9 +1,9 @@
 use crate::atoms;
-use crate::json_serde::{JsonEncoder, JsonSerdeWrap};
+use crate::json_serde::JsonSerdeWrap;
 use crate::{send_msg_from_other_thread, ProducerRef};
 use futures_lite::future;
-use mediasoup::producer::{Producer, ProducerId};
-use rustler::{Encoder, Env, Error, NifStruct, ResourceArc, Term};
+use mediasoup::producer::{Producer, ProducerDump, ProducerId};
+use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.Producer"]
@@ -20,71 +20,67 @@ impl ProducerStruct {
     }
 }
 
-pub fn producer_id<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let producer: ResourceArc<ProducerRef> = args[0].decode()?;
-    let producer = match producer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    Ok(producer.id().encode(env))
+#[rustler::nif]
+pub fn producer_id<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<String> {
+    let producer = producer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+    Ok(producer.id().to_string())
 }
-pub fn producer_close<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let producer: ResourceArc<ProducerRef> = args[0].decode()?;
+
+#[rustler::nif]
+pub fn producer_close<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(Atom,)> {
     producer.close();
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }
-pub fn producer_pause<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let producer: ResourceArc<ProducerRef> = args[0].decode()?;
-    let producer = match producer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn producer_pause<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
+    let producer = producer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    future::block_on(async move {
         return producer.pause().await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(),))
 }
-pub fn producer_resume<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let producer: ResourceArc<ProducerRef> = args[0].decode()?;
-    let producer = match producer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn producer_resume<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
+    let producer = producer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
-    let r = match future::block_on(async move {
+    future::block_on(async move {
         return producer.resume().await;
-    }) {
-        Ok(_) => (atoms::ok(),).encode(env),
-        Err(error) => (atoms::error(), format!("{}", error)).encode(env),
-    };
-    Ok(r)
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(),))
 }
 
-pub fn producer_dump<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let producer: ResourceArc<ProducerRef> = args[0].decode()?;
-    let producer = match producer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
+#[rustler::nif]
+pub fn producer_dump<'a>(
+    producer: ResourceArc<ProducerRef>,
+) -> NifResult<JsonSerdeWrap<ProducerDump>> {
+    let producer = producer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     let dump = future::block_on(async move {
         return producer.dump().await;
     })
-    .map_err(|e| Error::RaiseTerm(Box::new(format!("{}", e))))?;
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok(dump.encode(env))
+    Ok(JsonSerdeWrap::new(dump))
 }
-pub fn producer_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let producer: ResourceArc<ProducerRef> = args[0].decode()?;
-    let producer = match producer.unwrap() {
-        Some(v) => v,
-        None => return Ok((atoms::error(), atoms::terminated()).encode(env)),
-    };
-    let pid: rustler::Pid = args[1].decode()?;
+#[rustler::nif]
+pub fn producer_event<'a>(
+    producer: ResourceArc<ProducerRef>,
+    pid: rustler::LocalPid,
+) -> NifResult<(rustler::Atom,)> {
+    let producer = producer
+        .unwrap()
+        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
 
     crate::reg_callback!(pid, producer, on_close);
     crate::reg_callback!(pid, producer, on_pause);
@@ -116,5 +112,5 @@ pub fn producer_event<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, E
             .detach();
     }
 
-    Ok((atoms::ok(),).encode(env))
+    Ok((atoms::ok(),))
 }

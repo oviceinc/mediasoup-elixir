@@ -1,27 +1,27 @@
-rustler::rustler_atoms! {
-    atom ok;
-    atom error;
-    atom terminated;
-    atom on_new_router;
-    atom on_close;
-    atom on_dead;
-    atom on_router_close;
-    atom on_sctp_state_change;
-    atom on_ice_state_change;
-    atom on_dtls_state_change;
-    atom on_ice_selected_tuple_change;
-    atom on_new_producer;
-    atom on_new_consumer;
-    atom on_worker_close;
-    atom on_new_transport;
-    atom on_new_rtp_observer;
-    atom on_pause;
-    atom on_resume;
-    atom on_video_orientation_change;
-    atom on_score;
-    atom on_producer_pause;
-    atom on_producer_resume;
-    atom on_producer_close;
-    atom on_transport_close;
-    atom on_layers_change;
+rustler::atoms! {
+    ok,
+    error,
+    terminated,
+    on_new_router,
+    on_close,
+    on_dead,
+    on_router_close,
+    on_sctp_state_change,
+    on_ice_state_change,
+    on_dtls_state_change,
+    on_ice_selected_tuple_change,
+    on_new_producer,
+    on_new_consumer,
+    on_worker_close,
+    on_new_transport,
+    on_new_rtp_observer,
+    on_pause,
+    on_resume,
+    on_video_orientation_change,
+    on_score,
+    on_producer_pause,
+    on_producer_resume,
+    on_producer_close,
+    on_transport_close,
+    on_layers_change,
 }
