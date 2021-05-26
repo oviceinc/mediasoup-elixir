@@ -19,7 +19,7 @@ use crate::producer::{
 };
 use crate::resource::DisposableResourceWrapper;
 use crate::router::{
-    router_create_webrtc_transport, router_can_consume, router_close, router_dump, router_event,
+    router_can_consume, router_close, router_create_webrtc_transport, router_dump, router_event,
     router_id, router_rtp_capabilities,
 };
 use crate::webrtc_transport::{
@@ -31,8 +31,8 @@ use crate::webrtc_transport::{
     webrtc_transport_sctp_state, webrtc_transport_set_max_incoming_bitrate,
 };
 use crate::worker::{
-    worker_create_router, create_worker, create_worker_no_arg, worker_close, worker_closed, worker_dump,
-    worker_event, worker_id, worker_update_settings,
+    create_worker, create_worker_no_arg, worker_close, worker_closed, worker_create_router,
+    worker_dump, worker_event, worker_id, worker_update_settings,
 };
 
 use mediasoup::consumer::Consumer;

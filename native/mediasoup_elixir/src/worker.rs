@@ -35,14 +35,14 @@ static WORKER_MANAGER: Lazy<Mutex<WorkerManager>> = Lazy::new(|| Mutex::new(Work
 #[rustler::nif]
 pub fn worker_id(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerId>> {
     match worker.unwrap() {
-        Some(w) => return Ok(JsonSerdeWrap::new(w.id())),
-        None => return Err(Error::Term(Box::new(atoms::terminated()))),
+        Some(w) => Ok(JsonSerdeWrap::new(w.id())),
+        None => Err(Error::Term(Box::new(atoms::terminated()))),
     }
 }
 #[rustler::nif]
 pub fn worker_close(worker: ResourceArc<WorkerRef>) -> NifResult<(rustler::Atom,)> {
     worker.close();
-    return Ok((atoms::ok(),));
+    Ok((atoms::ok(),))
 }
 
 #[rustler::nif]
@@ -52,7 +52,7 @@ pub fn worker_create_router(
 ) -> NifResult<(rustler::Atom, RouterStruct)> {
     let worker = worker
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let option = option.to_option()?;
 
@@ -68,7 +68,7 @@ pub fn worker_create_router(
 pub fn worker_dump(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerDump>> {
     let worker = worker
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let dump = future::block_on(async move {
         return worker.dump().await;
@@ -81,7 +81,7 @@ pub fn worker_dump(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<Wo
 pub fn worker_closed(worker: ResourceArc<WorkerRef>) -> Result<bool, Error> {
     let worker = worker
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     Ok(worker.closed())
 }
@@ -92,7 +92,7 @@ pub fn worker_update_settings(
 ) -> NifResult<(rustler::Atom,)> {
     let worker = worker
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let settings = settings.to_setting()?;
 
@@ -111,7 +111,7 @@ pub fn worker_event(
 ) -> NifResult<(rustler::Atom,)> {
     let worker = worker
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     /* TODO: Can not create multiple instance for disposable
     {
@@ -127,13 +127,10 @@ pub fn worker_event(
     }*/
     crate::reg_callback!(pid, worker, on_close);
     {
-        let pid = pid.clone();
         worker
             .on_dead(move |reason| match reason {
-                Ok(_) => send_msg_from_other_thread(pid.clone(), (atoms::on_dead(),)),
-                Err(err) => {
-                    send_msg_from_other_thread(pid.clone(), (atoms::on_dead(), err.to_string()))
-                }
+                Ok(_) => send_msg_from_other_thread(pid, (atoms::on_dead(),)),
+                Err(err) => send_msg_from_other_thread(pid, (atoms::on_dead(), err.to_string())),
             })
             .detach();
     }
@@ -289,6 +286,6 @@ fn log_tag_from_string(s: &str) -> NifResult<WorkerLogTag> {
     };
 }
 
-fn log_tags_from_strings(v: &Vec<String>) -> NifResult<Vec<WorkerLogTag>> {
+fn log_tags_from_strings(v: &[String]) -> NifResult<Vec<WorkerLogTag>> {
     v.iter().map(|s| log_tag_from_string(s)).collect()
 }

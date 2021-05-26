@@ -5,6 +5,7 @@
 ### Requirement
   * Linux only (Mac support is likely to be added soon by mediasoup project)
   * [Rust](https://www.rust-lang.org/)
+  * make gcc g++
 
 
 ## TODO

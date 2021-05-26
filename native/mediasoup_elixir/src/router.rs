@@ -31,7 +31,7 @@ impl RouterStruct {
 pub fn router_id(router: ResourceArc<RouterRef>) -> NifResult<String> {
     let router = router
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(router.id().to_string())
 }
 #[rustler::nif]
@@ -46,8 +46,8 @@ pub fn router_create_webrtc_transport(
 ) -> NifResult<(rustler::Atom, WebRtcTransportStruct)> {
     let router = router
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
-    let option = option.to_option().map_err(|e| Error::RaiseAtom(e))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let option = option.try_to_option().map_err(|e| Error::RaiseAtom(e))?;
 
     let transport = future::block_on(async move {
         return router.create_webrtc_transport(option).await;
@@ -62,7 +62,7 @@ pub fn router_rtp_capabilities(
 ) -> NifResult<JsonSerdeWrap<RtpCapabilitiesFinalized>> {
     let router = router
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     Ok(JsonSerdeWrap::new(router.rtp_capabilities().clone()))
 }
@@ -75,7 +75,7 @@ pub fn router_can_consume(
 ) -> NifResult<bool> {
     let router = router
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     let producer_id = *producer_id;
     let rtp_capabilities = rtp_capabilities.clone();
 
@@ -86,7 +86,7 @@ pub fn router_can_consume(
 pub fn router_dump(router: ResourceArc<RouterRef>) -> NifResult<JsonSerdeWrap<RouterDump>> {
     let router = router
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     let dump = future::block_on(async move {
         return router.dump().await;
     })
@@ -102,7 +102,7 @@ pub fn router_event(
 ) -> NifResult<(rustler::Atom,)> {
     let router = router
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     crate::reg_callback!(pid, router, on_close);
     crate::reg_callback!(pid, router, on_worker_close);
@@ -149,7 +149,7 @@ struct SerNumSctpStreams {
     pub mis: u16,
 }
 impl SerNumSctpStreams {
-    pub fn to_native(self) -> NumSctpStreams {
+    pub fn as_streams(&self) -> NumSctpStreams {
         NumSctpStreams {
             os: self.os,
             mis: self.mis,
@@ -182,14 +182,14 @@ pub struct SerWebRtcTransportOptions {
 crate::define_rustler_serde_by_json!(SerWebRtcTransportOptions);
 
 impl SerWebRtcTransportOptions {
-    pub fn to_option(self) -> Result<WebRtcTransportOptions, &'static str> {
+    pub fn try_to_option(self) -> Result<WebRtcTransportOptions, &'static str> {
         let ips = match self.listen_ips.first() {
             None => Err("Rquired least one ip"),
             Some(ip) => Ok(TransportListenIps::new(*ip)),
         }?;
 
         let ips = self.listen_ips[1..]
-            .into_iter()
+            .iter()
             .fold(ips, |ips, ip| ips.insert(*ip));
 
         let mut option = WebRtcTransportOptions::new(ips);
@@ -212,7 +212,7 @@ impl SerWebRtcTransportOptions {
             option.enable_sctp = enable_sctp;
         }
         if let Some(num_sctp_streams) = self.num_sctp_streams {
-            option.num_sctp_streams = num_sctp_streams.to_native();
+            option.num_sctp_streams = num_sctp_streams.as_streams();
         }
         if let Some(max_sctp_message_size) = self.max_sctp_message_size {
             option.max_sctp_message_size = max_sctp_message_size;

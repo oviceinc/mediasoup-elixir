@@ -21,23 +21,23 @@ impl ProducerStruct {
 }
 
 #[rustler::nif]
-pub fn producer_id<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<String> {
+pub fn producer_id(producer: ResourceArc<ProducerRef>) -> NifResult<String> {
     let producer = producer
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(producer.id().to_string())
 }
 
 #[rustler::nif]
-pub fn producer_close<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(Atom,)> {
+pub fn producer_close(producer: ResourceArc<ProducerRef>) -> NifResult<(Atom,)> {
     producer.close();
     Ok((atoms::ok(),))
 }
 #[rustler::nif]
-pub fn producer_pause<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
+pub fn producer_pause(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
     let producer = producer
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     future::block_on(async move {
         return producer.pause().await;
@@ -46,10 +46,10 @@ pub fn producer_pause<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(rust
     Ok((atoms::ok(),))
 }
 #[rustler::nif]
-pub fn producer_resume<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
+pub fn producer_resume(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
     let producer = producer
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     future::block_on(async move {
         return producer.resume().await;
@@ -59,12 +59,10 @@ pub fn producer_resume<'a>(producer: ResourceArc<ProducerRef>) -> NifResult<(rus
 }
 
 #[rustler::nif]
-pub fn producer_dump<'a>(
-    producer: ResourceArc<ProducerRef>,
-) -> NifResult<JsonSerdeWrap<ProducerDump>> {
+pub fn producer_dump(producer: ResourceArc<ProducerRef>) -> NifResult<JsonSerdeWrap<ProducerDump>> {
     let producer = producer
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let dump = future::block_on(async move {
         return producer.dump().await;
@@ -74,13 +72,13 @@ pub fn producer_dump<'a>(
     Ok(JsonSerdeWrap::new(dump))
 }
 #[rustler::nif]
-pub fn producer_event<'a>(
+pub fn producer_event(
     producer: ResourceArc<ProducerRef>,
     pid: rustler::LocalPid,
 ) -> NifResult<(rustler::Atom,)> {
     let producer = producer
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     crate::reg_callback!(pid, producer, on_close);
     crate::reg_callback!(pid, producer, on_pause);
@@ -101,7 +99,7 @@ pub fn producer_event<'a>(
             .detach();
     }
     {
-        let pid = pid.clone();
+        //let pid = pid.clone();
         producer
             .on_score(move |score| {
                 send_msg_from_other_thread(

@@ -36,7 +36,7 @@ impl WebRtcTransportStruct {
 pub fn webrtc_transport_id(transport: ResourceArc<WebRtcTransportRef>) -> NifResult<String> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(transport.id().to_string())
 }
 
@@ -53,7 +53,7 @@ pub fn webrtc_transport_consume(
 ) -> NifResult<(Atom, ConsumerStruct)> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let option = ConsumerOptions::from(ser_option);
 
@@ -72,7 +72,7 @@ pub fn webrtc_transport_connect(
 ) -> NifResult<(Atom,)> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     let option: WebRtcTransportRemoteParameters = option.clone();
 
     future::block_on(async move {
@@ -89,7 +89,7 @@ pub fn webrtc_transport_produce(
 ) -> NifResult<(Atom, ProducerStruct)> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     let option = ProducerOptions::from(option);
 
     let producer = future::block_on(async move {
@@ -105,7 +105,7 @@ pub fn webrtc_transport_ice_candidates(
 ) -> NifResult<JsonSerdeWrap<std::vec::Vec<mediasoup::data_structures::IceCandidate>>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(JsonSerdeWrap::new(transport.ice_candidates().clone()))
 }
 
@@ -115,7 +115,7 @@ pub fn webrtc_transport_ice_role(
 ) -> NifResult<JsonSerdeWrap<IceRole>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(JsonSerdeWrap::new(transport.ice_role()))
 }
 
@@ -126,7 +126,7 @@ pub fn webrtc_transport_set_max_incoming_bitrate(
 ) -> NifResult<(Atom,)> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     future::block_on(async move {
         return transport.set_max_incoming_bitrate(bitrate).await;
@@ -141,7 +141,7 @@ pub fn webrtc_transport_ice_state(
 ) -> NifResult<JsonSerdeWrap<IceState>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(JsonSerdeWrap::new(transport.ice_state()))
 }
 
@@ -151,7 +151,7 @@ pub fn webrtc_transport_restart_ice(
 ) -> NifResult<(Atom, JsonSerdeWrap<IceParameters>)> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let ice_parameter = future::block_on(async move {
         return transport.restart_ice().await;
@@ -167,7 +167,7 @@ pub fn webrtc_transport_get_stats(
 ) -> NifResult<JsonSerdeWrap<std::vec::Vec<WebRtcTransportStat>>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let status = future::block_on(async move {
         return transport.get_stats().await;
@@ -183,7 +183,7 @@ pub fn webrtc_transport_dump(
 ) -> NifResult<JsonSerdeWrap<WebRtcTransportDump>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     let dump = future::block_on(async move {
         return transport.dump().await;
@@ -199,7 +199,7 @@ pub fn webrtc_transport_ice_selected_tuple(
 ) -> NifResult<JsonSerdeWrap<Option<TransportTuple>>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(JsonSerdeWrap::new(transport.ice_selected_tuple()))
 }
 
@@ -209,7 +209,7 @@ pub fn webrtc_transport_dtls_parameters(
 ) -> NifResult<JsonSerdeWrap<DtlsParameters>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(JsonSerdeWrap::new(transport.dtls_parameters()))
 }
 
@@ -219,7 +219,7 @@ pub fn webrtc_transport_dtls_state(
 ) -> NifResult<JsonSerdeWrap<DtlsState>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(JsonSerdeWrap::new(transport.dtls_state()))
 }
 #[rustler::nif]
@@ -228,7 +228,7 @@ pub fn webrtc_transport_sctp_state(
 ) -> NifResult<JsonSerdeWrap<Option<SctpState>>> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
     Ok(JsonSerdeWrap::new(transport.sctp_state()))
 }
 
@@ -239,7 +239,7 @@ pub fn webrtc_transport_event(
 ) -> NifResult<(Atom,)> {
     let transport = transport
         .unwrap()
-        .ok_or(Error::Term(Box::new(atoms::terminated())))?;
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
 
     //    crate::reg_callback!(env, transport, on_close);
 
@@ -280,14 +280,14 @@ pub fn webrtc_transport_event(
     */
 
     {
-        let pid = pid.clone();
+        //        let pid = pid.clone();
         transport
             .on_ice_selected_tuple_change(move |arg| {
                 send_msg_from_other_thread(
                     pid.clone(),
                     (
                         atoms::on_ice_selected_tuple_change(),
-                        JsonSerdeWrap::new(arg.clone()),
+                        JsonSerdeWrap::new(*arg),
                     ),
                 );
             })
