@@ -1,0 +1,53 @@
+name:  test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    name: Build and test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Elixir
+      uses: erlef/setup-elixir@885971a72ed1f9240973bd92ab57af8c1aa68f24
+      with:
+        elixir-version: '1.12.0' # Define the elixir version [required]
+        otp-version: '24.0' # Define the OTP version [required]
+    - name: Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+    - name: Restore dependencies cache
+      uses: actions/cache@v2
+      with:
+        path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            deps
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: ${{ runner.os }}-mix-
+    - name: Install dependencies
+      run: mix deps.get
+    - name: Run tests
+      run: mix test
+    - name: Run dialyzer
+      run: MIX_ENV=test mix dialyzer
+    - name: Run cargo clippy
+      run: cargo clippy
+      working-directory: native/mediasoup_elixir/

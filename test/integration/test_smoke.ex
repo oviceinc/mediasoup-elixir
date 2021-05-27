@@ -1,5 +1,4 @@
 defmodule IntegrateTest.SmokeTest do
-  import ExUnit.Assertions
 
   def smoke() do
     {:ok, worker} = Mediasoup.create_worker()

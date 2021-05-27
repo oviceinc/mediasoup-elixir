@@ -7,7 +7,6 @@ defmodule MediasoupElixir.MixProject do
       version: "0.0.1",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:rustler] ++ Mix.compilers(),
       rustler_crates: rustler_crates(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
