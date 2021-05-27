@@ -36,7 +36,7 @@ pub fn consumer_id(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWra
     let consumer = consumer
         .unwrap()
         .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
-    Ok(JsonSerdeWrap::new(consumer.id()))
+    Ok(consumer.id().into())
 }
 #[rustler::nif]
 pub fn consumer_close(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {

@@ -4,9 +4,11 @@ defmodule Mediasoup.Nif do
   alias Mediasoup.{Worker, Router, WebRtcTransport, Consumer, Producer}
 
   # construct worker
-  @spec create_worker() :: {:ok, Worker.t()} | {:error}
+  @spec create_worker() :: {:ok, Worker.t()} | {:error, String.t()}
   def create_worker(), do: :erlang.nif_error(:nif_not_loaded)
-  @spec create_worker(Worker.create_option()) :: {:ok, Mediasoup.Worker.t()} | {:error}
+
+  @spec create_worker(Worker.create_option()) ::
+          {:ok, Mediasoup.Worker.t()} | {:error, String.t()}
   def create_worker(_option), do: :erlang.nif_error(:nif_not_loaded)
 
   # worker
@@ -22,7 +24,7 @@ defmodule Mediasoup.Nif do
   def worker_closed(_worker), do: :erlang.nif_error(:nif_not_loaded)
   @spec worker_update_settings(reference, Worker.update_option()) :: {:ok} | {:error}
   def worker_update_settings(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
-  @spec worker_dump(reference) :: {:ok, map} | {:error}
+  @spec worker_dump(reference) :: map | {:error}
   def worker_dump(_worker), do: :erlang.nif_error(:nif_not_loaded)
 
   # router
@@ -33,11 +35,11 @@ defmodule Mediasoup.Nif do
   @spec router_create_webrtc_transport(reference, map) :: {:ok, WebRtcTransport.t()} | {:error}
   def router_create_webrtc_transport(_router, _option), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec router_can_consume(reference, String.t(), list(any)) :: boolean
+  @spec router_can_consume(reference, String.t(), Router.rtpCapabilities()) :: boolean
   def router_can_consume(_router, _producer_id, _rtp_capabilities),
     do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec router_rtp_capabilities(reference) :: list(any)
+  @spec router_rtp_capabilities(reference) :: Router.rtpCapabilities()
   def router_rtp_capabilities(_router), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec router_event(reference, pid) :: {:ok} | {:error}
@@ -50,11 +52,11 @@ defmodule Mediasoup.Nif do
   def webrtc_transport_id(_transport), do: :erlang.nif_error(:nif_not_loaded)
   @spec webrtc_transport_close(reference) :: {:ok} | {:error}
   def webrtc_transport_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  @spec webrtc_transport_consume(reference, any) :: {:ok, Consumer.t()} | {:error}
+  @spec webrtc_transport_consume(reference, any) :: {:ok, Consumer.t()} | {:error, String.t()}
   def webrtc_transport_consume(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
-  @spec webrtc_transport_connect(reference, any) :: {:ok} | {:error}
+  @spec webrtc_transport_connect(reference, any) :: {:ok} | {:error, String.t()}
   def webrtc_transport_connect(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
-  @spec webrtc_transport_produce(reference, any) :: {:ok, Producer.t()} | {:error}
+  @spec webrtc_transport_produce(reference, any) :: {:ok, Producer.t()} | {:error, String.t()}
   def webrtc_transport_produce(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_candidates(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_role(_transport), do: :erlang.nif_error(:nif_not_loaded)
@@ -108,7 +110,9 @@ defmodule Mediasoup.Nif do
   def producer_id(_producer), do: :erlang.nif_error(:nif_not_loaded)
   @spec producer_close(reference) :: {:ok} | {:error}
   def producer_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec producer_pause(reference) :: {:ok} | {:error}
   def producer_pause(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec producer_resume(reference) :: {:ok} | {:error}
   def producer_resume(_producer), do: :erlang.nif_error(:nif_not_loaded)
   @spec producer_event(reference, pid) :: {:ok} | {:error}
   def producer_event(_producer, _pid), do: :erlang.nif_error(:nif_not_loaded)

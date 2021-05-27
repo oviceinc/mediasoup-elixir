@@ -22,16 +22,16 @@ defmodule Mediasoup.Worker do
           | :sctp
           | :message
   @type create_option :: %{
-          logLevel: log_level | nil,
-          logTags: [log_tag] | nil,
-          rtcMinPort: integer | nil,
-          rtcMaxPort: integer | nil,
-          dtlsCertificateFile: String.t() | nil,
-          dtlsPrivateKeyFile: String.t() | nil
+          optional(:logLevel) => log_level,
+          optional(:logTags) => [log_tag],
+          optional(:rtcMinPort) => integer,
+          optional(:rtcMaxPort) => integer,
+          optional(:dtlsCertificateFile) => String.t(),
+          optional(:dtlsPrivateKeyFile) => String.t()
         }
   @type update_option :: %{
-          logLevel: log_level | nil,
-          logTags: [log_tag] | nil
+          optional(:logLevel) => log_level,
+          optional(:logTags) => [log_tag]
         }
 
   @spec close(t) :: {:ok} | {:error}
@@ -54,7 +54,7 @@ defmodule Mediasoup.Worker do
     Nif.worker_closed(worker.reference)
   end
 
-  @spec dump(t) :: %{}
+  @spec dump(t) :: map
   def dump(worker) do
     Nif.worker_dump(worker.reference)
   end
