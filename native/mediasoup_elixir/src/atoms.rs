@@ -24,4 +24,6 @@ rustler::atoms! {
     on_producer_close,
     on_transport_close,
     on_layers_change,
+    audio,
+    video,
 }

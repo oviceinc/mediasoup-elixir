@@ -16,22 +16,22 @@ defmodule Mediasoup.WebRtcTransport do
     Nif.webrtc_transport_close(transport.reference)
   end
 
-  @spec consume(t, consume_option()) :: {:ok, Consumer.t()} | {:error}
+  @spec consume(t, consume_option()) :: {:ok, Consumer.t()} | {:error, String.t()}
   def consume(transport, option) do
     Nif.webrtc_transport_consume(transport.reference, option)
   end
 
-  @spec produce(t, produce_option()) :: {:ok, Producer.t()} | {:error}
+  @spec produce(t, produce_option()) :: {:ok, Producer.t()} | {:errorr, String.t()}
   def produce(transport, option) do
     Nif.webrtc_transport_produce(transport.reference, option)
   end
 
-  @spec connect(t, connect_option()) :: {:ok} | {:error}
+  @spec connect(t, connect_option()) :: {:ok} | {:errorr, String.t()}
   def connect(transport, option) do
     Nif.webrtc_transport_connect(transport.reference, option)
   end
 
-  @spec ice_candidates(t) :: {}
+  @spec ice_candidates(t) :: list(any)
   def ice_candidates(transport) do
     Nif.webrtc_transport_ice_candidates(transport.reference)
   end
@@ -46,7 +46,7 @@ defmodule Mediasoup.WebRtcTransport do
     Nif.webrtc_transport_set_max_incoming_bitrate(transport.reference, bitrate)
   end
 
-  @spec ice_state(t) :: {}
+  @spec ice_state(t) :: String.t()
   def ice_state(transport) do
     Nif.webrtc_transport_ice_state(transport.reference)
   end
@@ -56,22 +56,22 @@ defmodule Mediasoup.WebRtcTransport do
     Nif.webrtc_transport_restart_ice(transport.reference)
   end
 
-  @spec ice_selected_tuple(t) :: {}
+  @spec ice_selected_tuple(t) :: String.t() | nil
   def ice_selected_tuple(transport) do
     Nif.webrtc_transport_ice_selected_tuple(transport.reference)
   end
 
-  @spec dtls_parameters(t) :: {}
+  @spec dtls_parameters(t) :: map
   def dtls_parameters(transport) do
     Nif.webrtc_transport_dtls_parameters(transport.reference)
   end
 
-  @spec dtls_state(t) :: {}
+  @spec dtls_state(t) :: String.t()
   def dtls_state(transport) do
     Nif.webrtc_transport_dtls_state(transport.reference)
   end
 
-  @spec sctp_state(t) :: {}
+  @spec sctp_state(t) :: String.t()
   def sctp_state(transport) do
     Nif.webrtc_transport_sctp_state(transport.reference)
   end

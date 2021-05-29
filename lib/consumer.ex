@@ -1,16 +1,36 @@
 defmodule Mediasoup.Consumer do
   alias Mediasoup.{Consumer, Nif}
-  @enforce_keys [:id, :reference]
-  defstruct [:id, :reference]
-  @type t(id, ref) :: %Consumer{id: id, reference: ref}
-  @type t :: %Consumer{id: String.t(), reference: reference}
+  @enforce_keys [:id, :producer_id, :kind, :rtp_parameters, :reference]
+  defstruct [:id, :producer_id, :kind, :rtp_parameters, :reference]
+
+  @type t(id, producer_id, kind, rtp_parameters, ref) :: %Consumer{
+          id: id,
+          producer_id: producer_id,
+          kind: kind,
+          rtp_parameters: rtp_parameters,
+          reference: ref
+        }
+  @type t :: %Consumer{
+          id: String.t(),
+          producer_id: String.t(),
+          kind: kind,
+          rtp_parameters: rtpParameters,
+          reference: reference
+        }
+
+  @type rtpParameters :: map
+
+  @typedoc """
+    audio or video
+  """
+  @type kind :: String.t()
 
   @spec close(t) :: {:ok} | {:error}
   def close(consumer) do
     Nif.consumer_close(consumer.reference)
   end
 
-  @spec dump(t) :: %{} | {:error}
+  @spec dump(t) :: map | {:error}
   def dump(consumer) do
     Nif.consumer_dump(consumer.reference)
   end

@@ -6,10 +6,14 @@ defmodule MediasoupElixir.MixProject do
       app: :mediasoup_elixir,
       version: "0.0.1",
       elixir: "~> 1.7",
-      compilers: [:rustler] ++ Mix.compilers(),
+      elixirc_paths: elixirc_paths(Mix.env()),
       rustler_crates: rustler_crates(),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      dialyzer: [
+        plt_add_apps: [:mix, :ex_unit],
+        check_plt: true
+      ]
     ]
   end
 
@@ -23,8 +27,8 @@ defmodule MediasoupElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:rustler, "~> 0.22.0-rc.1"},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
@@ -39,4 +43,7 @@ defmodule MediasoupElixir.MixProject do
       ]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/integration"]
+  defp elixirc_paths(_), do: ["lib"]
 end
