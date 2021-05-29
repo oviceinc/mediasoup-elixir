@@ -9,6 +9,5 @@
 
 
 ## TODO
-  - [ ] tests
-  - [ ] CI setup
-  - [ ] blocking vs send message at async function
+  - [ ] add more tests
+  - [ ] add @spec
