@@ -543,6 +543,7 @@ defmodule IntegrateTest.ConsumerTest do
         producerId: audio_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
+      assert {:ok} === Producer.pause(audio_producer)
 
     dump = Consumer.dump(audio_consumer)
 
@@ -592,7 +593,6 @@ defmodule IntegrateTest.ConsumerTest do
     {worker, router, transport_1, transport_2} = init()
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
     ## TODO: This test is unstable for unknown reason "Consumer not found"
-
     assert true === Router.can_consume?(router, audio_producer.id, consumer_device_capabilities())
 
     {:ok, audio_consumer} =
@@ -600,7 +600,7 @@ defmodule IntegrateTest.ConsumerTest do
         producerId: audio_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
-
+      assert {:ok} === Producer.pause(audio_producer)
 
     assert false == Consumer.closed?(audio_consumer)
 
@@ -640,6 +640,7 @@ defmodule IntegrateTest.ConsumerTest do
         producerId: audio_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
+      assert {:ok} === Producer.pause(audio_producer)
 
 
     Consumer.pause(audio_consumer)
@@ -706,7 +707,7 @@ defmodule IntegrateTest.ConsumerTest do
     Mediasoup.Worker.close(worker)
   end
 
-  def set_unset_priority_succeeds() do
+  def unset_priority_succeeds() do
     {worker, router, transport_1, transport_2} = init()
     {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
 
@@ -720,6 +721,7 @@ defmodule IntegrateTest.ConsumerTest do
           spatialLayer: 12
         }
       })
+      assert {:ok} === Producer.pause(video_producer)
 
     ## TODO: This test is unstable for unknown reason "Consumer not found"
     {:ok} = Consumer.set_priority(video_consumer, 2)

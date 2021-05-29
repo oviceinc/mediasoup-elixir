@@ -36,8 +36,6 @@ defmodule IntegrateTest.RouterTest do
         logLevel: :debug
       })
 
-    Mediasoup.Worker.event(worker, self())
-
     {:ok, router} =
       Mediasoup.Worker.create_router(worker, %{
         mediaCodecs: {
@@ -64,5 +62,7 @@ defmodule IntegrateTest.RouterTest do
     assert true == is_binary(router.id)
 
     assert match?(%{"rtpObserverIds" => [], "transportIds" => []}, Mediasoup.Router.dump(router))
+    Mediasoup.Router.close(router)
+    Mediasoup.Worker.close(worker)
   end
 end

@@ -114,5 +114,9 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert match?(%{"role" => "auto"}, Mediasoup.WebRtcTransport.dtls_parameters(transport))
     assert "new" == Mediasoup.WebRtcTransport.dtls_state(transport)
     assert "new" == Mediasoup.WebRtcTransport.sctp_state(transport)
+
+    Mediasoup.WebRtcTransport.close(transport)
+    Mediasoup.Router.close(router)
+    Mediasoup.Worker.close(worker)
   end
 end

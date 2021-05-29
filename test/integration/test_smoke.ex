@@ -65,5 +65,8 @@ defmodule IntegrateTest.SmokeTest do
         fecMechanisms: {}
       }
     })
+    Mediasoup.WebRtcTransport.close(transport)
+    Mediasoup.Router.close(router)
+    Mediasoup.Worker.close(worker)
   end
 end

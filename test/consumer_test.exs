@@ -6,6 +6,7 @@ defmodule ConsumerTest do
   end
 
   test "consume_incompatible_rtp_capabilities" do
+    Process.sleep(1000)
     IntegrateTest.ConsumerTest.consume_incompatible_rtp_capabilities()
   end
 
@@ -25,7 +26,7 @@ defmodule ConsumerTest do
     IntegrateTest.ConsumerTest.set_preferred_layers_succeeds()
   end
 
-  test "set_unset_priority_succeeds" do
-    IntegrateTest.ConsumerTest.set_unset_priority_succeeds()
+  test "unset_priority_succeeds" do
+    IntegrateTest.ConsumerTest.unset_priority_succeeds()
   end
 end

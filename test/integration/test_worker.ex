@@ -6,6 +6,7 @@ defmodule IntegrateTest.WorkerTest do
     {:ok, worker} = Mediasoup.create_worker()
 
     assert false == Mediasoup.Worker.closed?(worker)
+    Mediasoup.Worker.close(worker)
   end
 
   def worker_with_custom_settings() do
@@ -20,6 +21,7 @@ defmodule IntegrateTest.WorkerTest do
       })
 
     assert true == is_binary(worker.id)
+    Mediasoup.Worker.close(worker)
   end
 
   def worker_with_wrong_settings_cert() do
@@ -52,6 +54,7 @@ defmodule IntegrateTest.WorkerTest do
                logTags: [:info, :sctp, :message]
              })
            )
+           Mediasoup.Worker.close(worker)
   end
 
   def dump_succeeds() do
@@ -61,6 +64,7 @@ defmodule IntegrateTest.WorkerTest do
       })
 
     assert match?(%{"routerIds" => []}, Worker.dump(worker))
+    Mediasoup.Worker.close(worker)
   end
 
   def close_event() do
