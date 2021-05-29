@@ -317,9 +317,9 @@ checksum = "1f374d42cdfc1d7dbf3d3dec28afab2eb97ffbf43a3234d795b5986dbf4b90ba"
 
 [[package]]
 name = "mediasoup"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3190a138d5a99cf348b9a19d3da9c11c8a1ec7011d6950f599047dc4cd751789"
+checksum = "c93c664c3a9bdbbc254893cee3786eee3bd451ad6e0a5db5f45cd8c1e93864b9"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -349,9 +349,9 @@ dependencies = [
 
 [[package]]
 name = "mediasoup-sys"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ba6a8b7ce4c04aeef63082d191ffaf4d35ba8db410bd68ebeecaa10261486c1"
+checksum = "7fd12f448a10108f2fe27cc72b49c0e29d44556dc7e957c86635ac8ec77bba73"
 
 [[package]]
 name = "mediasoup_elixir"
