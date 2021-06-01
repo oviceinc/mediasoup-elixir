@@ -3,12 +3,10 @@
 
 ## Installation
 ### Requirement
-  * Linux only (Mac support is likely to be added soon by mediasoup project)
   * [Rust](https://www.rust-lang.org/)
-  * make gcc g++
+  * make and c/c++ compilers for build for mediasoup
 
 
 ## TODO
-  - [ ] tests
-  - [ ] CI setup
-  - [ ] blocking vs send message at async function
+  - [ ] add more tests
+  - [ ] add @spec
