@@ -1,5 +1,4 @@
 defmodule IntegrateTest.SmokeTest do
-
   def smoke() do
     {:ok, worker} = Mediasoup.create_worker()
 
@@ -65,6 +64,7 @@ defmodule IntegrateTest.SmokeTest do
         fecMechanisms: {}
       }
     })
+
     Mediasoup.WebRtcTransport.close(transport)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)

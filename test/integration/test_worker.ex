@@ -28,6 +28,7 @@ defmodule IntegrateTest.WorkerTest do
     assert match?(
              {:error, _},
              Mediasoup.create_worker(%{
+               logLevel: :none,
                dtlsCertificateFile: "/notfound/cert.pem",
                dtlsPrivateKeyFile: "/notfound/priv.pem"
              })
@@ -54,7 +55,8 @@ defmodule IntegrateTest.WorkerTest do
                logTags: [:info, :sctp, :message]
              })
            )
-           Mediasoup.Worker.close(worker)
+
+    Mediasoup.Worker.close(worker)
   end
 
   def dump_succeeds() do

@@ -543,7 +543,8 @@ defmodule IntegrateTest.ConsumerTest do
         producerId: audio_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
-      assert {:ok} === Producer.pause(audio_producer)
+
+    assert {:ok} === Producer.pause(audio_producer)
 
     dump = Consumer.dump(audio_consumer)
 
@@ -600,10 +601,10 @@ defmodule IntegrateTest.ConsumerTest do
         producerId: audio_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
-      assert {:ok} === Producer.pause(audio_producer)
+
+    assert {:ok} === Producer.pause(audio_producer)
 
     assert false == Consumer.closed?(audio_consumer)
-
 
     [consumer_stat | _producer_stat] = Consumer.get_stats(audio_consumer)
 
@@ -634,23 +635,20 @@ defmodule IntegrateTest.ConsumerTest do
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
     ## TODO: This test is unstable for unknown reason "Consumer not found"
 
-
     {:ok, audio_consumer} =
       WebRtcTransport.consume(transport_2, %{
         producerId: audio_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
-      assert {:ok} === Producer.pause(audio_producer)
 
+    assert {:ok} === Producer.pause(audio_producer)
 
     Consumer.pause(audio_consumer)
-
 
     consumer_dump = Consumer.dump(audio_consumer)
     assert consumer_dump["paused"] == true
 
     Consumer.resume(audio_consumer)
-
 
     consumer_dump = Consumer.dump(audio_consumer)
     assert consumer_dump["paused"] == false
@@ -670,7 +668,6 @@ defmodule IntegrateTest.ConsumerTest do
         producerId: audio_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
-
 
     Consumer.set_preferred_layers(audio_consumer, %{
       spatialLayer: 1,
@@ -711,7 +708,6 @@ defmodule IntegrateTest.ConsumerTest do
     {worker, router, transport_1, transport_2} = init()
     {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
 
-
     {:ok, video_consumer} =
       WebRtcTransport.consume(transport_2, %{
         producerId: video_producer.id,
@@ -721,7 +717,8 @@ defmodule IntegrateTest.ConsumerTest do
           spatialLayer: 12
         }
       })
-      assert {:ok} === Producer.pause(video_producer)
+
+    assert {:ok} === Producer.pause(video_producer)
 
     ## TODO: This test is unstable for unknown reason "Consumer not found"
     {:ok} = Consumer.set_priority(video_consumer, 2)
