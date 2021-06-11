@@ -546,7 +546,6 @@ where
 
 /// EnumDeserializerType
 pub enum EnumDeserializerType {
-    Any,
     Unit,
     Newtype,
     Tuple,
@@ -573,12 +572,6 @@ impl<'a> EnumDeserializer<'a> {
         let variant = String::deserialize(var_de).or(Err(Error::InvalidVariantName))?;
 
         match variant_type {
-            EnumDeserializerType::Any => Ok(EnumDeserializer {
-                variant_type,
-                variant_term,
-                variant,
-                term,
-            }),
             _ => {
                 if variants.contains(&variant.as_str()) {
                     Ok(EnumDeserializer {
@@ -616,7 +609,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
     #[inline]
     fn unit_variant(self) -> Result<(), Error> {
         match self.variant_type {
-            EnumDeserializerType::Any | EnumDeserializerType::Unit => Ok(()),
+            EnumDeserializerType::Unit => Ok(()),
             _ => Err(Error::ExpectedUnitVariant),
         }
     }
@@ -627,7 +620,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         T: DeserializeSeed<'de>,
     {
         match self.variant_type {
-            EnumDeserializerType::Any | EnumDeserializerType::Newtype => {
+            EnumDeserializerType::Newtype => {
                 if let Some(term) = self.term {
                     let tuple = util::validate_tuple(term, Some(2))?;
                     seed.deserialize(Deserializer::from(tuple[1]))
@@ -645,7 +638,7 @@ impl<'de, 'a: 'de> VariantAccess<'de> for EnumDeserializer<'a> {
         V: Visitor<'de>,
     {
         match self.variant_type {
-            EnumDeserializerType::Any | EnumDeserializerType::Tuple => {
+            EnumDeserializerType::Tuple => {
                 if let Some(term) = self.term {
                     let mut tuple = util::validate_tuple(term, Some(len + 1))?;
                     let iter = tuple.split_off(1).into_iter();
