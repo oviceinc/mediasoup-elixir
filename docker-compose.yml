@@ -1,0 +1,18 @@
+version: "3.0"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile_dev
+    working_dir: /var/opt/app
+    volumes:
+      - .:/var/opt/app
+      - deps:/var/opt/app/deps
+      - build:/var/opt/app/_build
+
+volumes:
+  storage:
+  deps:
+    driver: 'local'
+  build:
+    driver: 'local'
