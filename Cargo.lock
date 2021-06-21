@@ -601,7 +601,7 @@ dependencies = [
 
 [[package]]
 name = "serde_rustler"
-version = "0.1.0"
+version = "0.1.0-patch-0.22.0.rc1"
 dependencies = [
  "lazy_static",
  "quick-error",

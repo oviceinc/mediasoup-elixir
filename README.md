@@ -4,7 +4,7 @@
 ## Installation
 ### Requirement
   * [Rust](https://www.rust-lang.org/)
-  * make and c/c++ compilers for build for mediasoup
+  * `make` and `c/c++ compilers` for build for mediasoup
 
 
 ## TODO
