@@ -571,19 +571,15 @@ impl<'a> EnumDeserializer<'a> {
         let var_de = VariantNameDeserializer::from(variant_term);
         let variant = String::deserialize(var_de).or(Err(Error::InvalidVariantName))?;
 
-        match variant_type {
-            _ => {
-                if variants.contains(&variant.as_str()) {
-                    Ok(EnumDeserializer {
-                        variant_type,
-                        variant_term,
-                        variant,
-                        term,
-                    })
-                } else {
-                    Err(Error::InvalidVariantName)
-                }
-            }
+        if variants.contains(&variant.as_str()) {
+            Ok(EnumDeserializer {
+                variant_type,
+                variant_term,
+                variant,
+                term,
+            })
+        } else {
+            Err(Error::InvalidVariantName)
         }
     }
 }
