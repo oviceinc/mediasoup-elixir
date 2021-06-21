@@ -179,7 +179,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
         let name_term = atoms::str_to_term(&self.env, name).or(Err(Error::InvalidVariantName))?;
         let mut ser = SequenceSerializer::new(self, Some(2), Some(name_term));
         ser.add(value.serialize(self)?);
-        ser.to_tuple()
+        Ok(ser.to_tuple())
     }
 
     #[inline]
@@ -301,13 +301,13 @@ impl<'a> SequenceSerializer<'a> {
     }
 
     #[inline]
-    fn to_list(&self) -> Result<Term<'a>, Error> {
-        Ok(self.items.encode(self.ser.env))
+    fn to_list(&self) -> Term<'a> {
+        self.items.encode(self.ser.env)
     }
 
     #[inline]
-    fn to_tuple(&self) -> Result<Term<'a>, Error> {
-        Ok(tuple::make_tuple(self.ser.env, &self.items))
+    fn to_tuple(&self) -> Term<'a> {
+        tuple::make_tuple(self.ser.env, &self.items)
     }
 }
 
@@ -326,7 +326,7 @@ impl<'a> ser::SerializeSeq for SequenceSerializer<'a> {
 
     #[inline]
     fn end(self) -> Result<Term<'a>, Error> {
-        self.to_list()
+        Ok(self.to_list())
     }
 }
 
@@ -345,7 +345,7 @@ impl<'a> ser::SerializeTuple for SequenceSerializer<'a> {
 
     #[inline]
     fn end(self) -> Result<Term<'a>, Error> {
-        self.to_tuple()
+        Ok(self.to_list())
     }
 }
 
