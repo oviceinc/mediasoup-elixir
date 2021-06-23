@@ -18,5 +18,5 @@ crate-type = ["rlib"]
 lazy_static = "1.4.0"
 quick-error = "1.2"
 rustler = "0.22.0-rc.1"
-rustler_codegen = "0.22.0-rc.1"
+rustler_codegen = "0.22.0"
 serde = "1.0"
