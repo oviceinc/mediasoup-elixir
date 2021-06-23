@@ -30,10 +30,7 @@ defmodule MediasoupElixir.MixProject do
       # We'are waiting for new release of rustler.
       # It must contains https://github.com/rusterlium/rustler/pull/361
       # Because nif symlink is not created at first compile: https://github.com/oviceinc/mediasoup-elixir/issues/10
-      {:rustler,
-       git: "https://github.com/rusterlium/rustler.git",
-       ref: "5e3a153e0836db56856b25de7bf01fc5eef19fa8",
-       sparse: "rustler_mix"},
+      {:rustler,"~> 0.22.0"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
