@@ -4,7 +4,7 @@ use crate::send_msg_from_other_thread;
 use crate::ConsumerRef;
 use futures_lite::future;
 use mediasoup::consumer::{
-    Consumer, ConsumerDump, ConsumerId, ConsumerLayers, ConsumerScore, ConsumerStats,
+    Consumer, ConsumerDump, ConsumerId, ConsumerLayers, ConsumerScore, ConsumerStats, ConsumerType,
 };
 use mediasoup::producer::ProducerId;
 use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
@@ -16,6 +16,7 @@ pub struct ConsumerStruct {
     id: JsonSerdeWrap<ConsumerId>,
     producer_id: JsonSerdeWrap<ProducerId>,
     kind: JsonSerdeWrap<MediaKind>,
+    r#type: JsonSerdeWrap<ConsumerType>,
     rtp_parameters: JsonSerdeWrap<RtpParameters>,
     reference: ResourceArc<ConsumerRef>,
 }
@@ -25,6 +26,7 @@ impl ConsumerStruct {
             id: consumer.id().into(),
             producer_id: consumer.producer_id().into(),
             kind: consumer.kind().into(),
+            r#type: consumer.r#type().into(),
             rtp_parameters: consumer.rtp_parameters().clone().into(),
             reference: ConsumerRef::resource(consumer),
         }
