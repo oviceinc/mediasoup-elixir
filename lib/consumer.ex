@@ -1,14 +1,15 @@
 defmodule Mediasoup.Consumer do
   alias Mediasoup.{Consumer, Nif}
-  @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters, :reference]
-  defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :reference]
+  @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters, :producer_paused, :reference]
+  defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :producer_paused, :reference]
 
-  @type t(id, producer_id, kind, type, rtp_parameters, ref) :: %Consumer{
+  @type t(id, producer_id, kind, type, rtp_parameters, producer_paused, ref) :: %Consumer{
           id: id,
           producer_id: producer_id,
           kind: kind,
           type: type,
           rtp_parameters: rtp_parameters,
+          producer_paused: producer_paused,
           reference: ref
         }
   @type t :: %Consumer{
@@ -17,10 +18,13 @@ defmodule Mediasoup.Consumer do
           kind: kind,
           type: type,
           rtp_parameters: rtpParameters,
+          producer_paused: producerPaused,
           reference: reference
         }
 
   @type rtpParameters :: map
+
+  @type producerPaused :: boolean
 
   @typedoc """
     audio or video

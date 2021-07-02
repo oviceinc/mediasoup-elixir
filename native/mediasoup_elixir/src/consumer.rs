@@ -18,6 +18,7 @@ pub struct ConsumerStruct {
     kind: JsonSerdeWrap<MediaKind>,
     r#type: JsonSerdeWrap<ConsumerType>,
     rtp_parameters: JsonSerdeWrap<RtpParameters>,
+    producer_paused: JsonSerdeWrap<bool>,
     reference: ResourceArc<ConsumerRef>,
 }
 impl ConsumerStruct {
@@ -28,6 +29,7 @@ impl ConsumerStruct {
             kind: consumer.kind().into(),
             r#type: consumer.r#type().into(),
             rtp_parameters: consumer.rtp_parameters().clone().into(),
+            producer_paused: consumer.producer_paused().clone().into(),
             reference: ConsumerRef::resource(consumer),
         }
     }

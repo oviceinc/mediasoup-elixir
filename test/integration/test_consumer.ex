@@ -624,6 +624,8 @@ defmodule IntegrateTest.ConsumerTest do
 
     assert "simulcast" == video_consumer.type
 
+    assert true == video_consumer.producer_paused
+
     assert consumer_stat["kind"] == "video"
     assert consumer_stat["mimeType"] == "video/H264"
     Mediasoup.WebRtcTransport.close(transport_1)
