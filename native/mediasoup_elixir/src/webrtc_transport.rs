@@ -100,6 +100,16 @@ pub fn webrtc_transport_produce(
 }
 
 #[rustler::nif]
+pub fn webrtc_transport_ice_parameters(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<IceParameters>> {
+    let transport = transport
+        .unwrap()
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.ice_parameters().clone()))
+}
+
+#[rustler::nif]
 pub fn webrtc_transport_ice_candidates(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<std::vec::Vec<mediasoup::data_structures::IceCandidate>>> {
