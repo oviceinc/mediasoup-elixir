@@ -58,6 +58,7 @@ defmodule Mediasoup.Nif do
   def webrtc_transport_connect(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   @spec webrtc_transport_produce(reference, any) :: {:ok, Producer.t()} | {:error, String.t()}
   def webrtc_transport_produce(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_ice_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_candidates(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_role(_transport), do: :erlang.nif_error(:nif_not_loaded)
 

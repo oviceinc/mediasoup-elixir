@@ -31,6 +31,11 @@ defmodule Mediasoup.WebRtcTransport do
     Nif.webrtc_transport_connect(transport.reference, option)
   end
 
+  @spec ice_parameters(t) :: map()
+  def ice_parameters(transport) do
+    Nif.webrtc_transport_ice_parameters(transport.reference)
+  end
+
   @spec ice_candidates(t) :: list(any)
   def ice_candidates(transport) do
     Nif.webrtc_transport_ice_candidates(transport.reference)
