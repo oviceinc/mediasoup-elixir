@@ -36,6 +36,11 @@ defmodule Mediasoup.WebRtcTransport do
     Nif.webrtc_transport_ice_parameters(transport.reference)
   end
 
+  @spec sctp_parameters(t) :: map()
+  def sctp_parameters(transport) do
+    Nif.webrtc_transport_sctp_parameters(transport.reference)
+  end
+
   @spec ice_candidates(t) :: list(any)
   def ice_candidates(transport) do
     Nif.webrtc_transport_ice_candidates(transport.reference)
@@ -49,6 +54,11 @@ defmodule Mediasoup.WebRtcTransport do
   @spec set_max_incoming_bitrate(t, integer) :: {}
   def set_max_incoming_bitrate(transport, bitrate) do
     Nif.webrtc_transport_set_max_incoming_bitrate(transport.reference, bitrate)
+  end
+
+  @spec set_max_outgoing_bitrate(t, integer) :: {}
+  def set_max_outgoing_bitrate(transport, bitrate) do
+    Nif.webrtc_transport_set_max_outgoing_bitrate(transport.reference, bitrate)
   end
 
   @spec ice_state(t) :: String.t()

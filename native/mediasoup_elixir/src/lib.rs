@@ -25,10 +25,12 @@ use crate::router::{
 use crate::webrtc_transport::{
     webrtc_transport_close, webrtc_transport_connect, webrtc_transport_consume,
     webrtc_transport_dtls_parameters, webrtc_transport_dtls_state, webrtc_transport_dump,
-    webrtc_transport_event, webrtc_transport_get_stats, webrtc_transport_ice_candidates, webrtc_transport_ice_parameters,
-    webrtc_transport_ice_role, webrtc_transport_ice_selected_tuple, webrtc_transport_ice_state,
-    webrtc_transport_id, webrtc_transport_produce, webrtc_transport_restart_ice,
+    webrtc_transport_event, webrtc_transport_get_stats, webrtc_transport_ice_candidates,
+    webrtc_transport_ice_parameters, webrtc_transport_ice_role,
+    webrtc_transport_ice_selected_tuple, webrtc_transport_ice_state, webrtc_transport_id,
+    webrtc_transport_produce, webrtc_transport_restart_ice, webrtc_transport_sctp_parameters,
     webrtc_transport_sctp_state, webrtc_transport_set_max_incoming_bitrate,
+    webrtc_transport_set_max_outgoing_bitrate,
 };
 use crate::worker::{
     create_worker, create_worker_no_arg, worker_close, worker_closed, worker_create_router,
@@ -86,10 +88,12 @@ rustler::init! {
         webrtc_transport_connect,
         webrtc_transport_produce,
         webrtc_transport_set_max_incoming_bitrate,
+        webrtc_transport_set_max_outgoing_bitrate,
         webrtc_transport_ice_state,
         webrtc_transport_restart_ice,
         webrtc_transport_ice_selected_tuple,
         webrtc_transport_ice_parameters,
+        webrtc_transport_sctp_parameters,
         webrtc_transport_dtls_parameters,
         webrtc_transport_dtls_state,
         webrtc_transport_sctp_state,
