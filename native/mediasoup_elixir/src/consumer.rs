@@ -35,9 +35,7 @@ impl ConsumerStruct {
 
 #[rustler::nif]
 pub fn consumer_id(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerId>> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(consumer.id().into())
 }
 #[rustler::nif]
@@ -47,59 +45,45 @@ pub fn consumer_close(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> 
 }
 #[rustler::nif]
 pub fn consumer_closed(consumer: ResourceArc<ConsumerRef>) -> NifResult<bool> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(consumer.closed())
 }
 
 #[rustler::nif]
 pub fn consumer_paused(consumer: ResourceArc<ConsumerRef>) -> NifResult<bool> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(consumer.paused())
 }
 
 #[rustler::nif]
 pub fn consumer_producer_paused(consumer: ResourceArc<ConsumerRef>) -> NifResult<bool> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(consumer.producer_paused())
 }
 #[rustler::nif]
 pub fn consumer_priority(consumer: ResourceArc<ConsumerRef>) -> NifResult<u8> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(consumer.priority())
 }
 #[rustler::nif]
 pub fn consumer_score(
     consumer: ResourceArc<ConsumerRef>,
 ) -> NifResult<JsonSerdeWrap<ConsumerScore>> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(JsonSerdeWrap::new(consumer.score()))
 }
 #[rustler::nif]
 pub fn consumer_preferred_layers(
     consumer: ResourceArc<ConsumerRef>,
 ) -> NifResult<JsonSerdeWrap<Option<ConsumerLayers>>> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(JsonSerdeWrap::new(consumer.preferred_layers()))
 }
 #[rustler::nif]
 pub fn consumer_current_layers(
     consumer: ResourceArc<ConsumerRef>,
 ) -> NifResult<JsonSerdeWrap<Option<ConsumerLayers>>> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     Ok(JsonSerdeWrap::new(consumer.current_layers()))
 }
 
@@ -107,9 +91,7 @@ pub fn consumer_current_layers(
 pub fn consumer_get_stats(
     consumer: ResourceArc<ConsumerRef>,
 ) -> NifResult<JsonSerdeWrap<ConsumerStats>> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     let status = future::block_on(async move {
         return consumer.get_stats().await;
     })
@@ -119,9 +101,7 @@ pub fn consumer_get_stats(
 }
 #[rustler::nif]
 pub fn consumer_pause(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
 
     future::block_on(async move {
         return consumer.pause().await;
@@ -131,9 +111,7 @@ pub fn consumer_pause(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> 
 }
 #[rustler::nif]
 pub fn consumer_resume(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
 
     future::block_on(async move {
         return consumer.resume().await;
@@ -147,9 +125,7 @@ pub fn consumer_set_preferred_layers(
     consumer: ResourceArc<ConsumerRef>,
     layer: JsonSerdeWrap<ConsumerLayers>,
 ) -> NifResult<(Atom,)> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
 
     future::block_on(async move {
         return consumer.set_preferred_layers(*layer).await;
@@ -163,9 +139,7 @@ pub fn consumer_set_priority(
     consumer: ResourceArc<ConsumerRef>,
     priority: u8,
 ) -> NifResult<(Atom,)> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
     future::block_on(async move {
         return consumer.set_priority(priority).await;
     })
@@ -174,9 +148,7 @@ pub fn consumer_set_priority(
 }
 #[rustler::nif]
 pub fn consumer_unset_priority(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
 
     future::block_on(async move {
         return consumer.unset_priority().await;
@@ -187,9 +159,7 @@ pub fn consumer_unset_priority(consumer: ResourceArc<ConsumerRef>) -> NifResult<
 
 #[rustler::nif]
 pub fn consumer_request_key_frame(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
 
     future::block_on(async move {
         return consumer.request_key_frame().await;
@@ -200,9 +170,7 @@ pub fn consumer_request_key_frame(consumer: ResourceArc<ConsumerRef>) -> NifResu
 
 #[rustler::nif]
 pub fn consumer_dump(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerDump>> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
 
     let dump = future::block_on(async move {
         return consumer.dump().await;
@@ -217,9 +185,7 @@ pub fn consumer_event(
     consumer: ResourceArc<ConsumerRef>,
     pid: rustler::LocalPid,
 ) -> NifResult<(Atom,)> {
-    let consumer = consumer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let consumer = consumer.get_resource()?;
 
     crate::reg_callback!(pid, consumer, on_close);
     crate::reg_callback!(pid, consumer, on_pause);

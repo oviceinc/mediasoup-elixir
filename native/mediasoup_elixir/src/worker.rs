@@ -34,10 +34,9 @@ static WORKER_MANAGER: Lazy<Mutex<WorkerManager>> = Lazy::new(|| Mutex::new(Work
 
 #[rustler::nif]
 pub fn worker_id(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerId>> {
-    match worker.unwrap() {
-        Some(w) => Ok(JsonSerdeWrap::new(w.id())),
-        None => Err(Error::Term(Box::new(atoms::terminated()))),
-    }
+    let worker = worker.get_resource()?;
+
+    Ok(JsonSerdeWrap::new(worker.id()))
 }
 #[rustler::nif]
 pub fn worker_close(worker: ResourceArc<WorkerRef>) -> NifResult<(rustler::Atom,)> {
@@ -50,9 +49,7 @@ pub fn worker_create_router(
     worker: ResourceArc<WorkerRef>,
     option: SerRouterOptions,
 ) -> NifResult<(rustler::Atom, RouterStruct)> {
-    let worker = worker
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let worker = worker.get_resource()?;
 
     let option = option.to_option()?;
 
@@ -66,9 +63,7 @@ pub fn worker_create_router(
 
 #[rustler::nif]
 pub fn worker_dump(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerDump>> {
-    let worker = worker
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let worker = worker.get_resource()?;
 
     let dump = future::block_on(async move {
         return worker.dump().await;
@@ -79,9 +74,7 @@ pub fn worker_dump(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<Wo
 }
 #[rustler::nif]
 pub fn worker_closed(worker: ResourceArc<WorkerRef>) -> Result<bool, Error> {
-    let worker = worker
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let worker = worker.get_resource()?;
 
     Ok(worker.closed())
 }
@@ -90,9 +83,7 @@ pub fn worker_update_settings(
     worker: ResourceArc<WorkerRef>,
     settings: SerWorkerUpdateSettings,
 ) -> NifResult<(rustler::Atom,)> {
-    let worker = worker
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let worker = worker.get_resource()?;
 
     let settings = settings.to_setting()?;
 
@@ -109,9 +100,7 @@ pub fn worker_event(
     worker: ResourceArc<WorkerRef>,
     pid: rustler::LocalPid,
 ) -> NifResult<(rustler::Atom,)> {
-    let worker = worker
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let worker = worker.get_resource()?;
 
     /* TODO: Can not create multiple instance for disposable
     {
