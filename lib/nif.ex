@@ -32,7 +32,7 @@ defmodule Mediasoup.Nif do
   def router_id(_router), do: :erlang.nif_error(:nif_not_loaded)
   @spec router_close(reference) :: {:ok} | {:error}
   def router_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  @spec router_create_webrtc_transport(reference, map) :: {:ok, WebRtcTransport.t()} | {:error}
+  @spec router_create_webrtc_transport(reference, map) :: {:ok, WebRtcTransport.t()} | {:error, String.t()}
   def router_create_webrtc_transport(_router, _option), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec router_can_consume(reference, String.t(), Router.rtpCapabilities()) :: boolean
@@ -61,8 +61,12 @@ defmodule Mediasoup.Nif do
   def webrtc_transport_ice_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_candidates(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_role(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_sctp_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
   def webrtc_transport_set_max_incoming_bitrate(_transport, _bitrate),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  def webrtc_transport_set_max_outgoing_bitrate(_transport, _bitrate),
     do: :erlang.nif_error(:nif_not_loaded)
 
   def webrtc_transport_ice_state(_transport), do: :erlang.nif_error(:nif_not_loaded)

@@ -1,5 +1,5 @@
-use rustler::{Env, NifResult, Term};
 use crate::atoms;
+use rustler::{Env, NifResult, Term};
 
 fn to_json(term: Term) -> Result<std::vec::Vec<u8>, serde_json::Error> {
     let de = serde_rustler::Deserializer::from(term);
@@ -25,7 +25,7 @@ where
     };
     return match from_json(env, json) {
         Ok(term) => term,
-        Err(error) => rustler::Encoder::encode(&(atoms::error(),format!("{:?}", error)), env), // TODO:
+        Err(error) => rustler::Encoder::encode(&(atoms::error(), format!("{:?}", error)), env), // TODO:
     };
 }
 pub fn json_decode<'de, 'a: 'de, T>(term: Term<'a>) -> NifResult<T>

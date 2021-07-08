@@ -10,6 +10,7 @@ use mediasoup::data_structures::{
 };
 use mediasoup::producer::{ProducerId, ProducerOptions};
 use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
+use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use mediasoup::webrtc_transport::{
     WebRtcTransport, WebRtcTransportDump, WebRtcTransportRemoteParameters, WebRtcTransportStat,
@@ -110,6 +111,16 @@ pub fn webrtc_transport_ice_parameters(
 }
 
 #[rustler::nif]
+pub fn webrtc_transport_sctp_parameters(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<Option<SctpParameters>>> {
+    let transport = transport
+        .unwrap()
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    Ok(JsonSerdeWrap::new(transport.sctp_parameters().clone()))
+}
+
+#[rustler::nif]
 pub fn webrtc_transport_ice_candidates(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<std::vec::Vec<mediasoup::data_structures::IceCandidate>>> {
@@ -140,6 +151,22 @@ pub fn webrtc_transport_set_max_incoming_bitrate(
 
     future::block_on(async move {
         return transport.set_max_incoming_bitrate(bitrate).await;
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    Ok((atoms::ok(),))
+}
+
+#[rustler::nif]
+pub fn webrtc_transport_set_max_outgoing_bitrate(
+    transport: ResourceArc<WebRtcTransportRef>,
+    bitrate: u32,
+) -> NifResult<(Atom,)> {
+    let transport = transport
+        .unwrap()
+        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+
+    future::block_on(async move {
+        return transport.set_max_outgoing_bitrate(bitrate).await;
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
     Ok((atoms::ok(),))

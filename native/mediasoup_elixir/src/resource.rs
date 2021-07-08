@@ -34,6 +34,7 @@ impl<T> DisposableResourceWrapper<T> {
     }
 }
 impl<T: Clone> DisposableResourceWrapper<T> {
+    // TODO: avoid panic.
     pub fn unwrap(&self) -> Option<T> {
         self.0.read().unwrap().clone()
     }
