@@ -6,6 +6,7 @@
   "excheck": {:hex, :excheck, "0.6.0", "f8595a8ac2c0abc0d060c1a4fce7d26f41574543366a52d5f3c84de30a69747b", [:mix], [], "hexpm", "50a94eb60e79c886be425af6b6f09c8055556ff8ad00e474dba72172574b8d28"},
   "file_system": {:hex, :file_system, "0.2.10", "fb082005a9cd1711c05b5248710f8826b02d7d1784e7c3451f9c1231d4fc162d", [:mix], [], "hexpm", "41195edbfb562a593726eda3b3e8b103a309b733ad25f3d642ba49696bf715dc"},
   "jason": {:hex, :jason, "1.2.2", "ba43e3f2709fd1aa1dce90aaabfd039d000469c05c56f0b8e31978e03fa39052", [:mix], [{:decimal, "~> 1.0 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "18a228f5f0058ee183f29f9eae0805c6e59d61c3b006760668d8d18ff0d12179"},
+  "lcov_ex": {:hex, :lcov_ex, "0.2.0", "4ae06fc23e7dc7f06cddabf44b97901bb4a79cd7b783bce411d07131d6d5edd2", [:mix], [], "hexpm", "c5e33def56f9ae9de40171012c1c47fcbd4abaae430193aad4d4062a8d336970"},
   "rustler": {:hex, :rustler, "0.22.0", "e2930f9d6933e910f87526bb0a7f904e32b62a7e838a3ca4a884ee7fdfb957ed", [:mix], [{:toml, "~> 0.5.2", [hex: :toml, repo: "hexpm", optional: false]}], "hexpm", "01f5989dd511ebec09be481e07d3c59773d5373c5061e09d3ebc3ef61811b49d"},
   "toml": {:hex, :toml, "0.5.2", "e471388a8726d1ce51a6b32f864b8228a1eb8edc907a0edf2bb50eab9321b526", [:mix], [], "hexpm", "f1e3dabef71fb510d015fad18c0e05e7c57281001141504c6b69d94e99750a07"},
 }
