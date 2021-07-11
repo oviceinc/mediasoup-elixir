@@ -13,7 +13,7 @@ defmodule MediasoupElixir.MixProject do
       test_coverage: [
         tool: LcovEx,
         output: "coverage",
-        ignore_paths: ["test/"]
+        ignore_paths: ["test/", "lib/nif.ex"]
       ],
       dialyzer: [
         plt_add_apps: [:mix, :ex_unit],
