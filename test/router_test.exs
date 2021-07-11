@@ -8,4 +8,8 @@ defmodule RouterTest do
   test "router_dump" do
     IntegrateTest.RouterTest.router_dump()
   end
+
+  test "close_event" do
+    IntegrateTest.RouterTest.close_event()
+  end
 end

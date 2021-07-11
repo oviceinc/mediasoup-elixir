@@ -45,8 +45,10 @@ pub fn consumer_close(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> 
 }
 #[rustler::nif]
 pub fn consumer_closed(consumer: ResourceArc<ConsumerRef>) -> NifResult<bool> {
-    let consumer = consumer.get_resource()?;
-    Ok(consumer.closed())
+    match consumer.get_resource() {
+        Ok(consumer) => Ok(consumer.closed()),
+        Err(_) => Ok(true),
+    }
 }
 
 #[rustler::nif]

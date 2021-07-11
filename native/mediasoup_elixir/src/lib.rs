@@ -15,7 +15,8 @@ use crate::consumer::{
     consumer_score, consumer_set_preferred_layers, consumer_set_priority, consumer_unset_priority,
 };
 use crate::producer::{
-    producer_close, producer_dump, producer_event, producer_id, producer_pause, producer_resume,
+    producer_close, producer_closed, producer_dump, producer_event, producer_get_stats,
+    producer_id, producer_pause, producer_paused, producer_resume, producer_score,
 };
 use crate::resource::DisposableResourceWrapper;
 use crate::router::{
@@ -127,6 +128,10 @@ rustler::init! {
         producer_close,
         producer_pause,
         producer_resume,
+        producer_closed,
+        producer_paused,
+        producer_score,
+        producer_get_stats,
         producer_event,
         producer_dump
 

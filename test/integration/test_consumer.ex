@@ -632,6 +632,22 @@ defmodule IntegrateTest.ConsumerTest do
     Mediasoup.Worker.close(worker)
   end
 
+  def close() do
+    {_worker, _router, transport_1, transport_2} = init()
+    {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
+    ## TODO: This test is unstable for unknown reason "Consumer not found"
+
+    {:ok, audio_consumer} =
+      WebRtcTransport.consume(transport_2, %{
+        producerId: audio_producer.id,
+        rtpCapabilities: consumer_device_capabilities()
+      })
+
+    assert Consumer.closed?(audio_consumer) == false
+    Consumer.close(audio_consumer)
+    assert Consumer.closed?(audio_consumer) == true
+  end
+
   def pause_resume_succeeds() do
     {worker, router, transport_1, transport_2} = init()
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
@@ -731,5 +747,42 @@ defmodule IntegrateTest.ConsumerTest do
     Mediasoup.WebRtcTransport.close(transport_1)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
+  end
+
+  def request_key_frame() do
+    {_worker, _router, transport_1, transport_2} = init()
+    {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
+
+    {:ok, audio_consumer} =
+      WebRtcTransport.consume(transport_2, %{
+        producerId: audio_producer.id,
+        rtpCapabilities: consumer_device_capabilities()
+      })
+
+    Consumer.request_key_frame(audio_consumer)
+  end
+
+  def close_event() do
+    {_worker, router, transport_1, transport_2} = init()
+    {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
+
+    {:ok, audio_consumer} =
+      WebRtcTransport.consume(transport_2, %{
+        producerId: audio_producer.id,
+        rtpCapabilities: consumer_device_capabilities()
+      })
+
+    Consumer.event(audio_consumer, self())
+    Consumer.close(audio_consumer)
+
+    assert_receive {:on_close}
+
+    router_dump = Router.dump(router)
+
+    assert router_dump["mapProducerIdConsumerIds"] === %{audio_producer.id => []}
+
+    transport_1_dump = WebRtcTransport.dump(transport_1)
+    assert transport_1_dump["producerIds"] == [audio_producer.id]
+    assert transport_1_dump["consumerIds"] == []
   end
 end
