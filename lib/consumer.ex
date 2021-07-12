@@ -21,87 +21,87 @@ defmodule Mediasoup.Consumer do
   @type type :: String.t()
 
   @spec close(t) :: {:ok} | {:error}
-  def close(consumer) do
-    Nif.consumer_close(consumer.reference)
+  def close(%Consumer{reference: reference}) do
+    Nif.consumer_close(reference)
   end
 
   @spec dump(t) :: map | {:error}
-  def dump(consumer) do
-    Nif.consumer_dump(consumer.reference)
+  def dump(%Consumer{reference: reference}) do
+    Nif.consumer_dump(reference)
   end
 
   @spec closed?(t) :: boolean
-  def closed?(consumer) do
-    Nif.consumer_closed(consumer.reference)
+  def closed?(%Consumer{reference: reference}) do
+    Nif.consumer_closed(reference)
   end
 
   @spec paused?(t) :: boolean
-  def paused?(consumer) do
-    Nif.consumer_paused(consumer.reference)
+  def paused?(%Consumer{reference: reference}) do
+    Nif.consumer_paused(reference)
   end
 
   @spec producer_paused?(t) :: boolean
-  def producer_paused?(consumer) do
-    Nif.consumer_producer_paused(consumer.reference)
+  def producer_paused?(%Consumer{reference: reference}) do
+    Nif.consumer_producer_paused(reference)
   end
 
   @spec priority(t) :: number
-  def priority(consumer) do
-    Nif.consumer_priority(consumer.reference)
+  def priority(%Consumer{reference: reference}) do
+    Nif.consumer_priority(reference)
   end
 
   @spec score(t) :: map
-  def score(consumer) do
-    Nif.consumer_score(consumer.reference)
+  def score(%Consumer{reference: reference}) do
+    Nif.consumer_score(reference)
   end
 
   @spec preferred_layers(t) :: any
-  def preferred_layers(consumer) do
-    Nif.consumer_preferred_layers(consumer.reference)
+  def preferred_layers(%Consumer{reference: reference}) do
+    Nif.consumer_preferred_layers(reference)
   end
 
   @spec current_layers(t) :: any
-  def current_layers(consumer) do
-    Nif.consumer_current_layers(consumer.reference)
+  def current_layers(%Consumer{reference: reference}) do
+    Nif.consumer_current_layers(reference)
   end
 
   @spec get_stats(t) :: any
-  def get_stats(consumer) do
-    Nif.consumer_get_stats(consumer.reference)
+  def get_stats(%Consumer{reference: reference}) do
+    Nif.consumer_get_stats(reference)
   end
 
   @spec pause(t) :: {:ok} | {:error}
-  def pause(consumer) do
-    Nif.consumer_pause(consumer.reference)
+  def pause(%Consumer{reference: reference}) do
+    Nif.consumer_pause(reference)
   end
 
   @spec resume(t) :: {:ok} | {:error}
-  def resume(consumer) do
-    Nif.consumer_resume(consumer.reference)
+  def resume(%Consumer{reference: reference}) do
+    Nif.consumer_resume(reference)
   end
 
   @spec set_preferred_layers(t, map) :: {:ok} | {:error}
-  def set_preferred_layers(consumer, layer) do
-    Nif.consumer_set_preferred_layers(consumer.reference, layer)
+  def set_preferred_layers(%Consumer{reference: reference}, layer) do
+    Nif.consumer_set_preferred_layers(reference, layer)
   end
 
   @spec set_priority(t, integer) :: {:ok} | {:error}
-  def set_priority(consumer, priority) do
-    Nif.consumer_set_priority(consumer.reference, priority)
+  def set_priority(%Consumer{reference: reference}, priority) do
+    Nif.consumer_set_priority(reference, priority)
   end
 
   @spec unset_priority(t) :: {:ok} | {:error}
-  def unset_priority(consumer) do
-    Nif.consumer_unset_priority(consumer.reference)
+  def unset_priority(%Consumer{reference: reference}) do
+    Nif.consumer_unset_priority(reference)
   end
 
   @spec request_key_frame(t) :: {:ok} | {:error}
-  def request_key_frame(consumer) do
-    Nif.consumer_request_key_frame(consumer.reference)
+  def request_key_frame(%Consumer{reference: reference}) do
+    Nif.consumer_request_key_frame(reference)
   end
 
   @spec event(t, pid) :: {:ok} | {:error}
-  def event(consumer, pid) do
-    Nif.consumer_event(consumer.reference, pid)
+  def event(%Consumer{reference: reference}, pid) do
+    Nif.consumer_event(reference, pid)
   end
 end

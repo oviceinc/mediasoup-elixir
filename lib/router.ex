@@ -10,33 +10,33 @@ defmodule Mediasoup.Router do
   @type create_option :: map
 
   @spec close(t) :: {:ok} | {:error}
-  def close(router) do
-    Nif.router_close(router.reference)
+  def close(%Router{reference: reference}) do
+    Nif.router_close(reference)
   end
 
   @spec create_webrtc_transport(t, WebRtcTransport.create_option()) ::
           {:ok, WebRtcTransport.t()} | {:error, String.t()}
-  def create_webrtc_transport(router, option) do
-    Nif.router_create_webrtc_transport(router.reference, option)
+  def create_webrtc_transport(%Router{reference: reference}, option) do
+    Nif.router_create_webrtc_transport(reference, option)
   end
 
   @spec can_consume?(t, String.t(), rtpCapabilities) :: boolean
-  def can_consume?(router, producer_id, rtp_capabilities) do
-    Nif.router_can_consume(router.reference, producer_id, rtp_capabilities)
+  def can_consume?(%Router{reference: reference}, producer_id, rtp_capabilities) do
+    Nif.router_can_consume(reference, producer_id, rtp_capabilities)
   end
 
   @spec rtp_capabilities(t) :: Router.rtpCapabilities()
-  def rtp_capabilities(router) do
-    Nif.router_rtp_capabilities(router.reference)
+  def rtp_capabilities(%Router{reference: reference}) do
+    Nif.router_rtp_capabilities(reference)
   end
 
   @spec dump(t) :: map | {:error}
-  def dump(router) do
-    Nif.router_dump(router.reference)
+  def dump(%Router{reference: reference}) do
+    Nif.router_dump(reference)
   end
 
   @spec event(t, pid) :: {:ok} | {:error}
-  def event(router, pid) do
-    Nif.router_event(router.reference, pid)
+  def event(%Router{reference: reference}, pid) do
+    Nif.router_event(reference, pid)
   end
 end
