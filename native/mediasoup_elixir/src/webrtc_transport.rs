@@ -35,9 +35,7 @@ impl WebRtcTransportStruct {
 
 #[rustler::nif]
 pub fn webrtc_transport_id(transport: ResourceArc<WebRtcTransportRef>) -> NifResult<String> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(transport.id().to_string())
 }
 
@@ -52,9 +50,7 @@ pub fn webrtc_transport_consume(
     transport: ResourceArc<WebRtcTransportRef>,
     ser_option: SerConsumerOptions,
 ) -> NifResult<(Atom, ConsumerStruct)> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
 
     let option = ConsumerOptions::from(ser_option);
 
@@ -71,9 +67,7 @@ pub fn webrtc_transport_connect(
     transport: ResourceArc<WebRtcTransportRef>,
     option: JsonSerdeWrap<WebRtcTransportRemoteParameters>,
 ) -> NifResult<(Atom,)> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     let option: WebRtcTransportRemoteParameters = option.clone();
 
     future::block_on(async move {
@@ -88,9 +82,7 @@ pub fn webrtc_transport_produce(
     transport: ResourceArc<WebRtcTransportRef>,
     option: SerProducerOptions,
 ) -> NifResult<(Atom, ProducerStruct)> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     let option = ProducerOptions::from(option);
 
     let producer = future::block_on(async move {
@@ -104,9 +96,7 @@ pub fn webrtc_transport_produce(
 pub fn webrtc_transport_ice_parameters(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<IceParameters>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.ice_parameters().clone()))
 }
 
@@ -114,9 +104,7 @@ pub fn webrtc_transport_ice_parameters(
 pub fn webrtc_transport_sctp_parameters(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<Option<SctpParameters>>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.sctp_parameters().clone()))
 }
 
@@ -124,9 +112,7 @@ pub fn webrtc_transport_sctp_parameters(
 pub fn webrtc_transport_ice_candidates(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<std::vec::Vec<mediasoup::data_structures::IceCandidate>>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.ice_candidates().clone()))
 }
 
@@ -134,9 +120,7 @@ pub fn webrtc_transport_ice_candidates(
 pub fn webrtc_transport_ice_role(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<IceRole>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.ice_role()))
 }
 
@@ -145,9 +129,7 @@ pub fn webrtc_transport_set_max_incoming_bitrate(
     transport: ResourceArc<WebRtcTransportRef>,
     bitrate: u32,
 ) -> NifResult<(Atom,)> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
 
     future::block_on(async move {
         return transport.set_max_incoming_bitrate(bitrate).await;
@@ -161,9 +143,7 @@ pub fn webrtc_transport_set_max_outgoing_bitrate(
     transport: ResourceArc<WebRtcTransportRef>,
     bitrate: u32,
 ) -> NifResult<(Atom,)> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
 
     future::block_on(async move {
         return transport.set_max_outgoing_bitrate(bitrate).await;
@@ -176,9 +156,7 @@ pub fn webrtc_transport_set_max_outgoing_bitrate(
 pub fn webrtc_transport_ice_state(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<IceState>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.ice_state()))
 }
 
@@ -186,9 +164,7 @@ pub fn webrtc_transport_ice_state(
 pub fn webrtc_transport_restart_ice(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<(Atom, JsonSerdeWrap<IceParameters>)> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
 
     let ice_parameter = future::block_on(async move {
         return transport.restart_ice().await;
@@ -202,9 +178,7 @@ pub fn webrtc_transport_restart_ice(
 pub fn webrtc_transport_get_stats(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<std::vec::Vec<WebRtcTransportStat>>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
 
     let status = future::block_on(async move {
         return transport.get_stats().await;
@@ -218,9 +192,7 @@ pub fn webrtc_transport_get_stats(
 pub fn webrtc_transport_dump(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<WebRtcTransportDump>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
 
     let dump = future::block_on(async move {
         return transport.dump().await;
@@ -234,9 +206,7 @@ pub fn webrtc_transport_dump(
 pub fn webrtc_transport_ice_selected_tuple(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<Option<TransportTuple>>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.ice_selected_tuple()))
 }
 
@@ -244,9 +214,7 @@ pub fn webrtc_transport_ice_selected_tuple(
 pub fn webrtc_transport_dtls_parameters(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<DtlsParameters>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.dtls_parameters()))
 }
 
@@ -254,18 +222,14 @@ pub fn webrtc_transport_dtls_parameters(
 pub fn webrtc_transport_dtls_state(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<DtlsState>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.dtls_state()))
 }
 #[rustler::nif]
 pub fn webrtc_transport_sctp_state(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<Option<SctpState>>> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.sctp_state()))
 }
 
@@ -274,9 +238,7 @@ pub fn webrtc_transport_event(
     transport: ResourceArc<WebRtcTransportRef>,
     pid: rustler::LocalPid,
 ) -> NifResult<(Atom,)> {
-    let transport = transport
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let transport = transport.get_resource()?;
 
     //    crate::reg_callback!(env, transport, on_close);
 

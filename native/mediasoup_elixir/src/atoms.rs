@@ -2,6 +2,7 @@ rustler::atoms! {
     ok,
     error,
     terminated,
+    poison_error,
     on_new_router,
     on_close,
     on_dead,

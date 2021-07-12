@@ -1,3 +1,4 @@
+use crate::atoms;
 use rustler::ResourceArc;
 use std::sync::RwLock;
 /*
@@ -30,13 +31,28 @@ impl<T> DisposableResourceWrapper<T> {
         Self(RwLock::new(Some(value)))
     }
     pub fn close(&self) {
-        *self.0.write().unwrap() = None;
+        if let Ok(mut v) = self.0.write() {
+            *v = None;
+        }
     }
 }
 impl<T: Clone> DisposableResourceWrapper<T> {
-    // TODO: avoid panic.
-    pub fn unwrap(&self) -> Option<T> {
-        self.0.read().unwrap().clone()
+    fn read(
+        &self,
+    ) -> Result<Option<T>, std::sync::PoisonError<std::sync::RwLockReadGuard<std::option::Option<T>>>>
+    {
+        match self.0.read() {
+            Ok(v) => Ok(v.clone()),
+            Err(err) => Err(err),
+        }
+    }
+
+    pub fn get_resource(&self) -> rustler::NifResult<T> {
+        let resource = self
+            .read()
+            .map_err(|_error| rustler::Error::Term(Box::new(atoms::poison_error())))?
+            .ok_or_else(|| rustler::Error::Term(Box::new(atoms::terminated())))?;
+        Ok(resource)
     }
 }
 

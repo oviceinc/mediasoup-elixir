@@ -22,9 +22,7 @@ impl ProducerStruct {
 
 #[rustler::nif]
 pub fn producer_id(producer: ResourceArc<ProducerRef>) -> NifResult<String> {
-    let producer = producer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let producer = producer.get_resource()?;
     Ok(producer.id().to_string())
 }
 
@@ -35,9 +33,7 @@ pub fn producer_close(producer: ResourceArc<ProducerRef>) -> NifResult<(Atom,)> 
 }
 #[rustler::nif]
 pub fn producer_pause(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
-    let producer = producer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let producer = producer.get_resource()?;
 
     future::block_on(async move {
         return producer.pause().await;
@@ -47,9 +43,7 @@ pub fn producer_pause(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler:
 }
 #[rustler::nif]
 pub fn producer_resume(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
-    let producer = producer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let producer = producer.get_resource()?;
 
     future::block_on(async move {
         return producer.resume().await;
@@ -60,9 +54,7 @@ pub fn producer_resume(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler
 
 #[rustler::nif]
 pub fn producer_dump(producer: ResourceArc<ProducerRef>) -> NifResult<JsonSerdeWrap<ProducerDump>> {
-    let producer = producer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let producer = producer.get_resource()?;
 
     let dump = future::block_on(async move {
         return producer.dump().await;
@@ -76,9 +68,7 @@ pub fn producer_event(
     producer: ResourceArc<ProducerRef>,
     pid: rustler::LocalPid,
 ) -> NifResult<(rustler::Atom,)> {
-    let producer = producer
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let producer = producer.get_resource()?;
 
     crate::reg_callback!(pid, producer, on_close);
     crate::reg_callback!(pid, producer, on_pause);

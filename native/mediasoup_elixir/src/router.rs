@@ -29,9 +29,7 @@ impl RouterStruct {
 
 #[rustler::nif]
 pub fn router_id(router: ResourceArc<RouterRef>) -> NifResult<String> {
-    let router = router
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let router = router.get_resource()?;
     Ok(router.id().to_string())
 }
 #[rustler::nif]
@@ -44,9 +42,7 @@ pub fn router_create_webrtc_transport(
     router: ResourceArc<RouterRef>,
     option: SerWebRtcTransportOptions,
 ) -> NifResult<(rustler::Atom, WebRtcTransportStruct)> {
-    let router = router
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let router = router.get_resource()?;
     let option = option.try_to_option().map_err(|e| Error::RaiseAtom(e))?;
 
     let transport = future::block_on(async move {
@@ -60,9 +56,7 @@ pub fn router_create_webrtc_transport(
 pub fn router_rtp_capabilities(
     router: ResourceArc<RouterRef>,
 ) -> NifResult<JsonSerdeWrap<RtpCapabilitiesFinalized>> {
-    let router = router
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let router = router.get_resource()?;
 
     Ok(JsonSerdeWrap::new(router.rtp_capabilities().clone()))
 }
@@ -73,9 +67,7 @@ pub fn router_can_consume(
     producer_id: JsonSerdeWrap<ProducerId>,
     rtp_capabilities: JsonSerdeWrap<RtpCapabilities>,
 ) -> NifResult<bool> {
-    let router = router
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let router = router.get_resource()?;
     let producer_id = *producer_id;
     let rtp_capabilities = rtp_capabilities.clone();
 
@@ -84,9 +76,7 @@ pub fn router_can_consume(
 }
 #[rustler::nif]
 pub fn router_dump(router: ResourceArc<RouterRef>) -> NifResult<JsonSerdeWrap<RouterDump>> {
-    let router = router
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let router = router.get_resource()?;
     let dump = future::block_on(async move {
         return router.dump().await;
     })
@@ -100,9 +90,7 @@ pub fn router_event(
     router: ResourceArc<RouterRef>,
     pid: rustler::LocalPid,
 ) -> NifResult<(rustler::Atom,)> {
-    let router = router
-        .unwrap()
-        .ok_or_else(|| Error::Term(Box::new(atoms::terminated())))?;
+    let router = router.get_resource()?;
 
     crate::reg_callback!(pid, router, on_close);
     crate::reg_callback!(pid, router, on_worker_close);
