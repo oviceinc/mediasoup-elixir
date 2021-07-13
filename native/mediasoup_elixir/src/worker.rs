@@ -127,23 +127,7 @@ pub fn worker_event(
     Ok((atoms::ok(),))
 }
 
-#[rustler::nif(name = "create_worker")]
-pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, WorkerStruct)> {
-    let settings = WorkerSettings::default();
-    let worker_manager = WORKER_MANAGER
-        .lock()
-        .map_err(|_e| Error::RaiseAtom("worker_manager lock error"))?;
-
-    let worker = future::block_on(async move { worker_manager.create_worker(settings).await })
-        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), WorkerStruct::from(worker)))
-}
-
-#[rustler::nif]
-pub fn create_worker(
-    settings: JsonSerdeWrap<SerWorkerSettings>,
-) -> NifResult<(rustler::Atom, WorkerStruct)> {
-    let settings = settings.to_setting()?;
+fn create_worker_impl(settings: WorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
     let worker_manager = WORKER_MANAGER
         .lock()
         .map_err(|_e| Error::RaiseAtom("worker_manager lock error"))?;
@@ -153,6 +137,17 @@ pub fn create_worker(
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
     Ok((atoms::ok(), WorkerStruct::from(worker)))
+}
+
+#[rustler::nif(name = "create_worker")]
+pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, WorkerStruct)> {
+    create_worker_impl(WorkerSettings::default())
+}
+
+#[rustler::nif]
+pub fn create_worker(settings: SerWorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
+    let settings = settings.to_setting()?;
+    create_worker_impl(settings)
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -195,21 +190,22 @@ impl SerWorkerUpdateSettings {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, NifStruct)]
+#[module = "Mediasoup.Worker.Settings"]
 #[serde(rename_all = "camelCase")]
 pub struct SerWorkerSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_level: Option<String>,
+    pub log_level: Option<JsonSerdeWrap<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_tags: Option<Vec<String>>,
+    pub log_tags: Option<JsonSerdeWrap<Vec<String>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rtc_min_port: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rtc_max_port: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dtls_certificate_file: Option<PathBuf>,
+    pub dtls_certificate_file: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dtls_private_key_file: Option<PathBuf>,
+    pub dtls_private_key_file: Option<String>,
 }
 
 impl SerWorkerSettings {
@@ -230,8 +226,8 @@ impl SerWorkerSettings {
             (&self.dtls_certificate_file, &self.dtls_private_key_file)
         {
             value.dtls_files = Some(WorkerDtlsFiles {
-                certificate: cert.clone(),
-                private_key: private.clone(),
+                certificate: PathBuf::from(cert),
+                private_key: PathBuf::from(private),
             });
         }
 

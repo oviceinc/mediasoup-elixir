@@ -12,6 +12,21 @@ defmodule IntegrateTest.WorkerTest do
     Mediasoup.Worker.close(worker)
   end
 
+  def create_worker_with_struct() do
+    {:ok, worker} =
+      Mediasoup.create_worker(%Mediasoup.Worker.Settings{
+        rtc_min_port: 0,
+        rtc_max_port: 9999,
+        log_level: :debug,
+        log_tags: [:info],
+        dtls_certificate_file: "test/data/dtls-cert.pem",
+        dtls_private_key_file: "test/data/dtls-key.pem"
+      })
+
+    assert true == is_binary(worker.id)
+    Mediasoup.Worker.close(worker)
+  end
+
   def worker_with_custom_settings() do
     {:ok, worker} =
       Mediasoup.create_worker(%{
