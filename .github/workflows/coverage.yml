@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: mix deps.get
       - name: Run test coverage
-        run: MIX_ENV=test mix test --cover
+        run: mix coveralls.lcov -o coverage
 
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v2
@@ -86,7 +86,7 @@ jobs:
       - name: Install dependencies
         run: mix deps.get
       - name: Run test coverage
-        run: MIX_ENV=test mix test --cover
+        run: mix coveralls.lcov -o coverage
 
       #  Compares two code coverage files and generates report as a comment
       - name: Generate Code Coverage report

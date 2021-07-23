@@ -10,10 +10,11 @@ defmodule MediasoupElixir.MixProject do
       rustler_crates: rustler_crates(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      test_coverage: [
-        tool: LcovEx,
-        output: "coverage",
-        ignore_paths: ["test/", "lib/nif.ex"]
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.lcov": :test
       ],
       dialyzer: [
         plt_add_apps: [:mix, :ex_unit],
@@ -37,7 +38,7 @@ defmodule MediasoupElixir.MixProject do
       # Because nif symlink is not created at first compile: https://github.com/oviceinc/mediasoup-elixir/issues/10
       {:rustler, "~> 0.22.0"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:lcov_ex, "~> 0.2", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.14.2", only: :test},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
