@@ -2,19 +2,28 @@ use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
 use crate::{send_msg_from_other_thread, ProducerRef};
 use futures_lite::future;
-use mediasoup::producer::{Producer, ProducerDump, ProducerId};
+use mediasoup::producer::{
+    Producer, ProducerDump, ProducerId, ProducerScore, ProducerStat, ProducerType,
+};
+use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.Producer"]
 pub struct ProducerStruct {
     id: JsonSerdeWrap<ProducerId>,
+    kind: JsonSerdeWrap<MediaKind>,
+    r#type: JsonSerdeWrap<ProducerType>,
+    rtp_parameters: JsonSerdeWrap<RtpParameters>,
     reference: ResourceArc<ProducerRef>,
 }
 impl ProducerStruct {
     pub fn from(producer: Producer) -> Self {
         Self {
             id: producer.id().into(),
+            kind: producer.kind().into(),
+            r#type: producer.r#type().into(),
+            rtp_parameters: producer.rtp_parameters().clone().into(),
             reference: ProducerRef::resource(producer),
         }
     }
@@ -41,6 +50,43 @@ pub fn producer_pause(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler:
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
     Ok((atoms::ok(),))
 }
+
+#[rustler::nif]
+pub fn producer_closed(producer: ResourceArc<ProducerRef>) -> NifResult<bool> {
+    match producer.get_resource() {
+        Ok(producer) => Ok(producer.closed()),
+        Err(_) => Ok(true),
+    }
+}
+
+#[rustler::nif]
+pub fn producer_paused(producer: ResourceArc<ProducerRef>) -> NifResult<bool> {
+    let producer = producer.get_resource()?;
+    Ok(producer.paused())
+}
+
+#[rustler::nif]
+pub fn producer_score(
+    producer: ResourceArc<ProducerRef>,
+) -> NifResult<JsonSerdeWrap<std::vec::Vec<ProducerScore>>> {
+    let producer = producer.get_resource()?;
+    Ok(JsonSerdeWrap::new(producer.score()))
+}
+
+#[rustler::nif]
+pub fn producer_get_stats(
+    producer: ResourceArc<ProducerRef>,
+) -> NifResult<JsonSerdeWrap<std::vec::Vec<ProducerStat>>> {
+    let producer = producer.get_resource()?;
+
+    let stats = future::block_on(async move {
+        return producer.get_stats().await;
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+
+    Ok(JsonSerdeWrap::new(stats))
+}
+
 #[rustler::nif]
 pub fn producer_resume(producer: ResourceArc<ProducerRef>) -> NifResult<(rustler::Atom,)> {
     let producer = producer.get_resource()?;

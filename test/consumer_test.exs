@@ -5,8 +5,11 @@ defmodule ConsumerTest do
     IntegrateTest.ConsumerTest.consume_succeeds()
   end
 
+  test "close" do
+    IntegrateTest.ConsumerTest.close()
+  end
+
   test "consume_incompatible_rtp_capabilities" do
-    Process.sleep(1000)
     IntegrateTest.ConsumerTest.consume_incompatible_rtp_capabilities()
   end
 
@@ -28,5 +31,13 @@ defmodule ConsumerTest do
 
   test "unset_priority_succeeds" do
     IntegrateTest.ConsumerTest.unset_priority_succeeds()
+  end
+
+  test "request_key_frame" do
+    IntegrateTest.ConsumerTest.request_key_frame()
+  end
+
+  test "close_event" do
+    IntegrateTest.ConsumerTest.close_event()
   end
 end

@@ -105,7 +105,7 @@ pub fn webrtc_transport_sctp_parameters(
     transport: ResourceArc<WebRtcTransportRef>,
 ) -> NifResult<JsonSerdeWrap<Option<SctpParameters>>> {
     let transport = transport.get_resource()?;
-    Ok(JsonSerdeWrap::new(transport.sctp_parameters().clone()))
+    Ok(JsonSerdeWrap::new(transport.sctp_parameters()))
 }
 
 #[rustler::nif]

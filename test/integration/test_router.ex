@@ -36,6 +36,58 @@ defmodule IntegrateTest.RouterTest do
         logLevel: :debug
       })
 
+    mediaCodecs = [
+      %{
+        kind: "audio",
+        mimeType: "audio/opus",
+        clockRate: 48000,
+        channels: 2,
+        parameters: %{},
+        rtcpFeedback: []
+      },
+      %{
+        kind: "video",
+        mimeType: "video/VP8",
+        clockRate: 90000,
+        parameters: %{
+          "x-google-start-bitrate": 1000
+        },
+        rtcpFeedback: []
+      }
+    ]
+
+    {:ok, router} =
+      Mediasoup.Worker.create_router(worker, %{
+        mediaCodecs: mediaCodecs
+      })
+
+    assert true == is_binary(router.id)
+
+    [capabilitycodec | _remain] = Mediasoup.Router.rtp_capabilities(router)["codecs"]
+
+    assert match?(
+             %{
+               "channels" => 2,
+               "clockRate" => 48000,
+               "kind" => "audio",
+               "mimeType" => "audio/opus"
+             },
+             capabilitycodec
+           )
+
+    assert match?(%{"rtpObserverIds" => [], "transportIds" => []}, Mediasoup.Router.dump(router))
+    Mediasoup.Router.close(router)
+    Mediasoup.Worker.close(worker)
+  end
+
+  def close_event() do
+    {:ok, worker} =
+      Mediasoup.create_worker(%{
+        rtcMinPort: 10000,
+        rtcMaxPort: 10010,
+        logLevel: :debug
+      })
+
     {:ok, router} =
       Mediasoup.Worker.create_router(worker, %{
         mediaCodecs: {
@@ -59,10 +111,8 @@ defmodule IntegrateTest.RouterTest do
         }
       })
 
-    assert true == is_binary(router.id)
-
-    assert match?(%{"rtpObserverIds" => [], "transportIds" => []}, Mediasoup.Router.dump(router))
+    Mediasoup.Router.event(router, self())
     Mediasoup.Router.close(router)
-    Mediasoup.Worker.close(worker)
+    assert_receive {:on_close}
   end
 end

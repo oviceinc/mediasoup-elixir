@@ -3,14 +3,6 @@ defmodule Mediasoup.Consumer do
   @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters, :reference]
   defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :reference]
 
-  @type t(id, producer_id, kind, type, rtp_parameters, ref) :: %Consumer{
-          id: id,
-          producer_id: producer_id,
-          kind: kind,
-          type: type,
-          rtp_parameters: rtp_parameters,
-          reference: ref
-        }
   @type t :: %Consumer{
           id: String.t(),
           producer_id: String.t(),
