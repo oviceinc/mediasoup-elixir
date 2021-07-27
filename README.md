@@ -7,6 +7,3 @@
   * `make` and `c/c++ compilers` for build for mediasoup
 
 
-## TODO
-  - [ ] add more tests
-  - [ ] add @spec
