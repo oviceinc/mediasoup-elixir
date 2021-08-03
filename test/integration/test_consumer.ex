@@ -777,6 +777,8 @@ defmodule IntegrateTest.ConsumerTest do
 
     assert_receive {:on_close}
 
+    # wait for notify close to router
+    Process.sleep(50)
     router_dump = Router.dump(router)
 
     assert router_dump["mapProducerIdConsumerIds"] === %{audio_producer.id => []}
