@@ -98,53 +98,68 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     ice_candidates = Mediasoup.WebRtcTransport.ice_candidates(transport1)
 
+    assert match?(
+             [
+               %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "9.9.9.1",
+                 "protocol" => "udp",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "tcpcandidate",
+                 "ip" => "9.9.9.1",
+                 "protocol" => "tcp",
+                 "tcpType" => "passive",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "9.9.9.2",
+                 "protocol" => "udp",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "tcpcandidate",
+                 "ip" => "9.9.9.2",
+                 "protocol" => "tcp",
+                 "tcpType" => "passive",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "127.0.0.1",
+                 "protocol" => "udp",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "tcpcandidate",
+                 "ip" => "127.0.0.1",
+                 "protocol" => "tcp",
+                 "tcpType" => "passive",
+                 "type" => "host"
+               }
+             ],
+             ice_candidates
+           )
+
     [
       %{
-        "foundation" => "udpcandidate",
-        "ip" => "9.9.9.1",
-        "protocol" => "udp",
-        "tcpType" => nil,
-        "type" => "host",
         "priority" => priority1
       },
       %{
-        "foundation" => "tcpcandidate",
-        "ip" => "9.9.9.1",
-        "protocol" => "tcp",
-        "tcpType" => "passive",
-        "type" => "host",
         "priority" => priority2
       },
       %{
-        "foundation" => "udpcandidate",
-        "ip" => "9.9.9.2",
-        "protocol" => "udp",
-        "tcpType" => nil,
-        "type" => "host",
         "priority" => priority3
       },
       %{
-        "foundation" => "tcpcandidate",
-        "ip" => "9.9.9.2",
-        "protocol" => "tcp",
-        "tcpType" => "passive",
-        "type" => "host",
         "priority" => priority4
       },
       %{
-        "foundation" => "udpcandidate",
-        "ip" => "127.0.0.1",
-        "protocol" => "udp",
-        "tcpType" => nil,
-        "type" => "host",
         "priority" => priority5
       },
       %{
-        "foundation" => "tcpcandidate",
-        "ip" => "127.0.0.1",
-        "protocol" => "tcp",
-        "tcpType" => "passive",
-        "type" => "host",
         "priority" => priority6
       }
     ] = ice_candidates
