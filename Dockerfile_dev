@@ -4,7 +4,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
     RUSTUP_VERSION=1.24.1 \
-    RUST_VERSION=1.52.1
+    RUST_VERSION=1.54.0
 
 WORKDIR /tmp
 
