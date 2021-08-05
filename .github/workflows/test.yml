@@ -47,10 +47,14 @@ jobs:
         restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
     - name: Install dependencies
       run: mix deps.get
+    - name: Run check formatted on elixir
+      run: mix format --check-formatted
     - name: Run tests
       run: mix test
     - name: Run dialyzer
       run: MIX_ENV=test mix dialyzer
+    - name: Run check formatted on rust
+      run: cargo fmt --all -- --check
     - name: Run cargo clippy
       run: cargo clippy
       working-directory: native/mediasoup_elixir/
