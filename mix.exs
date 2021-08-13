@@ -7,12 +7,12 @@ defmodule MediasoupElixir.MixProject do
       version: "0.0.1",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
-      rustler_crates: rustler_crates(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
+        dialyzer: :test,
         "coveralls.detail": :test,
         "coveralls.lcov": :test
       ],
@@ -33,24 +33,10 @@ defmodule MediasoupElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # We'are waiting for new release of rustler.
-      # It must contains https://github.com/rusterlium/rustler/pull/361
-      # Because nif symlink is not created at first compile: https://github.com/oviceinc/mediasoup-elixir/issues/10
       {:rustler, "~> 0.22.0"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.14.2", only: :test},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
-    ]
-  end
-
-  defp rustler_crates() do
-    [
-      mediasoup: [
-        path: "native/mediasoup_elixir",
-        mode: if(Mix.env() == :prod, do: :release, else: :debug)
-      ]
     ]
   end
 
