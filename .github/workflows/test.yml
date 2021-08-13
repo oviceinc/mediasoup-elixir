@@ -52,7 +52,7 @@ jobs:
     - name: Run tests
       run: mix test
     - name: Run dialyzer
-      run: MIX_ENV=test mix dialyzer
+      run: mix dialyzer
     - name: Run check formatted on rust
       run: cargo fmt --all -- --check
     - name: Run cargo clippy
