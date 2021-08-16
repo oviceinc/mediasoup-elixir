@@ -35,32 +35,32 @@ defmodule Mediasoup.Worker do
         }
 
   @spec close(t) :: {:ok} | {:error}
-  def close(worker) do
-    Nif.worker_close(worker.reference)
+  def close(%Worker{reference: reference}) do
+    Nif.worker_close(reference)
   end
 
   @spec create_router(t, Router.create_option()) :: {:ok, Router.t()} | {:error}
-  def create_router(worker, option) do
-    Nif.worker_create_router(worker.reference, option)
+  def create_router(%Worker{reference: reference}, option) do
+    Nif.worker_create_router(reference, option)
   end
 
   @spec update_settings(t, update_option) :: {:ok} | {:error}
-  def update_settings(worker, pid) do
-    Nif.worker_update_settings(worker.reference, pid)
+  def update_settings(%Worker{reference: reference}, pid) do
+    Nif.worker_update_settings(reference, pid)
   end
 
   @spec closed?(t) :: boolean
-  def closed?(worker) do
-    Nif.worker_closed(worker.reference)
+  def closed?(%Worker{reference: reference}) do
+    Nif.worker_closed(reference)
   end
 
   @spec dump(t) :: map
-  def dump(worker) do
-    Nif.worker_dump(worker.reference)
+  def dump(%Worker{reference: reference}) do
+    Nif.worker_dump(reference)
   end
 
   @spec event(t, pid) :: {:ok} | {:error}
-  def event(worker, pid) do
-    Nif.worker_event(worker.reference, pid)
+  def event(%Worker{reference: reference}, pid) do
+    Nif.worker_event(reference, pid)
   end
 end
