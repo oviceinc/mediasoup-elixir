@@ -1,0 +1,40 @@
+name: reviewdog
+on: [pull_request]
+jobs:
+  credo:
+    name: runner / credo
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.12.0' # Define the elixir version [required]
+        otp-version: '24.0' # Define the OTP version [required]
+    - name: Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: '1.54.0'
+          override: true
+          components: rustfmt, clippy
+    - name: Restore dependencies cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+          deps
+          _build
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-mix-
+    - name: Install dependencies
+      run: mix deps.get
+    - uses: reviewdog/action-setup@v1
+    - name: credo
+      env:
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: | 
+        mix credo list --format flycheck | reviewdog -efm="%f:%l:%c: %m" -diff="git diff FETCH_HEAD" -reporter=github-pr-review

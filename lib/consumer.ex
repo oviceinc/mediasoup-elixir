@@ -1,4 +1,7 @@
 defmodule Mediasoup.Consumer do
+  @moduledoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#Consumer
+  """
   alias Mediasoup.{Consumer, Nif}
   @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters, :reference]
   defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :reference]

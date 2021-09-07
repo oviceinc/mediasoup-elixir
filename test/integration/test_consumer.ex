@@ -1,4 +1,7 @@
 defmodule IntegrateTest.ConsumerTest do
+  @moduledoc """
+  test for Consumer with dializer check
+  """
   import ExUnit.Assertions
   alias Mediasoup.{WebRtcTransport, Producer, Router, Consumer}
 
@@ -461,18 +464,18 @@ defmodule IntegrateTest.ConsumerTest do
     assert Consumer.preferred_layers(video_pipe_consumer) === nil
     assert Consumer.current_layers(video_pipe_consumer) === nil
 
-    videoProducerIds = Router.dump(router)["mapProducerIdConsumerIds"][video_producer.id]
-    assert video_consumer.id in videoProducerIds
-    assert video_pipe_consumer.id in videoProducerIds
+    video_producer_ids = Router.dump(router)["mapProducerIdConsumerIds"][video_producer.id]
+    assert video_consumer.id in video_producer_ids
+    assert video_pipe_consumer.id in video_producer_ids
 
     assert WebRtcTransport.dump(transport_2)["producerIds"] === []
     assert audio_producer.id in WebRtcTransport.dump(transport_1)["producerIds"]
     assert video_producer.id in WebRtcTransport.dump(transport_1)["producerIds"]
 
-    consumerIds = WebRtcTransport.dump(transport_2)["consumerIds"]
-    assert video_consumer.id in consumerIds
-    assert video_pipe_consumer.id in consumerIds
-    assert audio_consumer.id in consumerIds
+    consumer_ids = WebRtcTransport.dump(transport_2)["consumerIds"]
+    assert video_consumer.id in consumer_ids
+    assert video_pipe_consumer.id in consumer_ids
+    assert audio_consumer.id in consumer_ids
 
     Mediasoup.WebRtcTransport.close(transport_1)
     Mediasoup.WebRtcTransport.close(transport_1)

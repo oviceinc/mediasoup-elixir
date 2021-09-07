@@ -1,4 +1,7 @@
 defmodule Mediasoup.Router do
+  @moduledoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#Router
+  """
   alias Mediasoup.{Router, WebRtcTransport, Nif}
   @enforce_keys [:id, :reference]
   defstruct [:id, :reference]

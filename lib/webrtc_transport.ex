@@ -1,4 +1,8 @@
 defmodule Mediasoup.WebRtcTransport do
+  @moduledoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransport
+  """
+
   alias Mediasoup.{WebRtcTransport, Nif, Consumer, Producer}
   @enforce_keys [:id, :reference]
   defstruct [:id, :reference]

@@ -1,4 +1,7 @@
 defmodule IntegrateTest.SmokeTest do
+  @moduledoc """
+  Smoke test with dializer check
+  """
   def smoke() do
     {:ok, worker} = Mediasoup.create_worker()
 

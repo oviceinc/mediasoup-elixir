@@ -1,4 +1,7 @@
 defmodule Mediasoup.Nif do
+  @moduledoc """
+  Nif interface for mediasoup
+  """
   use Rustler, otp_app: :mediasoup_elixir, crate: :mediasoup_elixir
 
   alias Mediasoup.{Worker, Router, WebRtcTransport, Consumer, Producer}

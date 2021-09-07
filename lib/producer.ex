@@ -1,4 +1,7 @@
 defmodule Mediasoup.Producer do
+  @moduledoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#Producer
+  """
   alias Mediasoup.{Producer, Nif}
   @enforce_keys [:id, :kind, :type, :rtp_parameters, :reference]
   defstruct [:id, :kind, :type, :rtp_parameters, :reference]
