@@ -1,4 +1,7 @@
 defmodule Mediasoup.Worker do
+  @moduledoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#Worker
+  """
   alias Mediasoup.{Worker, Router, Nif}
 
   @enforce_keys [:id, :reference]

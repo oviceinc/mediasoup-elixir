@@ -1,4 +1,7 @@
 defmodule IntegrateTest.RouterTest do
+  @moduledoc """
+  test for Router with dializer check
+  """
   import ExUnit.Assertions
 
   def create_router_succeeds() do
@@ -36,7 +39,7 @@ defmodule IntegrateTest.RouterTest do
         logLevel: :debug
       })
 
-    mediaCodecs = [
+    media_codecs = [
       %{
         kind: "audio",
         mimeType: "audio/opus",
@@ -58,7 +61,7 @@ defmodule IntegrateTest.RouterTest do
 
     {:ok, router} =
       Mediasoup.Worker.create_router(worker, %{
-        mediaCodecs: mediaCodecs
+        mediaCodecs: media_codecs
       })
 
     assert true == is_binary(router.id)

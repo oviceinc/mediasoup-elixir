@@ -1,4 +1,7 @@
 defmodule IntegrateTest.ProducerTest do
+  @moduledoc """
+  test for Producer with dializer check
+  """
   import ExUnit.Assertions
   alias Mediasoup.{Producer, WebRtcTransport, Router}
 
@@ -431,7 +434,7 @@ defmodule IntegrateTest.ProducerTest do
               kind: "audio",
               mimeType: "audio/opus",
               payloadType: 111,
-              clockRate: 48000,
+              clockRate: 48_000,
               channels: 2,
               parameters: %{},
               rtcpFeedback: []

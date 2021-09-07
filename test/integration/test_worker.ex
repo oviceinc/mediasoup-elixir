@@ -1,4 +1,7 @@
 defmodule IntegrateTest.WorkerTest do
+  @moduledoc """
+  test for Worker with dializer check
+  """
   import ExUnit.Assertions
   alias Mediasoup.Worker
 

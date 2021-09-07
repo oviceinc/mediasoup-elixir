@@ -1,4 +1,7 @@
 defmodule IntegrateTest.WebRtcTransportTest do
+  @moduledoc """
+  test for WebRtcTransport with dializer check
+  """
   import ExUnit.Assertions
   alias Mediasoup.{WebRtcTransport, Router}
 
@@ -7,7 +10,7 @@ defmodule IntegrateTest.WebRtcTransportTest do
       %{
         kind: "audio",
         mimeType: "audio/opus",
-        clockRate: 48000,
+        clockRate: 48_000,
         channels: 2,
         parameters: %{"foo" => "bar"},
         rtcpFeedback: []
@@ -22,7 +25,7 @@ defmodule IntegrateTest.WebRtcTransportTest do
       %{
         kind: "video",
         mimeType: "video/H264",
-        clockRate: 90000,
+        clockRate: 90_000,
         parameters: %{
           "level-asymmetry-allowed" => 1,
           "packetization-mode" => 1,
