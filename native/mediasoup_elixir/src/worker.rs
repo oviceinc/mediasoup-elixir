@@ -189,7 +189,7 @@ impl SerWorkerUpdateSettings {
             value.log_level = Some(log_level_from_string(log_level.as_str())?)
         }
         if let Some(log_tags) = &self.log_tags {
-            value.log_tags = Some(log_tags_from_strings(&log_tags)?)
+            value.log_tags = Some(log_tags_from_strings(log_tags)?)
         }
         Ok(value)
     }
@@ -220,7 +220,7 @@ impl SerWorkerSettings {
             value.log_level = log_level_from_string(log_level.as_str())?
         }
         if let Some(log_tags) = &self.log_tags {
-            value.log_tags = log_tags_from_strings(&log_tags)?
+            value.log_tags = log_tags_from_strings(log_tags)?
         }
         let default_range = value.rtc_ports_range;
         let minport = self.rtc_min_port.unwrap_or(*default_range.start());
