@@ -49,12 +49,11 @@ jobs:
       run: mix deps.get
     - name: Run check formatted on elixir
       run: mix format --check-formatted
-    - name: Run tests
-      run: mix test
-    - name: Run dialyzer
-      run: mix dialyzer
     - name: Run check formatted on rust
       run: cargo fmt --all -- --check
-    - name: Run cargo clippy
-      run: cargo clippy
-      working-directory: native/mediasoup_elixir/
+    - name: Run tests
+      run: mix test
+    - name: Run cargo test
+      run: cargo test
+    - name: Run dialyzer
+      run: mix dialyzer
