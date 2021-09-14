@@ -36,6 +36,18 @@ defmodule Mediasoup.Nif do
   @spec router_close(reference) :: {:ok} | {:error}
   def router_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
 
+  @spec router_pipe_producer_to_router(
+          reference,
+          producer_id :: String.t(),
+          Router.PipeToRouterOptions.t()
+        ) :: {:ok, Router.PipeToRouterResult.t()} | {:error}
+  def router_pipe_producer_to_router(
+        _reference,
+        _producer_id,
+        _option
+      ),
+      do: :erlang.nif_error(:nif_not_loaded)
+
   @spec router_create_webrtc_transport(reference, map) ::
           {:ok, WebRtcTransport.t()} | {:error, String.t()}
   def router_create_webrtc_transport(_router, _option), do: :erlang.nif_error(:nif_not_loaded)
