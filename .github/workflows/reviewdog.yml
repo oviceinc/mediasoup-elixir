@@ -33,8 +33,12 @@ jobs:
     - name: Install dependencies
       run: mix deps.get
     - uses: reviewdog/action-setup@v1
-    - name: credo
+    - name: reviewdog
       env:
         REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: | 
-        mix credo list --format flycheck | reviewdog -efm="%f:%l:%c: %m" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
+        mix credo list --format flycheck | reviewdog -efm="%f:%l:%c: %m" -name="mix credo" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
+        cargo check -q --message-format=short | reviewdog -f=clippy -name="cargo check" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
+        cargo clippy -q --message-format=short | reviewdog -f=clippy -name="cargo clippy" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
+
+        
