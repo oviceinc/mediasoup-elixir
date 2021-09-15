@@ -76,7 +76,8 @@ rustler::init! {
         router_close,
         router_create_webrtc_transport,
         router_can_consume,
-        router_rtp_capabilities,router_pipe_producer_to_router,
+        router_rtp_capabilities,
+        router_pipe_producer_to_router,
         router_event,
         router_dump,
 

@@ -289,8 +289,7 @@ defmodule IntegrateTest.PipeTransportTest do
            }
 
     """
-
-    pipe_producer = audio_producer
+    # currently PipedProducer not implemented.
     assert pipe_producer.id === audio_producer.id
     assert "audio" === pipe_producer.kind
     #  assert nil == pipe_producer.rtp_parameters["mid"]
@@ -383,7 +382,7 @@ defmodule IntegrateTest.PipeTransportTest do
            }
 
     """
-    pipe_producer = video_producer
+    # currently PipedProducer not implemented.
     assert pipe_producer.id === video_producer.id
     assert "video" === pipe_producer.kind
     #  assert nil == pipe_producer.rtp_parameters["mid"]
