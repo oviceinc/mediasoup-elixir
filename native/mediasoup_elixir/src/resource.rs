@@ -1,6 +1,6 @@
 use crate::atoms;
 use rustler::ResourceArc;
-use std::sync::RwLock;
+use std::sync::Mutex;
 /*
 pub struct ResourceWrapper<T>(T);
 impl<T> ResourceWrapper<T> {
@@ -25,23 +25,26 @@ impl<T> std::ops::Deref for ResourceWrapper<T> {
     }
 }*/
 
-pub struct DisposableResourceWrapper<T>(pub RwLock<Option<T>>);
+pub struct DisposableResourceWrapper<T>(pub Mutex<Option<T>>);
 impl<T> DisposableResourceWrapper<T> {
     pub fn new(value: T) -> Self {
-        Self(RwLock::new(Some(value)))
+        Self(Mutex::new(Some(value)))
     }
     pub fn close(&self) {
-        if let Ok(mut v) = self.0.write() {
+        if let Ok(mut v) = self.0.lock() {
             *v = None;
         }
     }
 }
-impl<T: Clone> DisposableResourceWrapper<T> {
+impl<T> DisposableResourceWrapper<T>
+where
+    T: Clone,
+{
     fn read(
         &self,
-    ) -> Result<Option<T>, std::sync::PoisonError<std::sync::RwLockReadGuard<std::option::Option<T>>>>
+    ) -> Result<Option<T>, std::sync::PoisonError<std::sync::MutexGuard<std::option::Option<T>>>>
     {
-        match self.0.read() {
+        match self.0.lock() {
             Ok(v) => Ok(v.clone()),
             Err(err) => Err(err),
         }

@@ -15,8 +15,9 @@ use crate::consumer::{
     consumer_score, consumer_set_preferred_layers, consumer_set_priority, consumer_unset_priority,
 };
 use crate::producer::{
-    producer_close, producer_closed, producer_dump, producer_event, producer_get_stats,
-    producer_id, producer_pause, producer_paused, producer_resume, producer_score,
+    piped_producer_into_producer, producer_close, producer_closed, producer_dump, producer_event,
+    producer_get_stats, producer_id, producer_pause, producer_paused, producer_resume,
+    producer_score,
 };
 use crate::resource::DisposableResourceWrapper;
 use crate::router::{
@@ -39,7 +40,7 @@ use crate::worker::{
 };
 
 use mediasoup::consumer::Consumer;
-use mediasoup::producer::Producer;
+use mediasoup::producer::{PipedProducer, Producer};
 use mediasoup::router::Router;
 use mediasoup::webrtc_transport::WebRtcTransport;
 use mediasoup::worker::Worker;
@@ -134,7 +135,8 @@ rustler::init! {
         producer_score,
         producer_get_stats,
         producer_event,
-        producer_dump
+        producer_dump,
+        piped_producer_into_producer
 
     ],
     load = on_load
@@ -148,6 +150,7 @@ fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
     rustler::resource!(WebRtcTransportRef, env);
     rustler::resource!(ConsumerRef, env);
     rustler::resource!(ProducerRef, env);
+    rustler::resource!(PipedProducerRef, env);
     true
 }
 
@@ -156,3 +159,4 @@ pub type RouterRef = DisposableResourceWrapper<Router>;
 pub type WebRtcTransportRef = DisposableResourceWrapper<WebRtcTransport>;
 pub type ConsumerRef = DisposableResourceWrapper<Consumer>;
 pub type ProducerRef = DisposableResourceWrapper<Producer>;
+pub type PipedProducerRef = DisposableResourceWrapper<PipedProducer>;

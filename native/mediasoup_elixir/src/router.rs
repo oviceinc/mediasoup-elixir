@@ -1,6 +1,7 @@
 use crate::atoms;
 use crate::consumer::ConsumerStruct;
 use crate::json_serde::JsonSerdeWrap;
+use crate::producer::PipedProducerStruct;
 use crate::webrtc_transport::WebRtcTransportStruct;
 use crate::RouterRef;
 use futures_lite::future;
@@ -83,7 +84,7 @@ pub fn router_pipe_producer_to_router(
         atoms::ok(),
         PipeToRouterResultStruct {
             pipe_consumer: ConsumerStruct::from(result.pipe_consumer),
-            //            pipe_producer: ProducerStruct::from(result.pipe_producer.into_inner()),
+            pipe_producer: PipedProducerStruct::from(result.pipe_producer),
         },
     ));
 }
@@ -289,6 +290,6 @@ impl PipeToRouterOptionsStruct {
 #[module = "Mediasoup.Router.PipeToRouterResult"]
 pub struct PipeToRouterResultStruct {
     pub pipe_consumer: ConsumerStruct,
-    //    pub pipe_producer: ProducerStruct,// see PipedProducer
+    pub pipe_producer: PipedProducerStruct,
     //DataConsumer and DataProducer not implemented.
 }
