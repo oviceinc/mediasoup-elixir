@@ -9,6 +9,10 @@ defmodule WorkerTest do
     IntegrateTest.WorkerTest.worker_with_custom_settings()
   end
 
+  test "create_worker_with_struct" do
+    IntegrateTest.WorkerTest.create_worker_with_struct()
+  end
+
   test "worker with wrong settings cert" do
     IntegrateTest.WorkerTest.worker_with_wrong_settings_cert()
   end

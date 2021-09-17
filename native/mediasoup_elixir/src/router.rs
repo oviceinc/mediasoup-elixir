@@ -9,7 +9,7 @@ use mediasoup::router::{Router, RouterDump, RouterId};
 use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized};
 use mediasoup::sctp_parameters::NumSctpStreams;
 use mediasoup::webrtc_transport::{TransportListenIps, WebRtcTransportOptions};
-use rustler::{Env, Error, NifResult, NifStruct, ResourceArc, Term};
+use rustler::{Error, NifResult, NifStruct, ResourceArc};
 use serde::{Deserialize, Serialize};
 
 #[derive(NifStruct)]
@@ -40,10 +40,12 @@ pub fn router_close(router: ResourceArc<RouterRef>) -> NifResult<(rustler::Atom,
 #[rustler::nif]
 pub fn router_create_webrtc_transport(
     router: ResourceArc<RouterRef>,
-    option: SerWebRtcTransportOptions,
+    option: JsonSerdeWrap<SerWebRtcTransportOptions>,
 ) -> NifResult<(rustler::Atom, WebRtcTransportStruct)> {
     let router = router.get_resource()?;
-    let option = option.try_to_option().map_err(|e| Error::RaiseAtom(e))?;
+    let option = option
+        .try_to_option()
+        .map_err(|error| Error::Term(Box::new(error.to_string())))?;
 
     let transport = future::block_on(async move {
         return router.create_webrtc_transport(option).await;
@@ -167,10 +169,9 @@ pub struct SerWebRtcTransportOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     sctp_send_buffer_size: Option<u32>,
 }
-crate::define_rustler_serde_by_json!(SerWebRtcTransportOptions);
 
 impl SerWebRtcTransportOptions {
-    pub fn try_to_option(self) -> Result<WebRtcTransportOptions, &'static str> {
+    pub fn try_to_option(&self) -> Result<WebRtcTransportOptions, &'static str> {
         let ips = match self.listen_ips.first() {
             None => Err("Rquired least one ip"),
             Some(ip) => Ok(TransportListenIps::new(*ip)),
@@ -199,7 +200,7 @@ impl SerWebRtcTransportOptions {
         if let Some(enable_sctp) = self.enable_sctp {
             option.enable_sctp = enable_sctp;
         }
-        if let Some(num_sctp_streams) = self.num_sctp_streams {
+        if let Some(num_sctp_streams) = &self.num_sctp_streams {
             option.num_sctp_streams = num_sctp_streams.as_streams();
         }
         if let Some(max_sctp_message_size) = self.max_sctp_message_size {

@@ -24,6 +24,7 @@ defmodule Mediasoup.Worker do
           | :svc
           | :sctp
           | :message
+
   @type create_option :: %{
           optional(:logLevel) => log_level,
           optional(:logTags) => [log_tag],
@@ -65,5 +66,26 @@ defmodule Mediasoup.Worker do
   @spec event(t, pid) :: {:ok} | {:error}
   def event(%Worker{reference: reference}, pid) do
     Nif.worker_event(reference, pid)
+  end
+
+  defmodule Settings do
+    @moduledoc """
+    https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerSettings
+    """
+    defstruct log_level: nil,
+              log_tags: nil,
+              rtc_min_port: nil,
+              rtc_max_port: nil,
+              dtls_certificate_file: nil,
+              dtls_private_key_file: nil
+
+    @type t :: %Settings{
+            log_level: Worker.log_level() | nil,
+            log_tags: [Worker.log_tag()] | nil,
+            rtc_min_port: integer | nil,
+            rtc_max_port: integer | nil,
+            dtls_certificate_file: String.t() | nil,
+            dtls_private_key_file: String.t() | nil
+          }
   end
 end

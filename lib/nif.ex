@@ -10,8 +10,8 @@ defmodule Mediasoup.Nif do
   @spec create_worker() :: {:ok, Worker.t()} | {:error, String.t()}
   def create_worker(), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec create_worker(Worker.create_option()) ::
-          {:ok, Mediasoup.Worker.t()} | {:error, String.t()}
+  @spec create_worker(Worker.Settings.t()) ::
+          {:ok, Worker.t()} | {:error, String.t()}
   def create_worker(_option), do: :erlang.nif_error(:nif_not_loaded)
 
   # worker

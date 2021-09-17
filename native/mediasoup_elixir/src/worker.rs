@@ -11,7 +11,7 @@ use mediasoup::worker::{
 };
 use mediasoup::worker_manager::WorkerManager;
 use once_cell::sync::Lazy;
-use rustler::{Env, Error, NifResult, NifStruct, ResourceArc, Term};
+use rustler::{Error, NifResult, NifStruct, ResourceArc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -47,11 +47,11 @@ pub fn worker_close(worker: ResourceArc<WorkerRef>) -> NifResult<(rustler::Atom,
 #[rustler::nif]
 pub fn worker_create_router(
     worker: ResourceArc<WorkerRef>,
-    option: SerRouterOptions,
+    option: JsonSerdeWrap<SerRouterOptions>,
 ) -> NifResult<(rustler::Atom, RouterStruct)> {
     let worker = worker.get_resource()?;
 
-    let option = option.to_option()?;
+    let option = option.to_option();
 
     let router = future::block_on(async move {
         return worker.create_router(option).await;
@@ -81,7 +81,7 @@ pub fn worker_closed(worker: ResourceArc<WorkerRef>) -> Result<bool, Error> {
 #[rustler::nif]
 pub fn worker_update_settings(
     worker: ResourceArc<WorkerRef>,
-    settings: SerWorkerUpdateSettings,
+    settings: JsonSerdeWrap<SerWorkerUpdateSettings>,
 ) -> NifResult<(rustler::Atom,)> {
     let worker = worker.get_resource()?;
 
@@ -127,21 +127,7 @@ pub fn worker_event(
     Ok((atoms::ok(),))
 }
 
-#[rustler::nif(name = "create_worker")]
-pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, WorkerStruct)> {
-    let settings = WorkerSettings::default();
-    let worker_manager = WORKER_MANAGER
-        .lock()
-        .map_err(|_e| Error::RaiseAtom("worker_manager lock error"))?;
-
-    let worker = future::block_on(async move { worker_manager.create_worker(settings).await })
-        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), WorkerStruct::from(worker)))
-}
-
-#[rustler::nif]
-pub fn create_worker(settings: SerWorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
-    let settings = settings.to_setting()?;
+fn create_worker_impl(settings: WorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
     let worker_manager = WORKER_MANAGER
         .lock()
         .map_err(|_e| Error::RaiseAtom("worker_manager lock error"))?;
@@ -153,21 +139,31 @@ pub fn create_worker(settings: SerWorkerSettings) -> NifResult<(rustler::Atom, W
     Ok((atoms::ok(), WorkerStruct::from(worker)))
 }
 
+#[rustler::nif(name = "create_worker")]
+pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, WorkerStruct)> {
+    create_worker_impl(WorkerSettings::default())
+}
+
+#[rustler::nif]
+pub fn create_worker(settings: SerWorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
+    let settings = settings.to_setting()?;
+    create_worker_impl(settings)
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SerRouterOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub media_codecs: Option<Vec<RtpCodecCapability>>,
 }
-crate::define_rustler_serde_by_json!(SerRouterOptions);
 
 impl SerRouterOptions {
-    fn to_option(&self) -> Result<RouterOptions, Error> {
+    fn to_option(&self) -> RouterOptions {
         let mut value = RouterOptions::default();
         if let Some(media_codecs) = &self.media_codecs {
             value.media_codecs = media_codecs.to_vec();
         }
-        Ok(value)
+        value
     }
 }
 
@@ -179,7 +175,6 @@ pub struct SerWorkerUpdateSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_tags: Option<Vec<String>>,
 }
-crate::define_rustler_serde_by_json!(SerWorkerUpdateSettings);
 
 impl SerWorkerUpdateSettings {
     fn to_setting(&self) -> Result<WorkerUpdateSettings, Error> {
@@ -195,23 +190,23 @@ impl SerWorkerUpdateSettings {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, NifStruct)]
+#[module = "Mediasoup.Worker.Settings"]
 #[serde(rename_all = "camelCase")]
 pub struct SerWorkerSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_level: Option<String>,
+    pub log_level: Option<JsonSerdeWrap<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_tags: Option<Vec<String>>,
+    pub log_tags: Option<JsonSerdeWrap<Vec<String>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rtc_min_port: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rtc_max_port: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dtls_certificate_file: Option<PathBuf>,
+    pub dtls_certificate_file: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dtls_private_key_file: Option<PathBuf>,
+    pub dtls_private_key_file: Option<String>,
 }
-crate::define_rustler_serde_by_json!(SerWorkerSettings);
 
 impl SerWorkerSettings {
     fn to_setting(&self) -> Result<WorkerSettings, Error> {
@@ -231,8 +226,8 @@ impl SerWorkerSettings {
             (&self.dtls_certificate_file, &self.dtls_private_key_file)
         {
             value.dtls_files = Some(WorkerDtlsFiles {
-                certificate: cert.clone(),
-                private_key: private.clone(),
+                certificate: PathBuf::from(cert),
+                private_key: PathBuf::from(private),
             });
         }
 
