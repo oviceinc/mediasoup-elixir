@@ -107,4 +107,32 @@ defmodule Mediasoup.Consumer do
   def event(%Consumer{reference: reference}, pid) do
     Nif.consumer_event(reference, pid)
   end
+
+  defmodule Options do
+    @moduledoc """
+    https://mediasoup.org/documentation/v3/mediasoup/api/#ConsumerOptions
+    """
+    @enforce_keys [:producer_id, :rtp_capabilities]
+    defstruct [:producer_id, rtp_capabilities: nil, paused: nil, preferred_layers: nil, pipe: nil]
+
+    @type t :: %Options{
+            producer_id: String.t(),
+            rtp_capabilities: :audio | :video | nil,
+            paused: boolean | nil,
+            preferred_layers: term | nil,
+            pipe: boolean | nil
+          }
+
+    def from_map(%{} = map) do
+      map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
+
+      %Options{
+        producer_id: map["producerId"],
+        rtp_capabilities: map["rtpCapabilities"],
+        paused: map["paused"],
+        preferred_layers: map["preferredLayers"],
+        pipe: map["pipe"]
+      }
+    end
+  end
 end

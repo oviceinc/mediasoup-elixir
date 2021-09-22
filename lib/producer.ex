@@ -66,4 +66,40 @@ defmodule Mediasoup.Producer do
   def event(%Producer{reference: reference}, pid) do
     Nif.producer_event(reference, pid)
   end
+
+  defmodule Options do
+    @moduledoc """
+    https://mediasoup.org/documentation/v3/mediasoup/api/#ProducerOptions
+    """
+
+    @enforce_keys [:rtp_parameters]
+    defstruct [
+      :rtp_parameters,
+      id: nil,
+      kind: nil,
+      paused: nil,
+      key_frame_request_delay: nil
+    ]
+
+    @type t :: %Options{
+            id: String.t() | nil,
+            kind: :audio | :video | nil,
+            rtp_parameters: Producer.rtpParameters(),
+            paused: boolean | nil,
+            key_frame_request_delay: integer | nil
+          }
+
+    @spec from_map(map) :: Mediasoup.Producer.Options.t()
+    def from_map(%{} = map) do
+      map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
+
+      %Options{
+        id: map["id"],
+        kind: map["kind"],
+        rtp_parameters: map["rtpParameters"],
+        paused: map["paused"],
+        key_frame_request_delay: map["keyFrameRequestDelay"]
+      }
+    end
+  end
 end

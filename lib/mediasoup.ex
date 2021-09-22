@@ -16,13 +16,6 @@ defmodule Mediasoup do
   end
 
   def create_worker(option) do
-    Nif.create_worker(%Worker.Settings{
-      log_level: option["logLevel"] || option[:logLevel],
-      log_tags: option["logTags"] || option[:logTags],
-      rtc_min_port: option["rtcMinPort"] || option[:rtcMinPort],
-      rtc_max_port: option["rtcMaxPort"] || option[:rtcMaxPort],
-      dtls_certificate_file: option["dtlsCertificateFile"] || option[:dtlsCertificateFile],
-      dtls_private_key_file: option["dtlsPrivateKeyFile"] || option[:dtlsPrivateKeyFile]
-    })
+    Nif.create_worker(Worker.Settings.from_map(option))
   end
 end

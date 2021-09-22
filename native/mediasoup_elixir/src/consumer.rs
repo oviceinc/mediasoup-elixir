@@ -4,10 +4,11 @@ use crate::send_msg_from_other_thread;
 use crate::ConsumerRef;
 use futures_lite::future;
 use mediasoup::consumer::{
-    Consumer, ConsumerDump, ConsumerId, ConsumerLayers, ConsumerScore, ConsumerStats, ConsumerType,
+    Consumer, ConsumerDump, ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore,
+    ConsumerStats, ConsumerType,
 };
 use mediasoup::producer::ProducerId;
-use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
+use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
 
 #[derive(NifStruct)]
@@ -222,4 +223,28 @@ pub fn consumer_event(
     }
 
     Ok((atoms::ok(),))
+}
+
+#[derive(NifStruct)]
+#[module = "Mediasoup.Consumer.Options"]
+pub struct ConsumerOptionsStruct {
+    producer_id: JsonSerdeWrap<ProducerId>,
+    rtp_capabilities: JsonSerdeWrap<RtpCapabilities>,
+    paused: Option<bool>,
+    preferred_layers: JsonSerdeWrap<Option<ConsumerLayers>>,
+    pipe: Option<bool>,
+}
+
+impl ConsumerOptionsStruct {
+    pub fn to_option(&self) -> ConsumerOptions {
+        let mut option = ConsumerOptions::new(*self.producer_id, self.rtp_capabilities.clone());
+        if let Some(paused) = self.paused {
+            option.paused = paused;
+        }
+        option.preferred_layers = *self.preferred_layers;
+        if let Some(pipe) = self.pipe {
+            option.pipe = pipe;
+        }
+        option
+    }
 }
