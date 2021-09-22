@@ -233,7 +233,6 @@ pub fn webrtc_transport_sctp_state(
     let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.sctp_state()))
 }
-
 #[rustler::nif]
 pub fn webrtc_transport_event(
     transport: ResourceArc<WebRtcTransportRef>,

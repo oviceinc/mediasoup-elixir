@@ -3,7 +3,7 @@ defmodule IntegrateTest.PipeTransportTest do
   test for Consumer with dializer check
   """
   import ExUnit.Assertions
-  alias Mediasoup.{WebRtcTransport, Producer, Worker, Router, Consumer}
+  alias Mediasoup.{PipeTransport, WebRtcTransport, Transport, Producer, Worker, Router, Consumer}
 
   def media_codecs() do
     {
@@ -412,6 +412,139 @@ defmodule IntegrateTest.PipeTransportTest do
     assert Producer.paused?(pipe_producer) === true
   end
 
+  def create_with_fixed_port_succeeds() do
+    {_worker, router1, _router2, _transport1, _transport2} = init()
+
+    {:ok, pipe_transport} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"},
+        port: 60_000
+      })
+
+    assert match?(%{"localPort" => 60000}, PipeTransport.tuple(pipe_transport))
+
+    Transport.close(pipe_transport)
+  end
+
+  def create_with_enable_rtx_succeeds() do
+    {_worker, router1, _router2, transport1, _transport2} = init()
+
+    {:ok, pipe_transport} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"},
+        enable_rtx: true
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+    # Pause the videoProducer.
+    {:ok} = Producer.pause(video_producer)
+
+    {:ok, pipe_consumer} =
+      Transport.consume(pipe_transport, %Consumer.Options{
+        producer_id: video_producer.id,
+        rtp_capabilities: consumer_device_capabilities()
+      })
+
+    assert "video" == pipe_consumer.kind
+    assert nil == pipe_consumer.rtp_parameters["mid"]
+
+    assert [
+             %{
+               "clockRate" => 90000,
+               "mimeType" => "video/VP8",
+               "parameters" => %{"packetization-mode" => 1, "profile-level-id" => "4d0032"},
+               "payloadType" => 101,
+               "rtcpFeedback" => [
+                 %{"parameter" => "", "type" => "nack"},
+                 %{"parameter" => "pli", "type" => "nack"},
+                 %{"parameter" => "fir", "type" => "ccm"}
+               ]
+             },
+             %{
+               "clockRate" => 90000,
+               "mimeType" => "video/rtx",
+               "parameters" => %{"apt" => 101},
+               "payloadType" => 102,
+               "rtcpFeedback" => []
+             }
+           ] === pipe_consumer.rtp_parameters["codecs"]
+
+    assert [
+             %{
+               "encrypt" => false,
+               "id" => 6,
+               "uri" => "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 7,
+               "uri" => "urn:ietf:params:rtp-hdrext:framemarking"
+             },
+             %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
+             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"}
+           ] === pipe_consumer.rtp_parameters["headerExtensions"]
+
+    assert "pipe" == pipe_consumer.type
+
+    assert Consumer.paused?(pipe_consumer) === false
+    assert Consumer.producer_paused?(pipe_consumer) === true
+
+    assert Consumer.score(pipe_consumer) === %{
+             "producerScore" => 10,
+             "producerScores" => [0, 0, 0, 0],
+             "score" => 10
+           }
+  end
+
+  def create_with_enable_srtp_succeeds do
+    {_worker, router1, _router2, _transport1, _transport2} = init()
+
+    {:ok, pipe_transport} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"},
+        enable_srtp: true
+      })
+
+    srtp_parameters = PipeTransport.srtp_parameters(pipe_transport)
+    assert nil != srtp_parameters
+    assert String.length(srtp_parameters["keyBase64"]) == 40
+
+    # Missing srtp_parameters.
+    {:error, _message} =
+      PipeTransport.connect(pipe_transport, %{ip: "127.0.0.2", port: 9999, srtpParameters: nil})
+
+    # Valid srtp_parameters.
+    {:ok} =
+      PipeTransport.connect(pipe_transport, %{
+        ip: "127.0.0.2",
+        port: 9999,
+        srtpParameters: %{
+          cryptoSuite: "AES_CM_128_HMAC_SHA1_80",
+          keyBase64: "ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv"
+        }
+      })
+  end
+
+  def create_with_invalid_srtp_parameters_fails do
+    {_worker, router1, _router2, _transport1, _transport2} = init()
+
+    {:ok, pipe_transport} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    # No SRTP enabled so passing srtp_parameters must fail.
+    {:error, _message} =
+      PipeTransport.connect(pipe_transport, %{
+        ip: "127.0.0.2",
+        port: 9999,
+        srtpParameters: %{
+          cryptoSuite: "AES_CM_128_HMAC_SHA1_80",
+          keyBase64: "ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv"
+        }
+      })
+  end
+
   def consume_for_pipe_producer_succeeds() do
     {_worker, router1, router2, transport1, transport2} = init()
 
@@ -425,7 +558,7 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     {:ok, video_consumer} =
-      WebRtcTransport.consume(transport2, %{
+      Transport.consume(transport2, %{
         producerId: video_producer.id,
         rtpCapabilities: consumer_device_capabilities()
       })
@@ -559,5 +692,105 @@ defmodule IntegrateTest.PipeTransportTest do
 
     assert 3 == Mediasoup.Router.dump(router_a)["transportIds"] |> length
     assert 1 == Mediasoup.Router.dump(router_b)["transportIds"] |> length
+  end
+
+  def pipe_produce_consume do
+    {_worker, router1, router2, transport1, transport2} = init()
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+    # Pause the videoProducer.
+    {:ok} = Producer.pause(video_producer)
+
+    {:ok, pipe_transport_local} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    {:ok, pipe_transport_remote} =
+      Router.create_pipe_transport(router2, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    %{"localPort" => remote_port, "localIp" => remote_ip} =
+      PipeTransport.tuple(pipe_transport_remote)
+
+    %{"localPort" => local_port, "localIp" => local_ip} =
+      PipeTransport.tuple(pipe_transport_local)
+
+    {:ok} = PipeTransport.connect(pipe_transport_local, %{ip: remote_ip, port: remote_port})
+    {:ok} = PipeTransport.connect(pipe_transport_remote, %{ip: local_ip, port: local_port})
+
+    {:ok, pipe_consumer} =
+      Transport.consume(pipe_transport_local, %Consumer.Options{
+        producer_id: video_producer.id,
+        rtp_capabilities: consumer_device_capabilities()
+      })
+
+    {:ok, _pipe_producer} =
+      Transport.produce(pipe_transport_remote, %Producer.Options{
+        id: video_producer.id,
+        kind: pipe_consumer.kind,
+        rtp_parameters: pipe_consumer.rtp_parameters,
+        paused: Consumer.paused?(pipe_consumer)
+      })
+
+    {:ok, video_consumer} =
+      Transport.consume(transport2, %Consumer.Options{
+        producer_id: video_producer.id,
+        rtp_capabilities: consumer_device_capabilities()
+      })
+
+    assert nil == Transport.sctp_parameters(pipe_transport_local)
+    assert nil == Transport.sctp_state(pipe_transport_local)
+    assert nil != Transport.get_stats(pipe_transport_local)
+
+    assert nil != PipeTransport.dump(pipe_transport_local)
+    PipeTransport.event(pipe_transport_local, self())
+
+    assert "video" == video_consumer.kind
+    assert "0" == video_consumer.rtp_parameters["mid"]
+
+    assert [
+             %{
+               "encrypt" => false,
+               "id" => 4,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 5,
+               "uri" =>
+                 "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+             }
+           ] === video_consumer.rtp_parameters["headerExtensions"]
+  end
+
+  def pipe_produce_consume_with_map do
+    {_worker, router1, _router2, transport1, _transport2} = init()
+
+    {:ok, pipe_transport} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"},
+        enable_rtx: true
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+    # Pause the videoProducer.
+    {:ok} = Producer.pause(video_producer)
+
+    {:ok, pipe_consumer} =
+      Transport.consume(pipe_transport, %{
+        producerId: video_producer.id,
+        rtpCapabilities: consumer_device_capabilities()
+      })
+
+    assert "video" == pipe_consumer.kind
+    assert nil == pipe_consumer.rtp_parameters["mid"]
+
+    {:ok, _pipe_producer} =
+      Transport.produce(pipe_transport, %{
+        kind: pipe_consumer.kind,
+        rtpParameters: pipe_consumer.rtp_parameters
+      })
   end
 end

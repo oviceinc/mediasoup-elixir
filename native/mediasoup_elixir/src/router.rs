@@ -2,6 +2,7 @@ use crate::atoms;
 use crate::consumer::ConsumerStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
+use crate::pipe_transport::{PipeTransportOptionsStruct, PipeTransportStruct};
 use crate::producer::PipedProducerStruct;
 use crate::webrtc_transport::{WebRtcTransportOptionsStruct, WebRtcTransportStruct};
 use crate::RouterRef;
@@ -84,6 +85,22 @@ pub fn router_pipe_producer_to_router(
             pipe_producer: PipedProducerStruct::from(result.pipe_producer),
         },
     ));
+}
+
+#[rustler::nif]
+pub fn router_create_pipe_transport(
+    router: ResourceArc<RouterRef>,
+    option: PipeTransportOptionsStruct,
+) -> NifResult<(rustler::Atom, PipeTransportStruct)> {
+    let router = router.get_resource()?;
+    let option = option.try_to_option()?;
+
+    let result = future::block_on(async move {
+        return router.create_pipe_transport(option).await;
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+
+    return Ok((atoms::ok(), PipeTransportStruct::from(result)));
 }
 
 #[rustler::nif]
