@@ -21,7 +21,7 @@ use crate::producer::{
 use crate::resource::DisposableResourceWrapper;
 use crate::router::{
     router_can_consume, router_close, router_create_webrtc_transport, router_dump, router_event,
-    router_id, router_rtp_capabilities,
+    router_id, router_pipe_producer_to_router, router_rtp_capabilities,
 };
 use crate::webrtc_transport::{
     webrtc_transport_close, webrtc_transport_connect, webrtc_transport_consume,
@@ -77,6 +77,7 @@ rustler::init! {
         router_create_webrtc_transport,
         router_can_consume,
         router_rtp_capabilities,
+        router_pipe_producer_to_router,
         router_event,
         router_dump,
 

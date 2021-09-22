@@ -1,11 +1,12 @@
 use crate::atoms;
+use crate::consumer::ConsumerStruct;
 use crate::json_serde::JsonSerdeWrap;
 use crate::webrtc_transport::WebRtcTransportStruct;
 use crate::RouterRef;
 use futures_lite::future;
 use mediasoup::data_structures::TransportListenIp;
 use mediasoup::producer::ProducerId;
-use mediasoup::router::{Router, RouterDump, RouterId};
+use mediasoup::router::{PipeToRouterOptions, Router, RouterDump, RouterId};
 use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized};
 use mediasoup::sctp_parameters::NumSctpStreams;
 use mediasoup::webrtc_transport::{TransportListenIps, WebRtcTransportOptions};
@@ -61,6 +62,30 @@ pub fn router_rtp_capabilities(
     let router = router.get_resource()?;
 
     Ok(JsonSerdeWrap::new(router.rtp_capabilities().clone()))
+}
+
+#[rustler::nif]
+pub fn router_pipe_producer_to_router(
+    router: ResourceArc<RouterRef>,
+    producer_id: JsonSerdeWrap<ProducerId>,
+    option: PipeToRouterOptionsStruct,
+) -> NifResult<(rustler::Atom, PipeToRouterResultStruct)> {
+    let router = router.get_resource()?;
+    let producer_id = *producer_id;
+    let option = option.try_to_option()?;
+
+    let result = future::block_on(async move {
+        return router.pipe_producer_to_router(producer_id, option).await;
+    })
+    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+
+    return Ok((
+        atoms::ok(),
+        PipeToRouterResultStruct {
+            pipe_consumer: ConsumerStruct::from(result.pipe_consumer),
+            //            pipe_producer: ProducerStruct::from(result.pipe_producer.into_inner()),
+        },
+    ));
 }
 
 #[rustler::nif]
@@ -211,4 +236,59 @@ impl SerWebRtcTransportOptions {
         }
         Ok(option)
     }
+}
+
+#[derive(NifStruct)]
+#[module = "Mediasoup.Router.PipeToRouterOptions"]
+pub struct PipeToRouterOptionsStruct {
+    /// Target Router instance.
+    pub router: RouterStruct,
+    /// IP used in the PipeTransport pair.
+    ///
+    /// Default `127.0.0.1`.
+    //  listen_ip: Option<JsonSerdeWrap<TransportListenIp>>,
+    /// Create a SCTP association.
+    ///
+    /// Default `true`.
+    enable_sctp: Option<bool>,
+    /// SCTP streams number.
+    num_sctp_streams: Option<JsonSerdeWrap<SerNumSctpStreams>>,
+    /// Enable RTX and NACK for RTP retransmission.
+    ///
+    /// Default `false`.
+    pub enable_rtx: Option<bool>,
+    /// Enable SRTP.
+    ///
+    /// Default `false`.
+    pub enable_srtp: Option<bool>,
+}
+
+impl PipeToRouterOptionsStruct {
+    pub fn try_to_option(self) -> rustler::NifResult<PipeToRouterOptions> {
+        let router = self.router.reference.get_resource()?;
+
+        let mut option = PipeToRouterOptions::new(router);
+
+        if let Some(enable_sctp) = self.enable_sctp {
+            option.enable_sctp = enable_sctp;
+        }
+        if let Some(num_sctp_streams) = self.num_sctp_streams {
+            option.num_sctp_streams = num_sctp_streams.as_streams();
+        }
+        if let Some(enable_rtx) = self.enable_rtx {
+            option.enable_rtx = enable_rtx;
+        }
+        if let Some(enable_srtp) = self.enable_srtp {
+            option.enable_srtp = enable_srtp;
+        }
+        Ok(option)
+    }
+}
+
+#[derive(NifStruct)]
+#[module = "Mediasoup.Router.PipeToRouterResult"]
+pub struct PipeToRouterResultStruct {
+    pub pipe_consumer: ConsumerStruct,
+    //    pub pipe_producer: ProducerStruct,// see PipedProducer
+    //DataConsumer and DataProducer not implemented.
 }
