@@ -22,8 +22,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          ~/.cargo/registry
-          ~/.cargo/git
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
           target
           deps
           _build
