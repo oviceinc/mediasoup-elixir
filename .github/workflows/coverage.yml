@@ -29,11 +29,13 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-              ~/.cargo/registry
-              ~/.cargo/git
-              target
-              deps
-              _build
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target
+            deps
+            _build
           key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
       - name: Install dependencies
@@ -71,11 +73,13 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-              ~/.cargo/registry
-              ~/.cargo/git
-              target
-              deps
-              _build
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target
+            deps
+            _build
           key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
 
