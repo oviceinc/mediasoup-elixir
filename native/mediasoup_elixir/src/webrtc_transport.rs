@@ -1,22 +1,20 @@
 use crate::atoms;
-use crate::consumer::ConsumerStruct;
+use crate::consumer::{ConsumerOptionsStruct, ConsumerStruct};
 use crate::json_serde::JsonSerdeWrap;
-use crate::producer::ProducerStruct;
+use crate::producer::{ProducerOptionsStruct, ProducerStruct};
 use crate::{send_msg_from_other_thread, WebRtcTransportRef};
 use futures_lite::future;
-use mediasoup::consumer::{ConsumerLayers, ConsumerOptions};
+use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{
     DtlsParameters, DtlsState, IceParameters, IceRole, IceState, SctpState, TransportTuple,
 };
-use mediasoup::producer::{ProducerId, ProducerOptions};
-use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
+use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use mediasoup::webrtc_transport::{
     WebRtcTransport, WebRtcTransportDump, WebRtcTransportRemoteParameters, WebRtcTransportStat,
 };
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
-use serde::{Deserialize, Serialize};
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.WebRtcTransport"]
@@ -48,11 +46,11 @@ pub fn webrtc_transport_close(transport: ResourceArc<WebRtcTransportRef>) -> Nif
 #[rustler::nif]
 pub fn webrtc_transport_consume(
     transport: ResourceArc<WebRtcTransportRef>,
-    ser_option: JsonSerdeWrap<SerConsumerOptions>,
+    option: ConsumerOptionsStruct,
 ) -> NifResult<(Atom, ConsumerStruct)> {
     let transport = transport.get_resource()?;
 
-    let option: ConsumerOptions = ser_option.to_option();
+    let option: ConsumerOptions = option.to_option();
 
     let r = future::block_on(async move {
         return transport.consume(option).await;
@@ -80,7 +78,7 @@ pub fn webrtc_transport_connect(
 #[rustler::nif]
 pub fn webrtc_transport_produce(
     transport: ResourceArc<WebRtcTransportRef>,
-    option: JsonSerdeWrap<SerProducerOptions>,
+    option: ProducerOptionsStruct,
 ) -> NifResult<(Atom, ProducerStruct)> {
     let transport = transport.get_resource()?;
     let option: ProducerOptions = option.to_option();
@@ -294,56 +292,4 @@ pub fn webrtc_transport_event(
     }
 
     Ok((atoms::ok(),))
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SerConsumerOptions {
-    producer_id: ProducerId,
-    rtp_capabilities: RtpCapabilities,
-    paused: Option<bool>,
-    preferred_layers: Option<ConsumerLayers>,
-    pipe: Option<bool>,
-}
-
-impl SerConsumerOptions {
-    fn to_option(&self) -> ConsumerOptions {
-        let mut option = ConsumerOptions::new(self.producer_id, self.rtp_capabilities.clone());
-        if let Some(paused) = self.paused {
-            option.paused = paused;
-        }
-        option.preferred_layers = self.preferred_layers;
-        if let Some(pipe) = self.pipe {
-            option.pipe = pipe;
-        }
-        option
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct SerProducerOptions {
-    pub id: Option<ProducerId>,
-    pub kind: MediaKind,
-    pub rtp_parameters: RtpParameters,
-    pub paused: Option<bool>,
-    pub key_frame_request_delay: Option<u32>,
-}
-
-impl SerProducerOptions {
-    fn to_option(&self) -> ProducerOptions {
-        let mut option = match self.id {
-            Some(id) => {
-                ProducerOptions::new_pipe_transport(id, self.kind, self.rtp_parameters.clone())
-            }
-            None => ProducerOptions::new(self.kind, self.rtp_parameters.clone()),
-        };
-
-        option.paused = self.paused.unwrap_or(option.paused);
-        option.key_frame_request_delay = self
-            .key_frame_request_delay
-            .unwrap_or(option.key_frame_request_delay);
-
-        option
-    }
 }

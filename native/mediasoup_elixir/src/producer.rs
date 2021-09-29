@@ -3,7 +3,7 @@ use crate::json_serde::JsonSerdeWrap;
 use crate::{send_msg_from_other_thread, ProducerRef};
 use futures_lite::future;
 use mediasoup::producer::{
-    Producer, ProducerDump, ProducerId, ProducerScore, ProducerStat, ProducerType,
+    Producer, ProducerDump, ProducerId, ProducerOptions, ProducerScore, ProducerStat, ProducerType,
 };
 use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
@@ -147,4 +147,32 @@ pub fn producer_event(
     }
 
     Ok((atoms::ok(),))
+}
+
+#[derive(NifStruct)]
+#[module = "Mediasoup.Producer.Options"]
+pub struct ProducerOptionsStruct {
+    pub id: Option<JsonSerdeWrap<ProducerId>>,
+    pub kind: JsonSerdeWrap<MediaKind>,
+    pub rtp_parameters: JsonSerdeWrap<RtpParameters>,
+    pub paused: Option<bool>,
+    pub key_frame_request_delay: Option<u32>,
+}
+
+impl ProducerOptionsStruct {
+    pub fn to_option(&self) -> ProducerOptions {
+        let mut option = match &self.id {
+            Some(id) => {
+                ProducerOptions::new_pipe_transport(**id, *self.kind, self.rtp_parameters.clone())
+            }
+            None => ProducerOptions::new(*self.kind, self.rtp_parameters.clone()),
+        };
+
+        option.paused = self.paused.unwrap_or(option.paused);
+        option.key_frame_request_delay = self
+            .key_frame_request_delay
+            .unwrap_or(option.key_frame_request_delay);
+
+        option
+    }
 }

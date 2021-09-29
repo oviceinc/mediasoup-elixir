@@ -11,8 +11,6 @@ defmodule Mediasoup.WebRtcTransport do
 
   @type create_option :: map
 
-  @type consume_option :: map
-  @type produce_option :: map
   @type connect_option :: map
 
   @type ice_parameter :: map()
@@ -22,14 +20,24 @@ defmodule Mediasoup.WebRtcTransport do
     Nif.webrtc_transport_close(reference)
   end
 
-  @spec consume(t, consume_option()) :: {:ok, Consumer.t()} | {:error, String.t() | :terminated}
-  def consume(%WebRtcTransport{reference: reference}, option) do
+  @spec consume(t, Consumer.Options.t() | map()) ::
+          {:ok, Consumer.t()} | {:error, String.t() | :terminated}
+  def consume(%WebRtcTransport{reference: reference}, %Consumer.Options{} = option) do
     Nif.webrtc_transport_consume(reference, option)
   end
 
-  @spec produce(t, produce_option()) :: {:ok, Producer.t()} | {:error, String.t() | :terminated}
-  def produce(%WebRtcTransport{reference: reference}, option) do
+  def consume(%WebRtcTransport{} = transport, option) do
+    consume(transport, Consumer.Options.from_map(option))
+  end
+
+  @spec produce(t, Producer.Options.t() | map()) ::
+          {:ok, Producer.t()} | {:error, String.t() | :terminated}
+  def produce(%WebRtcTransport{reference: reference}, %Producer.Options{} = option) do
     Nif.webrtc_transport_produce(reference, option)
+  end
+
+  def produce(%WebRtcTransport{} = transport, %{} = option) do
+    produce(transport, Producer.Options.from_map(option))
   end
 
   @spec connect(t, connect_option()) :: {:ok} | {:error, String.t() | :terminated}

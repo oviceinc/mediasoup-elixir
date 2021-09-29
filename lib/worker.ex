@@ -87,5 +87,19 @@ defmodule Mediasoup.Worker do
             dtls_certificate_file: String.t() | nil,
             dtls_private_key_file: String.t() | nil
           }
+
+    @spec from_map(map) :: Mediasoup.Worker.Settings.t()
+    def from_map(%{} = map) do
+      map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
+
+      %Settings{
+        log_level: map["logLevel"],
+        log_tags: map["logTags"],
+        rtc_min_port: map["rtcMinPort"],
+        rtc_max_port: map["rtcMaxPort"],
+        dtls_certificate_file: map["dtlsCertificateFile"],
+        dtls_private_key_file: map["dtlsPrivateKeyFile"]
+      }
+    end
   end
 end
