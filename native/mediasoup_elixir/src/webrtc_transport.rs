@@ -1,18 +1,21 @@
 use crate::atoms;
 use crate::consumer::{ConsumerOptionsStruct, ConsumerStruct};
+use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::{ProducerOptionsStruct, ProducerStruct};
 use crate::{send_msg_from_other_thread, WebRtcTransportRef};
 use futures_lite::future;
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{
-    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, SctpState, TransportTuple,
+    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, SctpState, TransportListenIp,
+    TransportTuple,
 };
 use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use mediasoup::webrtc_transport::{
-    WebRtcTransport, WebRtcTransportDump, WebRtcTransportRemoteParameters, WebRtcTransportStat,
+    TransportListenIps, WebRtcTransport, WebRtcTransportDump, WebRtcTransportOptions,
+    WebRtcTransportRemoteParameters, WebRtcTransportStat,
 };
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
 
@@ -292,4 +295,61 @@ pub fn webrtc_transport_event(
     }
 
     Ok((atoms::ok(),))
+}
+
+#[derive(NifStruct)]
+#[module = "Mediasoup.WebRtcTransport.Options"]
+pub struct WebRtcTransportOptionsStruct {
+    listen_ips: JsonSerdeWrap<Vec<TransportListenIp>>,
+    enable_udp: Option<bool>,
+    enable_tcp: Option<bool>,
+    prefer_udp: Option<bool>,
+    prefer_tcp: Option<bool>,
+    initial_available_outgoing_bitrate: Option<u32>,
+    enable_sctp: Option<bool>,
+    num_sctp_streams: Option<JsonSerdeWrap<SerNumSctpStreams>>,
+    max_sctp_message_size: Option<u32>,
+    sctp_send_buffer_size: Option<u32>,
+}
+impl WebRtcTransportOptionsStruct {
+    pub fn try_to_option(&self) -> Result<WebRtcTransportOptions, &'static str> {
+        let ips = match self.listen_ips.first() {
+            None => Err("Rquired least one ip"),
+            Some(ip) => Ok(TransportListenIps::new(*ip)),
+        }?;
+
+        let ips = self.listen_ips[1..]
+            .iter()
+            .fold(ips, |ips, ip| ips.insert(*ip));
+
+        let mut option = WebRtcTransportOptions::new(ips);
+        if let Some(enable_udp) = self.enable_udp {
+            option.enable_udp = enable_udp;
+        }
+        if let Some(enable_tcp) = self.enable_tcp {
+            option.enable_tcp = enable_tcp;
+        }
+        if let Some(prefer_udp) = self.prefer_udp {
+            option.prefer_udp = prefer_udp;
+        }
+        if let Some(prefer_tcp) = self.prefer_tcp {
+            option.prefer_tcp = prefer_tcp;
+        }
+        if let Some(initial_available_outgoing_bitrate) = self.initial_available_outgoing_bitrate {
+            option.initial_available_outgoing_bitrate = initial_available_outgoing_bitrate;
+        }
+        if let Some(enable_sctp) = self.enable_sctp {
+            option.enable_sctp = enable_sctp;
+        }
+        if let Some(num_sctp_streams) = &self.num_sctp_streams {
+            option.num_sctp_streams = num_sctp_streams.as_streams();
+        }
+        if let Some(max_sctp_message_size) = self.max_sctp_message_size {
+            option.max_sctp_message_size = max_sctp_message_size;
+        }
+        if let Some(sctp_send_buffer_size) = self.sctp_send_buffer_size {
+            option.sctp_send_buffer_size = sctp_send_buffer_size;
+        }
+        Ok(option)
+    }
 }

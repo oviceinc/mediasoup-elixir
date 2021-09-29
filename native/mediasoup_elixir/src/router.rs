@@ -1,18 +1,15 @@
 use crate::atoms;
 use crate::consumer::ConsumerStruct;
+use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::PipedProducerStruct;
-use crate::webrtc_transport::WebRtcTransportStruct;
+use crate::webrtc_transport::{WebRtcTransportOptionsStruct, WebRtcTransportStruct};
 use crate::RouterRef;
 use futures_lite::future;
-use mediasoup::data_structures::TransportListenIp;
 use mediasoup::producer::ProducerId;
 use mediasoup::router::{PipeToRouterOptions, Router, RouterDump, RouterId};
 use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized};
-use mediasoup::sctp_parameters::NumSctpStreams;
-use mediasoup::webrtc_transport::{TransportListenIps, WebRtcTransportOptions};
 use rustler::{Error, NifResult, NifStruct, ResourceArc};
-use serde::{Deserialize, Serialize};
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.Router"]
@@ -42,7 +39,7 @@ pub fn router_close(router: ResourceArc<RouterRef>) -> NifResult<(rustler::Atom,
 #[rustler::nif]
 pub fn router_create_webrtc_transport(
     router: ResourceArc<RouterRef>,
-    option: JsonSerdeWrap<SerWebRtcTransportOptions>,
+    option: WebRtcTransportOptionsStruct,
 ) -> NifResult<(rustler::Atom, WebRtcTransportStruct)> {
     let router = router.get_resource()?;
     let option = option
@@ -155,88 +152,6 @@ pub fn router_event(
     */
 
     Ok((atoms::ok(),))
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-struct SerNumSctpStreams {
-    #[serde(rename = "OS")]
-    pub os: u16,
-    #[serde(rename = "MIS")]
-    pub mis: u16,
-}
-impl SerNumSctpStreams {
-    pub fn as_streams(&self) -> NumSctpStreams {
-        NumSctpStreams {
-            os: self.os,
-            mis: self.mis,
-        }
-    }
-}
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct SerWebRtcTransportOptions {
-    listen_ips: Vec<TransportListenIp>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    enable_udp: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    enable_tcp: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    prefer_udp: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    prefer_tcp: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    initial_available_outgoing_bitrate: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    enable_sctp: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    num_sctp_streams: Option<SerNumSctpStreams>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    max_sctp_message_size: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    sctp_send_buffer_size: Option<u32>,
-}
-
-impl SerWebRtcTransportOptions {
-    pub fn try_to_option(&self) -> Result<WebRtcTransportOptions, &'static str> {
-        let ips = match self.listen_ips.first() {
-            None => Err("Rquired least one ip"),
-            Some(ip) => Ok(TransportListenIps::new(*ip)),
-        }?;
-
-        let ips = self.listen_ips[1..]
-            .iter()
-            .fold(ips, |ips, ip| ips.insert(*ip));
-
-        let mut option = WebRtcTransportOptions::new(ips);
-        if let Some(enable_udp) = self.enable_udp {
-            option.enable_udp = enable_udp;
-        }
-        if let Some(enable_tcp) = self.enable_tcp {
-            option.enable_tcp = enable_tcp;
-        }
-        if let Some(prefer_udp) = self.prefer_udp {
-            option.prefer_udp = prefer_udp;
-        }
-        if let Some(prefer_tcp) = self.prefer_tcp {
-            option.prefer_tcp = prefer_tcp;
-        }
-        if let Some(initial_available_outgoing_bitrate) = self.initial_available_outgoing_bitrate {
-            option.initial_available_outgoing_bitrate = initial_available_outgoing_bitrate;
-        }
-        if let Some(enable_sctp) = self.enable_sctp {
-            option.enable_sctp = enable_sctp;
-        }
-        if let Some(num_sctp_streams) = &self.num_sctp_streams {
-            option.num_sctp_streams = num_sctp_streams.as_streams();
-        }
-        if let Some(max_sctp_message_size) = self.max_sctp_message_size {
-            option.max_sctp_message_size = max_sctp_message_size;
-        }
-        if let Some(sctp_send_buffer_size) = self.sctp_send_buffer_size {
-            option.sctp_send_buffer_size = sctp_send_buffer_size;
-        }
-        Ok(option)
-    }
 }
 
 #[derive(NifStruct)]
