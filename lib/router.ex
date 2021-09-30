@@ -43,7 +43,7 @@ defmodule Mediasoup.Router do
 
     @type t :: %PipeToRouterResult{
             pipe_consumer: Mediasoup.Consumer.t() | nil,
-            pipe_producer: Mediasoup.Producer.t() | nil
+            pipe_producer: Mediasoup.PipedProducer.t() | nil
           }
   end
 

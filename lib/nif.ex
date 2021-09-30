@@ -150,4 +150,6 @@ defmodule Mediasoup.Nif do
   @spec producer_event(reference, pid) :: {:ok} | {:error}
   def producer_event(_producer, _pid), do: :erlang.nif_error(:nif_not_loaded)
   def producer_dump(_producer), do: :erlang.nif_error(:nif_not_loaded)
+
+  def piped_producer_into_producer(_piped_producer), do: :erlang.nif_error(:nif_not_loaded)
 end

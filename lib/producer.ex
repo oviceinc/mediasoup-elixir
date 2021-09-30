@@ -103,3 +103,22 @@ defmodule Mediasoup.Producer do
     end
   end
 end
+
+defmodule Mediasoup.PipedProducer do
+  @moduledoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#Producer
+  Same as [`Producer`], but will not be closed when gc.
+  """
+  alias Mediasoup.{Producer, PipedProducer, Nif}
+  @enforce_keys [:reference]
+  defstruct [:reference]
+
+  @type t :: %PipedProducer{
+          reference: reference
+        }
+
+  @spec into_producer(t) :: {:ok, Producer.t()} | {:error, message :: term}
+  def into_producer(%PipedProducer{reference: reference}) do
+    Nif.piped_producer_into_producer(reference)
+  end
+end

@@ -1,9 +1,10 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::{send_msg_from_other_thread, ProducerRef};
+use crate::{send_msg_from_other_thread, PipedProducerRef, ProducerRef};
 use futures_lite::future;
 use mediasoup::producer::{
-    Producer, ProducerDump, ProducerId, ProducerOptions, ProducerScore, ProducerStat, ProducerType,
+    PipedProducer, Producer, ProducerDump, ProducerId, ProducerOptions, ProducerScore,
+    ProducerStat, ProducerType,
 };
 use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
@@ -174,5 +175,37 @@ impl ProducerOptionsStruct {
             .unwrap_or(option.key_frame_request_delay);
 
         option
+    }
+}
+
+#[derive(NifStruct)]
+#[module = "Mediasoup.PipedProducer"]
+pub struct PipedProducerStruct {
+    reference: ResourceArc<PipedProducerRef>,
+}
+impl PipedProducerStruct {
+    pub fn from(producer: PipedProducer) -> Self {
+        Self {
+            reference: PipedProducerRef::resource(producer),
+        }
+    }
+}
+
+#[rustler::nif]
+pub fn piped_producer_into_producer(
+    piped_producer: ResourceArc<PipedProducerRef>,
+) -> NifResult<(Atom, ProducerStruct)> {
+    let mut piped_producer = piped_producer
+        .0
+        .lock()
+        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+
+    if let Some(piped_producer) = piped_producer.take() {
+        Ok((
+            atoms::ok(),
+            ProducerStruct::from(piped_producer.into_inner()),
+        ))
+    } else {
+        Err(Error::Term(Box::new("closed")))
     }
 }

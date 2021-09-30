@@ -242,7 +242,7 @@ defmodule IntegrateTest.PipeTransportTest do
 
     {:ok, audio_producer} = WebRtcTransport.produce(transport1, audio_producer_options())
 
-    {:ok, %{pipe_consumer: pipe_consumer}} =
+    {:ok, %{pipe_consumer: pipe_consumer, pipe_producer: pipe_producer}} =
       Router.pipe_producer_to_router(router1, audio_producer.id, %Router.PipeToRouterOptions{
         router: router2
       })
@@ -288,11 +288,10 @@ defmodule IntegrateTest.PipeTransportTest do
              "score" => 10
            }
 
-    """
-    # currently PipedProducer not implemented.
+    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
     assert pipe_producer.id === audio_producer.id
     assert "audio" === pipe_producer.kind
-    #  assert nil == pipe_producer.rtp_parameters["mid"]
+    assert nil == pipe_producer.rtp_parameters["mid"]
 
     assert [
              %{
@@ -319,7 +318,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
     assert Producer.paused?(pipe_producer) === false
-    """
   end
 
   def pipe_to_router_succeeds_with_video() do
@@ -335,7 +333,7 @@ defmodule IntegrateTest.PipeTransportTest do
     # Pause the videoProducer.
     assert {:ok} === Producer.pause(video_producer)
 
-    {:ok, %{pipe_consumer: pipe_consumer}} =
+    {:ok, %{pipe_consumer: pipe_consumer, pipe_producer: pipe_producer}} =
       Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
         router: router2
       })
@@ -381,18 +379,18 @@ defmodule IntegrateTest.PipeTransportTest do
              "score" => 10
            }
 
-    """
-    # currently PipedProducer not implemented.
+    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
+
     assert pipe_producer.id === video_producer.id
     assert "video" === pipe_producer.kind
-    #  assert nil == pipe_producer.rtp_parameters["mid"]
+    assert nil == pipe_producer.rtp_parameters["mid"]
 
     assert [
              %{
                "clockRate" => 90000,
-               "mimeType" => "video/H264",
+               "mimeType" => "video/VP8",
                "parameters" => %{"packetization-mode" => 1, "profile-level-id" => "4d0032"},
-               "payloadType" => 103,
+               "payloadType" => 101,
                "rtcpFeedback" => [
                  %{"parameter" => "pli", "type" => "nack"},
                  %{"parameter" => "fir", "type" => "ccm"}
@@ -412,7 +410,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
     assert Producer.paused?(pipe_producer) === true
-    """
   end
 
   def consume_for_pipe_producer_succeeds() do
