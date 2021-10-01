@@ -1,5 +1,6 @@
 mod atoms;
 mod consumer;
+mod data_structure;
 mod json_serde;
 mod macros;
 mod producer;

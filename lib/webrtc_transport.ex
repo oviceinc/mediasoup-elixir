@@ -9,7 +9,57 @@ defmodule Mediasoup.WebRtcTransport do
   @type t(id, ref) :: %WebRtcTransport{id: id, reference: ref}
   @type t :: %WebRtcTransport{id: String.t(), reference: reference}
 
-  @type create_option :: map
+  defmodule Options do
+    @moduledoc """
+    https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
+    """
+
+    @enforce_keys [:listen_ips]
+    defstruct [
+      :listen_ips,
+      enable_udp: nil,
+      enable_tcp: nil,
+      prefer_udp: nil,
+      prefer_tcp: nil,
+      initial_available_outgoing_bitrate: nil,
+      enable_sctp: nil,
+      num_sctp_streams: nil,
+      max_sctp_message_size: nil,
+      sctp_send_buffer_size: nil
+    ]
+
+    @type t :: %Options{
+            listen_ips: [Mediasoup.transport_listen_ip()],
+            enable_udp: boolean | nil,
+            enable_tcp: boolean | nil,
+            prefer_udp: boolean | nil,
+            prefer_tcp: boolean | nil,
+            initial_available_outgoing_bitrate: integer() | nil,
+            enable_sctp: boolean | nil,
+            num_sctp_streams: Mediasoup.num_sctp_streams() | nil,
+            max_sctp_message_size: integer() | nil,
+            sctp_send_buffer_size: integer() | nil
+          }
+
+    def from_map(%{} = map) do
+      map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
+
+      %Options{
+        listen_ips: map["listenIps"],
+        enable_udp: map["enableUdp"],
+        enable_tcp: map["enableTcp"],
+        prefer_udp: map["preferUdp"],
+        prefer_tcp: map["preferTcp"],
+        initial_available_outgoing_bitrate: map["initialAvailableOutgoingBitrate"],
+        enable_sctp: map["enableSctp"],
+        num_sctp_streams: map["numSctpStreams"],
+        max_sctp_message_size: map["maxSctpMessageSize"],
+        sctp_send_buffer_size: map["sctpSendBufferSize"]
+      }
+    end
+  end
+
+  @type create_option :: map | Options.t()
 
   @type connect_option :: map
 

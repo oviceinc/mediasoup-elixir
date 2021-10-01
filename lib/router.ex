@@ -54,8 +54,12 @@ defmodule Mediasoup.Router do
 
   @spec create_webrtc_transport(t, WebRtcTransport.create_option()) ::
           {:ok, WebRtcTransport.t()} | {:error, String.t()}
-  def create_webrtc_transport(%Router{reference: reference}, option) do
+  def create_webrtc_transport(%Router{reference: reference}, %WebRtcTransport.Options{} = option) do
     Nif.router_create_webrtc_transport(reference, option)
+  end
+
+  def create_webrtc_transport(router, %{} = option) do
+    create_webrtc_transport(router, WebRtcTransport.Options.from_map(option))
   end
 
   @spec pipe_producer_to_router(t, producer_id :: String.t(), PipeToRouterOptions.t()) ::
