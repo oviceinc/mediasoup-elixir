@@ -117,10 +117,8 @@ pub fn pipe_transport_consume(
 
     let option = option.to_option();
 
-    let r = future::block_on(async move {
-        return transport.consume(option).await;
-    })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    let r = future::block_on(async move { transport.consume(option).await })
+        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
     Ok((atoms::ok(), ConsumerStruct::from(r)))
 }
@@ -226,8 +224,6 @@ pub fn pipe_transport_event(
     pid: rustler::LocalPid,
 ) -> NifResult<(Atom,)> {
     let transport = transport.get_resource()?;
-
-    //    crate::reg_callback!(env, transport, on_close);
 
     crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
     crate::reg_callback_json_clone_param!(pid, transport, on_tuple);

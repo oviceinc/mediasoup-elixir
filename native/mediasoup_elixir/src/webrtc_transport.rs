@@ -55,10 +55,8 @@ pub fn webrtc_transport_consume(
 
     let option: ConsumerOptions = option.to_option();
 
-    let r = future::block_on(async move {
-        return transport.consume(option).await;
-    })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+    let r = future::block_on(async move { transport.consume(option).await })
+        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
     Ok((atoms::ok(), ConsumerStruct::from(r)))
 }
@@ -240,46 +238,11 @@ pub fn webrtc_transport_event(
 ) -> NifResult<(Atom,)> {
     let transport = transport.get_resource()?;
 
-    //    crate::reg_callback!(env, transport, on_close);
-
     crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
     crate::reg_callback_json_param!(pid, transport, on_ice_state_change);
     crate::reg_callback_json_param!(pid, transport, on_dtls_state_change);
 
-    /* TODO: Can not create multiple instance for disposable
     {
-        let pid = pid.clone();
-        transport
-            .on_new_producer(Box::new(move |producer| {
-                send_msg_from_other_thread(
-                    pid.clone(),
-                    (
-                        atoms::on_new_producer(),
-                        ProducerStruct::from(producer.clone()),
-                    ),
-                );
-            }))
-            .detach();
-    }
-
-    {
-        let pid = pid.clone();
-        transport
-            .on_new_consumer(Box::new(move |consumer| {
-                send_msg_from_other_thread(
-                    pid.clone(),
-                    (
-                        atoms::on_new_consumer(),
-                        ConsumerStruct::from(consumer.clone()),
-                    ),
-                );
-            }))
-            .detach();
-    }
-    */
-
-    {
-        //        let pid = pid.clone();
         transport
             .on_ice_selected_tuple_change(move |arg| {
                 send_msg_from_other_thread(

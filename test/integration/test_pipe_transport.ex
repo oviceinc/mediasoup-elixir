@@ -251,7 +251,7 @@ defmodule IntegrateTest.PipeTransportTest do
     assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
 
     assert "audio" == pipe_consumer.kind
-    assert nil == pipe_consumer.rtp_parameters["mid"]
+    refute pipe_consumer.rtp_parameters["mid"]
 
     assert [
              %{
@@ -291,7 +291,7 @@ defmodule IntegrateTest.PipeTransportTest do
     {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
     assert pipe_producer.id === audio_producer.id
     assert "audio" === pipe_producer.kind
-    assert nil == pipe_producer.rtp_parameters["mid"]
+    refute pipe_producer.rtp_parameters["mid"]
 
     assert [
              %{
@@ -342,7 +342,7 @@ defmodule IntegrateTest.PipeTransportTest do
     assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
 
     assert "video" == pipe_consumer.kind
-    assert nil == pipe_consumer.rtp_parameters["mid"]
+    refute pipe_consumer.rtp_parameters["mid"]
 
     assert [
              %{
@@ -383,7 +383,7 @@ defmodule IntegrateTest.PipeTransportTest do
 
     assert pipe_producer.id === video_producer.id
     assert "video" === pipe_producer.kind
-    assert nil == pipe_producer.rtp_parameters["mid"]
+    refute pipe_producer.rtp_parameters["mid"]
 
     assert [
              %{
@@ -446,7 +446,7 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     assert "video" == pipe_consumer.kind
-    assert nil == pipe_consumer.rtp_parameters["mid"]
+    refute pipe_consumer.rtp_parameters["mid"]
 
     assert [
              %{
@@ -506,7 +506,7 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     srtp_parameters = PipeTransport.srtp_parameters(pipe_transport)
-    assert nil != srtp_parameters
+    assert match?(%{}, srtp_parameters)
     assert String.length(srtp_parameters["keyBase64"]) == 40
 
     # Missing srtp_parameters.
@@ -740,11 +740,11 @@ defmodule IntegrateTest.PipeTransportTest do
         rtp_capabilities: consumer_device_capabilities()
       })
 
-    assert nil == Transport.sctp_parameters(pipe_transport_local)
-    assert nil == Transport.sctp_state(pipe_transport_local)
-    assert nil != Transport.get_stats(pipe_transport_local)
+    refute Transport.sctp_parameters(pipe_transport_local)
+    refute Transport.sctp_state(pipe_transport_local)
+    assert Transport.get_stats(pipe_transport_local)
 
-    assert nil != PipeTransport.dump(pipe_transport_local)
+    assert PipeTransport.dump(pipe_transport_local)
     PipeTransport.event(pipe_transport_local, self())
 
     assert "video" == video_consumer.kind
@@ -785,7 +785,7 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     assert "video" == pipe_consumer.kind
-    assert nil == pipe_consumer.rtp_parameters["mid"]
+    refute pipe_consumer.rtp_parameters["mid"]
 
     {:ok, _pipe_producer} =
       Transport.produce(pipe_transport, %{
