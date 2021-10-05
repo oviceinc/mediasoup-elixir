@@ -2,7 +2,7 @@ defmodule Mediasoup.Router do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Router
   """
-  alias Mediasoup.{Router, WebRtcTransport, Nif}
+  alias Mediasoup.{Router, WebRtcTransport, PipeTransport, Nif}
   @enforce_keys [:id, :reference]
   defstruct [:id, :reference]
   @type t(id, ref) :: %Router{id: id, reference: ref}
@@ -70,6 +70,17 @@ defmodule Mediasoup.Router do
         %PipeToRouterOptions{} = option
       ) do
     Nif.router_pipe_producer_to_router(reference, producer_id, option)
+  end
+
+  @spec create_pipe_transport(
+          Router.t(),
+          PipeTransport.Options.t()
+        ) :: {:ok, PipeTransport.t()} | {:error, String.t()}
+  def create_pipe_transport(
+        %Router{reference: reference},
+        %PipeTransport.Options{} = option
+      ) do
+    Nif.router_create_pipe_transport(reference, option)
   end
 
   @spec can_consume?(t, String.t(), rtpCapabilities) :: boolean

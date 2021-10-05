@@ -1,6 +1,7 @@
 defmodule Mediasoup.Nif do
   @moduledoc """
   Nif interface for mediasoup
+  Do not use directly
   """
   use Rustler, otp_app: :mediasoup_elixir, crate: :mediasoup_elixir
 
@@ -44,6 +45,12 @@ defmodule Mediasoup.Nif do
   def router_pipe_producer_to_router(
         _reference,
         _producer_id,
+        _option
+      ),
+      do: :erlang.nif_error(:nif_not_loaded)
+
+  def router_create_pipe_transport(
+        _reference,
         _option
       ),
       do: :erlang.nif_error(:nif_not_loaded)
@@ -96,6 +103,19 @@ defmodule Mediasoup.Nif do
   @spec webrtc_transport_event(reference, pid) :: {:ok} | {:error}
   def webrtc_transport_event(_transport, _pid), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_dump(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
+  # pipe_transport
+  def pipe_transport_close(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_consume(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_connect(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_produce(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_get_stats(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_tuple(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_sctp_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_sctp_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_srtp_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_dump(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def pipe_transport_event(_transport, _pid), do: :erlang.nif_error(:nif_not_loaded)
 
   # consumer
   @spec consumer_id(reference) :: String.t()
