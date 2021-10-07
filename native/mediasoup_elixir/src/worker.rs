@@ -10,11 +10,9 @@ use mediasoup::worker::{
     WorkerUpdateSettings,
 };
 use mediasoup::worker_manager::WorkerManager;
-use once_cell::sync::Lazy;
 use rustler::{Error, NifResult, NifStruct, ResourceArc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Mutex;
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.Worker"]
@@ -30,7 +28,6 @@ impl WorkerStruct {
         }
     }
 }
-static WORKER_MANAGER: Lazy<Mutex<WorkerManager>> = Lazy::new(|| Mutex::new(WorkerManager::new()));
 
 #[rustler::nif]
 pub fn worker_id(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerId>> {
@@ -128,9 +125,7 @@ pub fn worker_event(
 }
 
 fn create_worker_impl(settings: WorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
-    let worker_manager = WORKER_MANAGER
-        .lock()
-        .map_err(|_e| Error::RaiseAtom("worker_manager lock error"))?;
+    let worker_manager = WorkerManager::new();
 
     let worker = future::block_on(async move {
         return worker_manager.create_worker(settings).await;
