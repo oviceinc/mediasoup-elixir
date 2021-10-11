@@ -37,11 +37,6 @@ defmodule ProducerTest do
     IntegrateTest.ProducerTest.pause_resume_succeeds()
   end
 
-  # TODO: not supported now.
-  #  test "enable_trace_event_succeeds" do
-  #    IntegrateTest.ProducerTest.enable_trace_event_succeeds()
-  #  end
-
   test "close_event" do
     IntegrateTest.ProducerTest.close_event()
   end
