@@ -78,13 +78,13 @@ pub fn router_pipe_producer_to_router(
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    return Ok((
+    Ok((
         atoms::ok(),
         PipeToRouterResultStruct {
             pipe_consumer: ConsumerStruct::from(result.pipe_consumer),
             pipe_producer: PipedProducerStruct::from(result.pipe_producer),
         },
-    ));
+    ))
 }
 
 #[rustler::nif]
@@ -100,7 +100,7 @@ pub fn router_create_pipe_transport(
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    return Ok((atoms::ok(), PipeTransportStruct::from(result)));
+    Ok((atoms::ok(), PipeTransportStruct::from(result)))
 }
 
 #[rustler::nif]
