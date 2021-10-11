@@ -596,7 +596,6 @@ defmodule IntegrateTest.ConsumerTest do
   def get_stats_succeeds() do
     {worker, router, transport_1, transport_2} = init()
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
-    ## TODO: This test is unstable for unknown reason "Consumer not found"
     assert true === Router.can_consume?(router, audio_producer.id, consumer_device_capabilities())
 
     {:ok, audio_consumer} =
@@ -638,7 +637,6 @@ defmodule IntegrateTest.ConsumerTest do
   def close() do
     {_worker, _router, transport_1, transport_2} = init()
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
-    ## TODO: This test is unstable for unknown reason "Consumer not found"
 
     {:ok, audio_consumer} =
       WebRtcTransport.consume(transport_2, %{
@@ -654,7 +652,6 @@ defmodule IntegrateTest.ConsumerTest do
   def pause_resume_succeeds() do
     {worker, router, transport_1, transport_2} = init()
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
-    ## TODO: This test is unstable for unknown reason "Consumer not found"
 
     {:ok, audio_consumer} =
       WebRtcTransport.consume(transport_2, %{
@@ -682,7 +679,6 @@ defmodule IntegrateTest.ConsumerTest do
   def set_preferred_layers_succeeds() do
     {worker, router, transport_1, transport_2} = init()
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
-    ## TODO: This test is unstable for unknown reason "Consumer not found"
 
     {:ok, audio_consumer} =
       WebRtcTransport.consume(transport_2, %{
@@ -741,7 +737,6 @@ defmodule IntegrateTest.ConsumerTest do
 
     assert {:ok} === Producer.pause(video_producer)
 
-    ## TODO: This test is unstable for unknown reason "Consumer not found"
     {:ok} = Consumer.set_priority(video_consumer, 2)
     assert Consumer.priority(video_consumer) == 2
     Consumer.unset_priority(video_consumer)
