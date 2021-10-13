@@ -3,70 +3,7 @@ defmodule Mediasoup.Worker do
   https://mediasoup.org/documentation/v3/mediasoup/api/#Worker
   """
   alias Mediasoup.{Worker, Router, Nif}
-
-  @enforce_keys [:id, :reference]
-  defstruct [:id, :reference]
-  @type t(id, reference) :: %Worker{id: id, reference: reference}
-  @type t :: %Worker{id: String.t(), reference: reference}
-
-  @type log_level :: :debug | :warn | :error | :none
-  @type log_tag ::
-          :info
-          | :ice
-          | :dtls
-          | :rtp
-          | :srtp
-          | :rtcp
-          | :rtx
-          | :bwe
-          | :score
-          | :simulcast
-          | :svc
-          | :sctp
-          | :message
-
-  @type create_option :: %{
-          optional(:logLevel) => log_level,
-          optional(:logTags) => [log_tag],
-          optional(:rtcMinPort) => integer,
-          optional(:rtcMaxPort) => integer,
-          optional(:dtlsCertificateFile) => String.t(),
-          optional(:dtlsPrivateKeyFile) => String.t()
-        }
-  @type update_option :: %{
-          optional(:logLevel) => log_level,
-          optional(:logTags) => [log_tag]
-        }
-
-  @spec close(t) :: {:ok} | {:error}
-  def close(%Worker{reference: reference}) do
-    Nif.worker_close(reference)
-  end
-
-  @spec create_router(t, Router.create_option()) :: {:ok, Router.t()} | {:error}
-  def create_router(%Worker{reference: reference}, option) do
-    Nif.worker_create_router(reference, option)
-  end
-
-  @spec update_settings(t, update_option) :: {:ok} | {:error}
-  def update_settings(%Worker{reference: reference}, pid) do
-    Nif.worker_update_settings(reference, pid)
-  end
-
-  @spec closed?(t) :: boolean
-  def closed?(%Worker{reference: reference}) do
-    Nif.worker_closed(reference)
-  end
-
-  @spec dump(t) :: map
-  def dump(%Worker{reference: reference}) do
-    Nif.worker_dump(reference)
-  end
-
-  @spec event(t, pid) :: {:ok} | {:error}
-  def event(%Worker{reference: reference}, pid) do
-    Nif.worker_event(reference, pid)
-  end
+  use Mediasoup.ProcessWrap.WithChildren
 
   defmodule Settings do
     @moduledoc """
@@ -101,5 +38,124 @@ defmodule Mediasoup.Worker do
         dtls_private_key_file: map["dtlsPrivateKeyFile"]
       }
     end
+  end
+
+  @enforce_keys [:id, :reference]
+  defstruct [:id, :reference]
+  @type t :: %Worker{id: String.t(), reference: reference}
+
+  @type log_level :: :debug | :warn | :error | :none
+  @type log_tag ::
+          :info
+          | :ice
+          | :dtls
+          | :rtp
+          | :srtp
+          | :rtcp
+          | :rtx
+          | :bwe
+          | :score
+          | :simulcast
+          | :svc
+          | :sctp
+          | :message
+
+  @type create_option ::
+          %{
+            optional(:logLevel) => log_level,
+            optional(:logTags) => [log_tag],
+            optional(:rtcMinPort) => integer,
+            optional(:rtcMaxPort) => integer,
+            optional(:dtlsCertificateFile) => String.t(),
+            optional(:dtlsPrivateKeyFile) => String.t()
+          }
+          | Settings.t()
+  @type update_option :: %{
+          optional(:logLevel) => log_level,
+          optional(:logTags) => [log_tag]
+        }
+
+  def id(%Worker{id: id}) do
+    id
+  end
+
+  def id(pid) when is_pid(pid) do
+    GenServer.call(pid, {:id, []})
+  end
+
+  @spec close(t | pid) :: {:ok} | {:error}
+  def close(%Worker{reference: reference}) do
+    Nif.worker_close(reference)
+  end
+
+  def close(pid) when is_pid(pid) do
+    GenServer.stop(pid)
+  end
+
+  @spec create_router(t | pid, Router.create_option()) :: {:ok, Router.t()} | {:error}
+  def create_router(%Worker{reference: reference}, option) do
+    Nif.worker_create_router(reference, option)
+  end
+
+  def create_router(pid, option) when is_pid(pid) do
+    GenServer.call(pid, {:start_child, Router, :create_router, [option]})
+  end
+
+  @spec update_settings(t | pid, update_option) :: {:ok} | {:error}
+  def update_settings(%Worker{reference: reference}, settings) do
+    Nif.worker_update_settings(reference, settings)
+  end
+
+  def update_settings(pid, settings) when is_pid(pid) do
+    GenServer.call(pid, {:update_settings, [settings]})
+  end
+
+  @spec closed?(t | pid) :: boolean
+  def closed?(%Worker{reference: reference}) do
+    Nif.worker_closed(reference)
+  end
+
+  def closed?(pid) when is_pid(pid) do
+    !Process.alive?(pid)
+  end
+
+  @spec dump(t | pid) :: map
+  def dump(%Worker{reference: reference}) do
+    Nif.worker_dump(reference)
+  end
+
+  def dump(pid) when is_pid(pid) do
+    GenServer.call(pid, {:dump, []})
+  end
+
+  @spec event(t | pid, pid) :: {:ok} | {:error}
+  def event(%Worker{reference: reference}, pid) do
+    Nif.worker_event(reference, pid)
+  end
+
+  def event(pid, lisener) do
+    GenServer.call(pid, {:event, [lisener]})
+  end
+
+  @type start_link_opt :: {:settings, Settings.t() | map()}
+
+  @spec start_link([start_link_opt]) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(opt \\ []) do
+    settings = Keyword.get(opt, :settings)
+    GenServer.start_link(Worker, settings, Keyword.drop(opt, [:settings]))
+  end
+
+  # GenServer callbacks
+  def init(settings) do
+    {:ok, worker} =
+      if settings != nil do
+        Mediasoup.create_worker(settings)
+      else
+        Mediasoup.create_worker()
+      end
+
+    {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
+
+    {:ok, %{struct: worker, supervisor: supervisor}}
   end
 end

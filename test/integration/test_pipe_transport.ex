@@ -201,9 +201,7 @@ defmodule IntegrateTest.PipeTransportTest do
     }
   end
 
-  def init() do
-    {:ok, worker} = Mediasoup.create_worker()
-
+  def init(worker) do
     Worker.event(worker, self())
 
     {:ok, router1} =
@@ -237,8 +235,8 @@ defmodule IntegrateTest.PipeTransportTest do
     {worker, router1, router2, transport1, transport2}
   end
 
-  def pipe_to_router_succeeds_with_audio() do
-    {_worker, router1, router2, transport1, _transport2} = init()
+  def pipe_to_router_succeeds_with_audio(worker) do
+    {_worker, router1, router2, transport1, _transport2} = init(worker)
 
     {:ok, audio_producer} = WebRtcTransport.produce(transport1, audio_producer_options())
 
@@ -320,8 +318,8 @@ defmodule IntegrateTest.PipeTransportTest do
     assert Producer.paused?(pipe_producer) === false
   end
 
-  def pipe_to_router_succeeds_with_video() do
-    {_worker, router1, router2, transport1, _transport2} = init()
+  def pipe_to_router_succeeds_with_video(worker) do
+    {_worker, router1, router2, transport1, _transport2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport1, audio_producer_options())
 
     {:ok, _} =
@@ -412,8 +410,8 @@ defmodule IntegrateTest.PipeTransportTest do
     assert Producer.paused?(pipe_producer) === true
   end
 
-  def create_with_fixed_port_succeeds() do
-    {_worker, router1, _router2, _transport1, _transport2} = init()
+  def create_with_fixed_port_succeeds(worker) do
+    {_worker, router1, _router2, _transport1, _transport2} = init(worker)
 
     {:ok, pipe_transport} =
       Router.create_pipe_transport(router1, %PipeTransport.Options{
@@ -426,8 +424,8 @@ defmodule IntegrateTest.PipeTransportTest do
     Transport.close(pipe_transport)
   end
 
-  def create_with_enable_rtx_succeeds() do
-    {_worker, router1, _router2, transport1, _transport2} = init()
+  def create_with_enable_rtx_succeeds(worker) do
+    {_worker, router1, _router2, transport1, _transport2} = init(worker)
 
     {:ok, pipe_transport} =
       Router.create_pipe_transport(router1, %PipeTransport.Options{
@@ -496,8 +494,8 @@ defmodule IntegrateTest.PipeTransportTest do
            }
   end
 
-  def create_with_enable_srtp_succeeds do
-    {_worker, router1, _router2, _transport1, _transport2} = init()
+  def create_with_enable_srtp_succeeds(worker) do
+    {_worker, router1, _router2, _transport1, _transport2} = init(worker)
 
     {:ok, pipe_transport} =
       Router.create_pipe_transport(router1, %PipeTransport.Options{
@@ -525,8 +523,8 @@ defmodule IntegrateTest.PipeTransportTest do
       })
   end
 
-  def create_with_invalid_srtp_parameters_fails do
-    {_worker, router1, _router2, _transport1, _transport2} = init()
+  def create_with_invalid_srtp_parameters_fails(worker) do
+    {_worker, router1, _router2, _transport1, _transport2} = init(worker)
 
     {:ok, pipe_transport} =
       Router.create_pipe_transport(router1, %PipeTransport.Options{
@@ -545,8 +543,8 @@ defmodule IntegrateTest.PipeTransportTest do
       })
   end
 
-  def consume_for_pipe_producer_succeeds() do
-    {_worker, router1, router2, transport1, transport2} = init()
+  def consume_for_pipe_producer_succeeds(worker) do
+    {_worker, router1, router2, transport1, transport2} = init(worker)
 
     {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
     # Pause the videoProducer.
@@ -607,8 +605,8 @@ defmodule IntegrateTest.PipeTransportTest do
     assert nil != encoding["rtx"]
   end
 
-  def producer_pause_resume_are_transmitted_to_pipe_consumer() do
-    {_worker, router1, router2, transport1, transport2} = init()
+  def producer_pause_resume_are_transmitted_to_pipe_consumer(worker) do
+    {_worker, router1, router2, transport1, transport2} = init(worker)
 
     {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
     # Pause the videoProducer.
@@ -646,8 +644,8 @@ defmodule IntegrateTest.PipeTransportTest do
     assert false == video_consumer |> Consumer.paused?()
   end
 
-  def pipe_to_router_called_twice_generates_single_pair() do
-    {worker, _router1, _router2, _transport1, _transport2} = init()
+  def pipe_to_router_called_twice_generates_single_pair(worker) do
+    {worker, _router1, _router2, _transport1, _transport2} = init(worker)
 
     {:ok, router_a} =
       Worker.create_router(worker, %{
@@ -694,8 +692,8 @@ defmodule IntegrateTest.PipeTransportTest do
     assert 1 == Mediasoup.Router.dump(router_b)["transportIds"] |> length
   end
 
-  def pipe_produce_consume do
-    {_worker, router1, router2, transport1, transport2} = init()
+  def pipe_produce_consume(worker) do
+    {_worker, router1, router2, transport1, transport2} = init(worker)
 
     {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
     # Pause the videoProducer.
@@ -765,8 +763,8 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === video_consumer.rtp_parameters["headerExtensions"]
   end
 
-  def pipe_produce_consume_with_map do
-    {_worker, router1, _router2, transport1, _transport2} = init()
+  def pipe_produce_consume_with_map(worker) do
+    {_worker, router1, _router2, transport1, _transport2} = init(worker)
 
     {:ok, pipe_transport} =
       Router.create_pipe_transport(router1, %PipeTransport.Options{

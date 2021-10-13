@@ -146,10 +146,8 @@ defmodule IntegrateTest.ProducerTest do
     }
   end
 
-  def init() do
+  def init(worker) do
     alias Mediasoup.{Worker, Router}
-    {:ok, worker} = Mediasoup.create_worker()
-
     Worker.event(worker, self())
 
     {:ok, router} =
@@ -178,8 +176,8 @@ defmodule IntegrateTest.ProducerTest do
     {worker, router, transport_1, transport_2}
   end
 
-  def produce_succeeds() do
-    {_worker, router, transport_1, transport_2} = init()
+  def produce_succeeds(worker) do
+    {_worker, router, transport_1, transport_2} = init(worker)
 
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
@@ -219,8 +217,8 @@ defmodule IntegrateTest.ProducerTest do
     assert transport_2_dump["consumerIds"] === []
   end
 
-  def close() do
-    {_worker, _router, transport_1, _transport_2} = init()
+  def close(worker) do
+    {_worker, _router, transport_1, _transport_2} = init(worker)
 
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
     assert Producer.closed?(audio_producer) == false
@@ -228,8 +226,8 @@ defmodule IntegrateTest.ProducerTest do
     assert Producer.closed?(audio_producer) == true
   end
 
-  def produce_wrong_arguments() do
-    {_worker, _router, transport_1, _transport_2} = init()
+  def produce_wrong_arguments(worker) do
+    {_worker, _router, transport_1, _transport_2} = init(worker)
 
     # Empty rtp_parameters.codecs.
     {:error, message} =
@@ -252,8 +250,8 @@ defmodule IntegrateTest.ProducerTest do
     # TODO: need more tests
   end
 
-  def produce_unsupported_codecs() do
-    {_worker, _router, transport_1, _transport_2} = init()
+  def produce_unsupported_codecs(worker) do
+    {_worker, _router, transport_1, _transport_2} = init(worker)
 
     {:error, message} =
       WebRtcTransport.produce(transport_1, %{
@@ -344,8 +342,8 @@ defmodule IntegrateTest.ProducerTest do
     "RTP mapping error:" <> _ = message
   end
 
-  def produce_already_used_mid_ssrc() do
-    {_worker, _router, transport_1, transport_2} = init()
+  def produce_already_used_mid_ssrc(worker) do
+    {_worker, _router, transport_1, transport_2} = init(worker)
 
     {:ok, _first_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
@@ -422,8 +420,8 @@ defmodule IntegrateTest.ProducerTest do
     "Request to worker failed:" <> _ = message
   end
 
-  def produce_no_mid_single_encoding_without_dir_or_ssrc() do
-    {_worker, _router, transport_1, _transport_2} = init()
+  def produce_no_mid_single_encoding_without_dir_or_ssrc(worker) do
+    {_worker, _router, transport_1, _transport_2} = init(worker)
 
     {:error, message} =
       WebRtcTransport.produce(transport_1, %{
@@ -452,8 +450,8 @@ defmodule IntegrateTest.ProducerTest do
     "Request to worker failed:" <> _ = message
   end
 
-  def dump_succeeds() do
-    {_worker, _router, transport_1, transport_2} = init()
+  def dump_succeeds(worker) do
+    {_worker, _router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     dump = Producer.dump(audio_producer)
@@ -473,8 +471,8 @@ defmodule IntegrateTest.ProducerTest do
     assert dump["type"] == "simulcast"
   end
 
-  def get_stats_succeeds() do
-    {_worker, _router, transport_1, transport_2} = init()
+  def get_stats_succeeds(worker) do
+    {_worker, _router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     stats = Producer.get_stats(audio_producer)
@@ -486,8 +484,8 @@ defmodule IntegrateTest.ProducerTest do
     assert [] == stats
   end
 
-  def pause_resume_succeeds() do
-    {_worker, _router, transport_1, _transport_2} = init()
+  def pause_resume_succeeds(worker) do
+    {_worker, _router, transport_1, _transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     Producer.pause(audio_producer)
@@ -500,8 +498,8 @@ defmodule IntegrateTest.ProducerTest do
     assert dump["paused"] == false
   end
 
-  def close_event() do
-    {_worker, router, transport_1, _transport_2} = init()
+  def close_event(worker) do
+    {_worker, router, transport_1, _transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     Producer.event(audio_producer, self())

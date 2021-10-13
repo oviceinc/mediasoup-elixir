@@ -247,9 +247,8 @@ defmodule IntegrateTest.ConsumerTest do
     }
   end
 
-  def init() do
+  def init(worker) do
     alias Mediasoup.{Worker, Router}
-    {:ok, worker} = Mediasoup.create_worker()
 
     Worker.event(worker, self())
 
@@ -279,8 +278,8 @@ defmodule IntegrateTest.ConsumerTest do
     {worker, router, transport_1, transport_2}
   end
 
-  def consume_succeeds() do
-    {worker, router, transport_1, transport_2} = init()
+  def consume_succeeds(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
 
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
     {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
@@ -478,13 +477,13 @@ defmodule IntegrateTest.ConsumerTest do
     assert audio_consumer.id in consumer_ids
 
     Mediasoup.WebRtcTransport.close(transport_1)
-    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
   end
 
-  def consume_incompatible_rtp_capabilities() do
-    {worker, router, transport_1, transport_2} = init()
+  def consume_incompatible_rtp_capabilities(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     incompatible_device_capabilities = %{
@@ -527,13 +526,13 @@ defmodule IntegrateTest.ConsumerTest do
       })
 
     Mediasoup.WebRtcTransport.close(transport_1)
-    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
   end
 
-  def dump_succeeds() do
-    {worker, router, transport_1, transport_2} = init()
+  def dump_succeeds(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
     {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
 
@@ -588,13 +587,13 @@ defmodule IntegrateTest.ConsumerTest do
     assert dump["rtpParameters"]["encodings"] == [%{"codecPayloadType" => 100, "ssrc" => ssrc}]
 
     Mediasoup.WebRtcTransport.close(transport_1)
-    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
   end
 
-  def get_stats_succeeds() do
-    {worker, router, transport_1, transport_2} = init()
+  def get_stats_succeeds(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
     assert true === Router.can_consume?(router, audio_producer.id, consumer_device_capabilities())
 
@@ -629,13 +628,13 @@ defmodule IntegrateTest.ConsumerTest do
     assert consumer_stat["kind"] == "video"
     assert consumer_stat["mimeType"] == "video/H264"
     Mediasoup.WebRtcTransport.close(transport_1)
-    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
   end
 
-  def close() do
-    {_worker, _router, transport_1, transport_2} = init()
+  def close(worker) do
+    {_worker, _router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     {:ok, audio_consumer} =
@@ -649,8 +648,8 @@ defmodule IntegrateTest.ConsumerTest do
     assert Consumer.closed?(audio_consumer) == true
   end
 
-  def pause_resume_succeeds() do
-    {worker, router, transport_1, transport_2} = init()
+  def pause_resume_succeeds(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     {:ok, audio_consumer} =
@@ -671,13 +670,13 @@ defmodule IntegrateTest.ConsumerTest do
     consumer_dump = Consumer.dump(audio_consumer)
     assert consumer_dump["paused"] == false
     Mediasoup.WebRtcTransport.close(transport_1)
-    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
   end
 
-  def set_preferred_layers_succeeds() do
-    {worker, router, transport_1, transport_2} = init()
+  def set_preferred_layers_succeeds(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     {:ok, audio_consumer} =
@@ -716,13 +715,13 @@ defmodule IntegrateTest.ConsumerTest do
            }
 
     Mediasoup.WebRtcTransport.close(transport_1)
-    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
   end
 
-  def unset_priority_succeeds() do
-    {worker, router, transport_1, transport_2} = init()
+  def unset_priority_succeeds(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
     {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
 
     {:ok, video_consumer} =
@@ -742,13 +741,13 @@ defmodule IntegrateTest.ConsumerTest do
     Consumer.unset_priority(video_consumer)
     assert Consumer.priority(video_consumer) == 1
     Mediasoup.WebRtcTransport.close(transport_1)
-    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
   end
 
-  def request_key_frame() do
-    {_worker, _router, transport_1, transport_2} = init()
+  def request_key_frame(worker) do
+    {_worker, _router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     {:ok, audio_consumer} =
@@ -760,8 +759,8 @@ defmodule IntegrateTest.ConsumerTest do
     Consumer.request_key_frame(audio_consumer)
   end
 
-  def close_event() do
-    {_worker, router, transport_1, transport_2} = init()
+  def close_event(worker) do
+    {_worker, router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
     {:ok, audio_consumer} =
