@@ -37,9 +37,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
     }
   end
 
-  defp init() do
+  defp init(worker) do
     alias Mediasoup.{Worker, Router}
-    {:ok, worker} = Mediasoup.create_worker()
 
     Worker.event(worker, self())
 
@@ -51,8 +50,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
     {worker, router}
   end
 
-  def create_succeeds() do
-    {_worker, router} = init()
+  def create_succeeds(worker) do
+    {_worker, router} = init(worker)
 
     {:ok, _transport} =
       Router.create_webrtc_transport(router, %{
@@ -180,8 +179,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert "new" == WebRtcTransport.sctp_state(transport1)
   end
 
-  def close() do
-    {_worker, router} = init()
+  def close(worker) do
+    {_worker, router} = init(worker)
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
@@ -194,11 +193,10 @@ defmodule IntegrateTest.WebRtcTransportTest do
       })
 
     Mediasoup.WebRtcTransport.close(transport)
-    assert {:error, :terminated} == Mediasoup.WebRtcTransport.sctp_state(transport)
   end
 
-  def create_non_bindable_ip() do
-    {_worker, router} = init()
+  def create_non_bindable_ip(worker) do
+    {_worker, router} = init(worker)
 
     {:error, _message} =
       Router.create_webrtc_transport(router, %{
@@ -210,8 +208,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
       })
   end
 
-  def get_stats_succeeds() do
-    {_worker, router} = init()
+  def get_stats_succeeds(worker) do
+    {_worker, router} = init(worker)
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
@@ -252,8 +250,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
     ] = stats
   end
 
-  def connect_succeeds() do
-    {_worker, router} = init()
+  def connect_succeeds(worker) do
+    {_worker, router} = init(worker)
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
@@ -300,8 +298,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert match?(%{"role" => "server"}, WebRtcTransport.dtls_parameters(transport))
   end
 
-  def set_max_incoming_bitrate_succeeds() do
-    {_worker, router} = init()
+  def set_max_incoming_bitrate_succeeds(worker) do
+    {_worker, router} = init(worker)
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
@@ -316,8 +314,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
     {:ok} = Mediasoup.WebRtcTransport.set_max_incoming_bitrate(transport, 100_000)
   end
 
-  def set_max_outgoing_bitrate_succeeds() do
-    {_worker, router} = init()
+  def set_max_outgoing_bitrate_succeeds(worker) do
+    {_worker, router} = init(worker)
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
@@ -332,8 +330,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
     {:ok} = Mediasoup.WebRtcTransport.set_max_outgoing_bitrate(transport, 100_000)
   end
 
-  def restart_ice_succeeds() do
-    {_worker, router} = init()
+  def restart_ice_succeeds(worker) do
+    {_worker, router} = init(worker)
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
@@ -353,7 +351,7 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert ice_parameters["password"] !== previouse_ice_parameters["password"]
   end
 
-  def close_event() do
+  def close_event(_worker) do
     # TODO: Not supported.
   end
 end

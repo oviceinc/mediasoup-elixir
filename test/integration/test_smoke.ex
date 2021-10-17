@@ -3,7 +3,7 @@ defmodule IntegrateTest.SmokeTest do
   Smoke test with dializer check
   """
   def smoke() do
-    {:ok, worker} = Mediasoup.create_worker()
+    {:ok, worker} = Mediasoup.Worker.start_link()
 
     {:ok, router} =
       Mediasoup.Worker.create_router(worker, %{

@@ -35,7 +35,9 @@ defmodule Mediasoup.Nif do
   @spec router_id(reference) :: String.t()
   def router_id(_router), do: :erlang.nif_error(:nif_not_loaded)
   @spec router_close(reference) :: {:ok} | {:error}
-  def router_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  def router_close(_router), do: :erlang.nif_error(:nif_not_loaded)
+
+  def router_closed(_router), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec router_pipe_producer_to_router(
           reference,

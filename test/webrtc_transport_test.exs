@@ -1,39 +1,62 @@
 defmodule MediasoupElixirWebRtcTransportTest do
   use ExUnit.Case
 
-  test "create_succeeds" do
-    IntegrateTest.WebRtcTransportTest.create_succeeds()
+  setup do
+    {:ok, struct_worker} = Mediasoup.create_worker()
+
+    {:ok, process_worker} = Mediasoup.Worker.start_link()
+
+    %{struct_worker: struct_worker, process_worker: process_worker}
   end
 
-  test "close" do
-    IntegrateTest.WebRtcTransportTest.close()
+  test "create_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.WebRtcTransportTest.create_succeeds(struct_worker)
+    IntegrateTest.WebRtcTransportTest.create_succeeds(process_worker)
   end
 
-  test "create_non_bindable_ip" do
-    IntegrateTest.WebRtcTransportTest.create_non_bindable_ip()
+  test "close", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.WebRtcTransportTest.close(struct_worker)
+    IntegrateTest.WebRtcTransportTest.close(process_worker)
   end
 
-  test "get_stats_succeeds" do
-    IntegrateTest.WebRtcTransportTest.get_stats_succeeds()
+  test "create_non_bindable_ip", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.WebRtcTransportTest.create_non_bindable_ip(struct_worker)
+    IntegrateTest.WebRtcTransportTest.create_non_bindable_ip(process_worker)
   end
 
-  test "connect_succeeds" do
-    IntegrateTest.WebRtcTransportTest.connect_succeeds()
+  test "get_stats_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.WebRtcTransportTest.get_stats_succeeds(struct_worker)
+    IntegrateTest.WebRtcTransportTest.get_stats_succeeds(process_worker)
   end
 
-  test "set_max_incoming_bitrate_succeeds" do
-    IntegrateTest.WebRtcTransportTest.set_max_incoming_bitrate_succeeds()
+  test "connect_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.WebRtcTransportTest.connect_succeeds(struct_worker)
+    IntegrateTest.WebRtcTransportTest.connect_succeeds(process_worker)
   end
 
-  test "set_max_outgoing_bitrate_succeeds" do
-    IntegrateTest.WebRtcTransportTest.set_max_outgoing_bitrate_succeeds()
+  test "set_max_incoming_bitrate_succeeds", %{
+    struct_worker: struct_worker,
+    process_worker: process_worker
+  } do
+    IntegrateTest.WebRtcTransportTest.set_max_incoming_bitrate_succeeds(struct_worker)
+    IntegrateTest.WebRtcTransportTest.set_max_incoming_bitrate_succeeds(process_worker)
   end
 
-  test "restart_ice_succeeds" do
-    IntegrateTest.WebRtcTransportTest.restart_ice_succeeds()
+  test "set_max_outgoing_bitrate_succeeds", %{
+    struct_worker: struct_worker,
+    process_worker: process_worker
+  } do
+    IntegrateTest.WebRtcTransportTest.set_max_outgoing_bitrate_succeeds(struct_worker)
+    IntegrateTest.WebRtcTransportTest.set_max_outgoing_bitrate_succeeds(process_worker)
   end
 
-  test "close_event" do
-    IntegrateTest.WebRtcTransportTest.close_event()
+  test "restart_ice_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.WebRtcTransportTest.restart_ice_succeeds(struct_worker)
+    IntegrateTest.WebRtcTransportTest.restart_ice_succeeds(process_worker)
+  end
+
+  test "close_event", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.WebRtcTransportTest.close_event(struct_worker)
+    IntegrateTest.WebRtcTransportTest.close_event(process_worker)
   end
 end

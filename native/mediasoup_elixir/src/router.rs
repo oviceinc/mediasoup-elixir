@@ -38,6 +38,12 @@ pub fn router_close(router: ResourceArc<RouterRef>) -> NifResult<(rustler::Atom,
     Ok((atoms::ok(),))
 }
 #[rustler::nif]
+pub fn router_closed(router: ResourceArc<RouterRef>) -> NifResult<bool> {
+    let router = router.get_resource()?;
+    Ok(router.closed())
+}
+
+#[rustler::nif]
 pub fn router_create_webrtc_transport(
     router: ResourceArc<RouterRef>,
     option: WebRtcTransportOptionsStruct,

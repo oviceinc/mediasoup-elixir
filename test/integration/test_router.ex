@@ -4,14 +4,7 @@ defmodule IntegrateTest.RouterTest do
   """
   import ExUnit.Assertions
 
-  def create_router_succeeds() do
-    {:ok, worker} =
-      Mediasoup.create_worker(%{
-        rtcMinPort: 10000,
-        rtcMaxPort: 10010,
-        logLevel: :debug
-      })
-
+  def create_router_succeeds(worker) do
     Mediasoup.Worker.event(worker, self())
 
     {:ok, router} =
@@ -31,14 +24,7 @@ defmodule IntegrateTest.RouterTest do
     assert true == is_binary(router.id)
   end
 
-  def router_dump() do
-    {:ok, worker} =
-      Mediasoup.create_worker(%{
-        rtcMinPort: 10000,
-        rtcMaxPort: 10010,
-        logLevel: :debug
-      })
-
+  def router_dump(worker) do
     media_codecs = [
       %{
         kind: "audio",
@@ -83,14 +69,7 @@ defmodule IntegrateTest.RouterTest do
     Mediasoup.Worker.close(worker)
   end
 
-  def close_event() do
-    {:ok, worker} =
-      Mediasoup.create_worker(%{
-        rtcMinPort: 10000,
-        rtcMaxPort: 10010,
-        logLevel: :debug
-      })
-
+  def close_event(worker) do
     {:ok, router} =
       Mediasoup.Worker.create_router(worker, %{
         mediaCodecs: {
@@ -117,5 +96,37 @@ defmodule IntegrateTest.RouterTest do
     Mediasoup.Router.event(router, self())
     Mediasoup.Router.close(router)
     assert_receive {:on_close}
+  end
+
+  def close_worker(worker) do
+    {:ok, router} =
+      Mediasoup.Worker.create_router(worker, %{
+        mediaCodecs: {
+          %{
+            kind: "audio",
+            mimeType: "audio/opus",
+            clockRate: 48000,
+            channels: 2,
+            parameters: %{},
+            rtcpFeedback: []
+          },
+          %{
+            kind: "video",
+            mimeType: "video/VP8",
+            clockRate: 90000,
+            parameters: %{
+              "x-google-start-bitrate": 1000
+            },
+            rtcpFeedback: []
+          }
+        }
+      })
+
+    refute Mediasoup.Router.closed?(router)
+
+    Mediasoup.Router.event(router, self())
+    Mediasoup.Worker.close(worker)
+
+    assert Mediasoup.Router.closed?(router)
   end
 end
