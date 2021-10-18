@@ -65,6 +65,10 @@ defmodule Mediasoup.WebRtcTransport do
 
   @type ice_parameter :: map()
 
+  def id(%WebRtcTransport{id: id}) do
+    id
+  end
+
   @spec close(t) :: {:ok} | {:error}
   def close(%WebRtcTransport{pid: pid}) when is_pid(pid) do
     GenServer.stop(pid)
@@ -72,6 +76,15 @@ defmodule Mediasoup.WebRtcTransport do
 
   def close(%WebRtcTransport{reference: reference}) do
     Nif.webrtc_transport_close(reference)
+  end
+
+  @spec closed?(t) :: boolean
+  def closed?(%WebRtcTransport{pid: pid}) when is_pid(pid) do
+    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+  end
+
+  def closed?(%WebRtcTransport{reference: reference}) do
+    Nif.webrtc_transport_closed(reference)
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::

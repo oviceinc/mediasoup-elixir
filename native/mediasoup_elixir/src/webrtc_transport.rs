@@ -47,6 +47,14 @@ pub fn webrtc_transport_close(transport: ResourceArc<WebRtcTransportRef>) -> Nif
 }
 
 #[rustler::nif]
+pub fn webrtc_transport_closed(transport: ResourceArc<WebRtcTransportRef>) -> NifResult<bool> {
+    match transport.get_resource() {
+        Ok(transport) => Ok(transport.closed()),
+        Err(_) => Ok(true),
+    }
+}
+
+#[rustler::nif]
 pub fn webrtc_transport_consume(
     transport: ResourceArc<WebRtcTransportRef>,
     option: ConsumerOptionsStruct,
@@ -238,6 +246,7 @@ pub fn webrtc_transport_event(
 ) -> NifResult<(Atom,)> {
     let transport = transport.get_resource()?;
 
+    crate::reg_callback_once!(pid, transport, on_close);
     crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
     crate::reg_callback_json_param!(pid, transport, on_ice_state_change);
     crate::reg_callback_json_param!(pid, transport, on_dtls_state_change);

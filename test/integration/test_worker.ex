@@ -8,6 +8,7 @@ defmodule IntegrateTest.WorkerTest do
   def create_worker_with_default_settings() do
     {:ok, worker} = Mediasoup.create_worker()
 
+    assert is_binary(Worker.id(worker))
     assert false == Mediasoup.Worker.closed?(worker)
     Mediasoup.Worker.close(worker)
   end
@@ -93,8 +94,6 @@ defmodule IntegrateTest.WorkerTest do
     Worker.event(worker, self())
     Worker.close(worker)
 
-    receive do
-      {:on_close} -> {}
-    end
+    assert_receive {:on_close}
   end
 end

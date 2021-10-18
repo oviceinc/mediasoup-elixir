@@ -40,4 +40,8 @@ defmodule WorkerTest do
     IntegrateTest.WorkerTest.close_event()
     IntegrateTest.WorkerProcessTest.close_event()
   end
+
+  test "close_router" do
+    IntegrateTest.WorkerProcessTest.close_router()
+  end
 end

@@ -421,7 +421,9 @@ defmodule IntegrateTest.PipeTransportTest do
 
     assert match?(%{"localPort" => 60000}, PipeTransport.tuple(pipe_transport))
 
+    assert is_binary(Transport.id(pipe_transport))
     Transport.close(pipe_transport)
+    Transport.closed?(pipe_transport)
   end
 
   def create_with_enable_rtx_succeeds(worker) do
@@ -790,5 +792,33 @@ defmodule IntegrateTest.PipeTransportTest do
         kind: pipe_consumer.kind,
         rtpParameters: pipe_consumer.rtp_parameters
       })
+  end
+
+  def close_event(worker) do
+    {_worker, router1, _router2, _transport1, _transport2} = init(worker)
+
+    {:ok, pipe_transport} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    Mediasoup.Transport.event(pipe_transport, self())
+    Mediasoup.Transport.close(pipe_transport)
+
+    assert_receive {:on_close}
+  end
+
+  def close_router_event(worker) do
+    {_worker, router1, _router2, _transport1, _transport2} = init(worker)
+
+    {:ok, pipe_transport} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    Mediasoup.Transport.event(pipe_transport, self())
+    Mediasoup.Router.close(router1)
+    assert Mediasoup.Transport.closed?(pipe_transport)
+    assert_receive {:on_close}
   end
 end

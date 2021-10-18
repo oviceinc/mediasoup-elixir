@@ -24,6 +24,25 @@ defmodule Mediasoup.Producer do
   @type kind :: String.t()
   @type type :: String.t()
 
+  def id(%Producer{id: id}) do
+    id
+  end
+
+  @spec kind(t) :: String.t()
+  def kind(%Producer{kind: kind}) do
+    kind
+  end
+
+  @spec type(t) :: String.t()
+  def type(%Producer{type: type}) do
+    type
+  end
+
+  @spec rtp_parameters(t) :: rtpParameters()
+  def rtp_parameters(%Producer{rtp_parameters: rtp_parameters}) do
+    rtp_parameters
+  end
+
   @spec close(t) :: {:ok} | {:error}
   def close(%Producer{pid: pid}) when is_pid(pid) do
     GenServer.stop(pid)

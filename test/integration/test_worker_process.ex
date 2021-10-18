@@ -8,6 +8,7 @@ defmodule IntegrateTest.WorkerProcessTest do
   def create_worker_with_default_settings() do
     {:ok, worker} = Worker.start_link()
 
+    assert is_binary(Worker.id(worker))
     assert false == Mediasoup.Worker.closed?(worker)
     Mediasoup.Worker.close(worker)
   end
@@ -103,8 +104,28 @@ defmodule IntegrateTest.WorkerProcessTest do
     Worker.event(worker, self())
     Worker.close(worker)
 
-    #  receive do
-    #    {:on_close} -> {}
-    #  end
+    assert_receive {:on_close}
+  end
+
+  def close_router() do
+    {:ok, worker} = Worker.start_link()
+
+    {:ok, router} =
+      Worker.create_router(worker, %{
+        mediaCodecs: {
+          %{
+            kind: "audio",
+            mimeType: "audio/opus",
+            clockRate: 48000,
+            channels: 2,
+            parameters: %{},
+            rtcpFeedback: []
+          }
+        }
+      })
+
+    Mediasoup.Router.close(router)
+
+    refute Worker.closed?(worker)
   end
 end

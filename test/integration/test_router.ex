@@ -21,7 +21,7 @@ defmodule IntegrateTest.RouterTest do
         }
       })
 
-    assert true == is_binary(router.id)
+    assert true == is_binary(Mediasoup.Router.id(router))
   end
 
   def router_dump(worker) do

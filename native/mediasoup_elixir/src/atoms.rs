@@ -6,7 +6,6 @@ rustler::atoms! {
     on_new_router,
     on_close,
     on_dead,
-    on_router_close,
     on_sctp_state_change,
     on_tuple,
     on_ice_state_change,

@@ -25,6 +25,26 @@ defmodule Mediasoup.Consumer do
   @type kind :: String.t()
   @type type :: String.t()
 
+  def id(%Consumer{id: id}) do
+    id
+  end
+
+  def producer_id(%Consumer{producer_id: producer_id}) do
+    producer_id
+  end
+
+  def kind(%Consumer{kind: kind}) do
+    kind
+  end
+
+  def type(%Consumer{type: type}) do
+    type
+  end
+
+  def rtp_parameters(%Consumer{rtp_parameters: rtp_parameters}) do
+    rtp_parameters
+  end
+
   @spec close(t) :: {:ok} | {:error}
   def close(%Consumer{pid: pid}) when is_pid(pid) do
     GenServer.stop(pid)
