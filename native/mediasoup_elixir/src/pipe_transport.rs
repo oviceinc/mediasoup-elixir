@@ -101,6 +101,14 @@ pub fn pipe_transport_close(transport: ResourceArc<PipeTransportRef>) -> NifResu
 }
 
 #[rustler::nif]
+pub fn pipe_transport_closed(transport: ResourceArc<PipeTransportRef>) -> NifResult<bool> {
+    match transport.get_resource() {
+        Ok(transport) => Ok(transport.closed()),
+        Err(_) => Ok(true),
+    }
+}
+
+#[rustler::nif]
 pub fn pipe_transport_tuple(
     transport: ResourceArc<PipeTransportRef>,
 ) -> NifResult<JsonSerdeWrap<TransportTuple>> {
@@ -225,6 +233,7 @@ pub fn pipe_transport_event(
 ) -> NifResult<(Atom,)> {
     let transport = transport.get_resource()?;
 
+    crate::reg_callback_once!(pid, transport, on_close);
     crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
     crate::reg_callback_json_clone_param!(pid, transport, on_tuple);
 

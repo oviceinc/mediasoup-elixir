@@ -44,6 +44,10 @@ defmodule Mediasoup.PipeTransport do
           optional(:srtpParameters) => map() | nil
         }
 
+  def id(%PipeTransport{id: id}) do
+    id
+  end
+
   @spec close(t) :: {:ok} | {:error}
   def close(%PipeTransport{pid: pid}) when is_pid(pid) do
     GenServer.stop(pid)
@@ -51,6 +55,15 @@ defmodule Mediasoup.PipeTransport do
 
   def close(%PipeTransport{reference: reference}) do
     Nif.pipe_transport_close(reference)
+  end
+
+  @spec closed?(t) :: boolean
+  def closed?(%PipeTransport{pid: pid}) when is_pid(pid) do
+    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+  end
+
+  def closed?(%PipeTransport{reference: reference}) do
+    Nif.pipe_transport_closed(reference)
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::

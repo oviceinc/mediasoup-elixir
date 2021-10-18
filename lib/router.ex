@@ -48,6 +48,10 @@ defmodule Mediasoup.Router do
           }
   end
 
+  def id(%Router{id: id}) do
+    id
+  end
+
   @spec close(t) :: {:ok} | {:error}
   def close(%Router{pid: pid}) when is_pid(pid) do
     GenServer.stop(pid)

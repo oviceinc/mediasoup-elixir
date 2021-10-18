@@ -154,6 +154,8 @@ defmodule Mediasoup.Worker do
         Mediasoup.create_worker()
       end
 
+    Process.flag(:trap_exit, true)
+
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
     {:ok, %{struct: worker, supervisor: supervisor}}

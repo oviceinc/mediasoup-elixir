@@ -103,4 +103,13 @@ defmodule PipeTransportTest do
     IntegrateTest.PipeTransportTest.pipe_produce_consume_with_map(struct_worker)
     IntegrateTest.PipeTransportTest.pipe_produce_consume_with_map(process_worker)
   end
+
+  test "close_event", %{struct_worker: struct_worker, process_worker: process_worker} do
+    IntegrateTest.PipeTransportTest.close_event(struct_worker)
+    IntegrateTest.PipeTransportTest.close_event(process_worker)
+  end
+
+  test "close_router_event", %{struct_worker: _struct_worker, process_worker: process_worker} do
+    IntegrateTest.PipeTransportTest.close_router_event(process_worker)
+  end
 end

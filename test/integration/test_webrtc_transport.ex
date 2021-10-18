@@ -192,7 +192,9 @@ defmodule IntegrateTest.WebRtcTransportTest do
         }
       })
 
-    Mediasoup.WebRtcTransport.close(transport)
+    assert is_binary(Mediasoup.Transport.id(transport))
+    Mediasoup.Transport.close(transport)
+    Mediasoup.Transport.closed?(transport)
   end
 
   def create_non_bindable_ip(worker) do
@@ -351,7 +353,41 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert ice_parameters["password"] !== previouse_ice_parameters["password"]
   end
 
-  def close_event(_worker) do
-    # TODO: Not supported.
+  def close_event(worker) do
+    {_worker, router} = init(worker)
+
+    {:ok, transport} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: {
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1"
+          }
+        }
+      })
+
+    Mediasoup.Transport.event(transport, self())
+    Mediasoup.Transport.close(transport)
+
+    assert_receive {:on_close}
+  end
+
+  def close_router_event(worker) do
+    {_worker, router} = init(worker)
+
+    {:ok, transport} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: {
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1"
+          }
+        }
+      })
+
+    Mediasoup.Transport.event(transport, self())
+    Mediasoup.Router.close(router)
+    assert Mediasoup.Transport.closed?(transport)
+    assert_receive {:on_close}
   end
 end

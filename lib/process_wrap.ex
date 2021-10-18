@@ -9,7 +9,7 @@ defmodule Mediasoup.ProcessWrap do
     """
     defmacro __using__(_opts) do
       quote do
-        use GenServer
+        use GenServer, restart: :temporary
 
         def struct(pid) when is_pid(pid) do
           GenServer.call(pid, {:struct, []})
@@ -21,6 +21,7 @@ defmodule Mediasoup.ProcessWrap do
         end
 
         def init(struct) do
+          Process.flag(:trap_exit, true)
           {:ok, %{struct: struct}}
         end
 
@@ -52,7 +53,7 @@ defmodule Mediasoup.ProcessWrap do
     """
     defmacro __using__(_opts) do
       quote do
-        use GenServer
+        use GenServer, restart: :temporary
 
         def struct(pid) when is_pid(pid) do
           GenServer.call(pid, {:struct, []})
@@ -64,6 +65,7 @@ defmodule Mediasoup.ProcessWrap do
         end
 
         def init(struct) do
+          Process.flag(:trap_exit, true)
           {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
           {:ok, %{struct: struct, supervisor: supervisor}}

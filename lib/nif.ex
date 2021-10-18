@@ -77,7 +77,10 @@ defmodule Mediasoup.Nif do
   @spec webrtc_transport_id(reference) :: String.t()
   def webrtc_transport_id(_transport), do: :erlang.nif_error(:nif_not_loaded)
   @spec webrtc_transport_close(reference) :: {:ok} | {:error}
-  def webrtc_transport_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_close(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  @spec webrtc_transport_closed(reference) :: boolean
+  def webrtc_transport_closed(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
   @spec webrtc_transport_consume(reference, any) :: {:ok, Consumer.t()} | {:error, String.t()}
   def webrtc_transport_consume(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   @spec webrtc_transport_connect(reference, any) :: {:ok} | {:error, String.t()}
@@ -108,6 +111,8 @@ defmodule Mediasoup.Nif do
 
   # pipe_transport
   def pipe_transport_close(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  @spec pipe_transport_closed(reference) :: boolean
+  def pipe_transport_closed(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_consume(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_connect(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_produce(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)

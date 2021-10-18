@@ -17,8 +17,8 @@ use crate::consumer::{
     consumer_score, consumer_set_preferred_layers, consumer_set_priority, consumer_unset_priority,
 };
 use crate::pipe_transport::{
-    pipe_transport_close, pipe_transport_connect, pipe_transport_consume, pipe_transport_dump,
-    pipe_transport_event, pipe_transport_get_stats, pipe_transport_produce,
+    pipe_transport_close, pipe_transport_closed, pipe_transport_connect, pipe_transport_consume,
+    pipe_transport_dump, pipe_transport_event, pipe_transport_get_stats, pipe_transport_produce,
     pipe_transport_sctp_parameters, pipe_transport_sctp_state, pipe_transport_srtp_parameters,
     pipe_transport_tuple,
 };
@@ -34,10 +34,10 @@ use crate::router::{
     router_pipe_producer_to_router, router_rtp_capabilities,
 };
 use crate::webrtc_transport::{
-    webrtc_transport_close, webrtc_transport_connect, webrtc_transport_consume,
-    webrtc_transport_dtls_parameters, webrtc_transport_dtls_state, webrtc_transport_dump,
-    webrtc_transport_event, webrtc_transport_get_stats, webrtc_transport_ice_candidates,
-    webrtc_transport_ice_parameters, webrtc_transport_ice_role,
+    webrtc_transport_close, webrtc_transport_closed, webrtc_transport_connect,
+    webrtc_transport_consume, webrtc_transport_dtls_parameters, webrtc_transport_dtls_state,
+    webrtc_transport_dump, webrtc_transport_event, webrtc_transport_get_stats,
+    webrtc_transport_ice_candidates, webrtc_transport_ice_parameters, webrtc_transport_ice_role,
     webrtc_transport_ice_selected_tuple, webrtc_transport_ice_state, webrtc_transport_id,
     webrtc_transport_produce, webrtc_transport_restart_ice, webrtc_transport_sctp_parameters,
     webrtc_transport_sctp_state, webrtc_transport_set_max_incoming_bitrate,
@@ -97,6 +97,7 @@ rustler::init! {
         // webrtc_transport
         webrtc_transport_id,
         webrtc_transport_close,
+        webrtc_transport_closed,
         webrtc_transport_ice_candidates,
         webrtc_transport_ice_role,
         webrtc_transport_consume,
@@ -119,6 +120,7 @@ rustler::init! {
 
         // pipe_transport
         pipe_transport_close,
+        pipe_transport_closed,
         pipe_transport_tuple,
         pipe_transport_consume,
         pipe_transport_connect,

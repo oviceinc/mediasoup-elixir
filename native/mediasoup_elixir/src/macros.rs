@@ -11,6 +11,18 @@ macro_rules! reg_callback {
             .detach();
     }};
 }
+#[doc(hidden)]
+#[macro_export]
+macro_rules! reg_callback_once {
+    ($pid: ident, $value: ident, $event_name: ident) => {{
+        let pid = $pid.clone();
+        $value
+            .$event_name(Box::new(|| {
+                crate::send_msg_from_other_thread(pid, (atoms::$event_name(),))
+            }))
+            .detach();
+    }};
+}
 
 #[doc(hidden)]
 #[macro_export]

@@ -292,11 +292,11 @@ defmodule IntegrateTest.ConsumerTest do
 
     {:ok, audio_consumer} =
       WebRtcTransport.consume(transport_2, %{
-        producerId: audio_producer.id,
+        producerId: audio_producer |> Producer.id(),
         rtpCapabilities: consumer_device_capabilities()
       })
 
-    assert audio_producer.id === audio_consumer.producer_id
+    assert audio_producer |> Producer.id() === audio_consumer |> Consumer.producer_id()
     assert "audio" === audio_consumer.kind
     assert "0" === audio_consumer.rtp_parameters["mid"]
 
@@ -331,8 +331,8 @@ defmodule IntegrateTest.ConsumerTest do
     assert Consumer.current_layers(audio_consumer) === nil
 
     assert Router.dump(router)["mapProducerIdConsumerIds"] === %{
-             audio_producer.id => [audio_consumer.id],
-             video_producer.id => []
+             (audio_producer |> Producer.id()) => [audio_consumer |> Consumer.id()],
+             (video_producer |> Producer.id()) => []
            }
 
     assert WebRtcTransport.dump(transport_2)["producerIds"] === []
@@ -347,9 +347,9 @@ defmodule IntegrateTest.ConsumerTest do
         rtpCapabilities: consumer_device_capabilities()
       })
 
-    assert video_producer.id === video_consumer.producer_id
-    assert "video" === video_consumer.kind
-    assert "1" === video_consumer.rtp_parameters["mid"]
+    assert video_producer.id === Consumer.producer_id(video_consumer)
+    assert "video" === Consumer.kind(video_consumer)
+    assert "1" === Consumer.rtp_parameters(video_consumer)["mid"]
 
     assert [
              %{
@@ -623,7 +623,7 @@ defmodule IntegrateTest.ConsumerTest do
 
     [consumer_stat | _producer_stat] = Consumer.get_stats(video_consumer)
 
-    assert "simulcast" == video_consumer.type
+    assert "simulcast" == Consumer.type(video_consumer)
 
     assert consumer_stat["kind"] == "video"
     assert consumer_stat["mimeType"] == "video/H264"

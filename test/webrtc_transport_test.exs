@@ -59,4 +59,8 @@ defmodule MediasoupElixirWebRtcTransportTest do
     IntegrateTest.WebRtcTransportTest.close_event(struct_worker)
     IntegrateTest.WebRtcTransportTest.close_event(process_worker)
   end
+
+  test "close_router_event", %{struct_worker: _struct_worker, process_worker: process_worker} do
+    IntegrateTest.PipeTransportTest.close_router_event(process_worker)
+  end
 end
