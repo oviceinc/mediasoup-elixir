@@ -165,12 +165,25 @@ defmodule Mediasoup.Router do
     Nif.router_dump(reference)
   end
 
-  @spec event(t, pid) :: {:ok} | {:error}
-  def event(%Router{pid: pid}, listener) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener]})
+  @type event_type ::
+          :on_close
+          | :on_dead
+
+  @spec event(t, pid, event_filter :: [event_type]) :: {:ok} | {:error, :terminated}
+  def event(
+        router,
+        listener,
+        event_filter \\ [
+          :on_close,
+          :on_dead
+        ]
+      )
+
+  def event(%Router{pid: pid}, listener, event_filter) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_filter]})
   end
 
-  def event(%Router{reference: reference}, pid) do
-    Nif.router_event(reference, pid)
+  def event(%Router{reference: reference}, pid, event_filter) do
+    Nif.router_event(reference, pid, event_filter)
   end
 end

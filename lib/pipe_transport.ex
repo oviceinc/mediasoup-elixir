@@ -158,12 +158,27 @@ defmodule Mediasoup.PipeTransport do
     Nif.pipe_transport_dump(reference)
   end
 
-  @spec event(Mediasoup.PipeTransport.t(), pid()) :: {:ok} | {:error, :terminated}
-  def event(%PipeTransport{pid: pid}, listener) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener]})
+  @type event_type ::
+          :on_close
+          | :on_sctp_state_change
+          | :on_tuple
+
+  @spec event(t, pid, event_filter :: [event_type]) :: {:ok} | {:error, :terminated}
+  def event(
+        transport,
+        listener,
+        event_filter \\ [
+          :on_close,
+          :on_sctp_state_change,
+          :on_tuple
+        ]
+      )
+
+  def event(%PipeTransport{pid: pid}, listener, event_filter) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_filter]})
   end
 
-  def event(%PipeTransport{reference: reference}, pid) do
-    Nif.pipe_transport_event(reference, pid)
+  def event(%PipeTransport{reference: reference}, pid, event_filter) do
+    Nif.pipe_transport_event(reference, pid, event_filter)
   end
 end

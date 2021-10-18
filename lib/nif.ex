@@ -22,8 +22,8 @@ defmodule Mediasoup.Nif do
   def worker_id(_worker), do: :erlang.nif_error(:nif_not_loaded)
   @spec worker_close(reference) :: {:ok} | {:error}
   def worker_close(_worker), do: :erlang.nif_error(:nif_not_loaded)
-  @spec worker_event(reference, pid) :: {:ok} | {:error}
-  def worker_event(_worker, _pid), do: :erlang.nif_error(:nif_not_loaded)
+  @spec worker_event(reference, pid, [atom()]) :: {:ok} | {:error}
+  def worker_event(_worker, _pid, _event_filter), do: :erlang.nif_error(:nif_not_loaded)
   @spec worker_closed(reference) :: boolean
   def worker_closed(_worker), do: :erlang.nif_error(:nif_not_loaded)
   @spec worker_update_settings(reference, Worker.update_option()) :: {:ok} | {:error}
@@ -68,8 +68,8 @@ defmodule Mediasoup.Nif do
   @spec router_rtp_capabilities(reference) :: Router.rtpCapabilities()
   def router_rtp_capabilities(_router), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec router_event(reference, pid) :: {:ok} | {:error}
-  def router_event(_router, _pid), do: :erlang.nif_error(:nif_not_loaded)
+  @spec router_event(reference, pid, [atom()]) :: {:ok} | {:error}
+  def router_event(_router, _pid, _event_filter), do: :erlang.nif_error(:nif_not_loaded)
   @spec router_dump(reference) :: any
   def router_dump(_router), do: :erlang.nif_error(:nif_not_loaded)
 
@@ -105,8 +105,10 @@ defmodule Mediasoup.Nif do
   def webrtc_transport_dtls_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_sctp_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_get_stats(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  @spec webrtc_transport_event(reference, pid) :: {:ok} | {:error}
-  def webrtc_transport_event(_transport, _pid), do: :erlang.nif_error(:nif_not_loaded)
+  @spec webrtc_transport_event(reference, pid, [atom()]) :: {:ok} | {:error}
+  def webrtc_transport_event(_transport, _pid, _event_filter),
+    do: :erlang.nif_error(:nif_not_loaded)
+
   def webrtc_transport_dump(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
   # pipe_transport
@@ -122,7 +124,9 @@ defmodule Mediasoup.Nif do
   def pipe_transport_sctp_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_srtp_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_dump(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  def pipe_transport_event(_transport, _pid), do: :erlang.nif_error(:nif_not_loaded)
+
+  def pipe_transport_event(_transport, _pid, _event_filter),
+    do: :erlang.nif_error(:nif_not_loaded)
 
   # consumer
   @spec consumer_id(reference) :: String.t()
@@ -131,8 +135,8 @@ defmodule Mediasoup.Nif do
   def consumer_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   @spec consumer_closed(reference) :: boolean
   def consumer_closed(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  @spec consumer_event(reference, pid) :: {:ok} | {:error}
-  def consumer_event(_consumer, _pid), do: :erlang.nif_error(:nif_not_loaded)
+  @spec consumer_event(reference, pid, [atom()]) :: {:ok} | {:error}
+  def consumer_event(_consumer, _pid, _event_filter), do: :erlang.nif_error(:nif_not_loaded)
   @spec consumer_paused(reference) :: boolean
   def consumer_paused(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   @spec consumer_producer_paused(reference) :: boolean
@@ -174,8 +178,8 @@ defmodule Mediasoup.Nif do
   @spec producer_get_stats(reference) :: list() | {:error}
   def producer_get_stats(_producer), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec producer_event(reference, pid) :: {:ok} | {:error}
-  def producer_event(_producer, _pid), do: :erlang.nif_error(:nif_not_loaded)
+  @spec producer_event(reference, pid, [atom()]) :: {:ok} | {:error}
+  def producer_event(_producer, _pid, _event_filter), do: :erlang.nif_error(:nif_not_loaded)
   def producer_dump(_producer), do: :erlang.nif_error(:nif_not_loaded)
 
   def piped_producer_into_producer(_piped_producer), do: :erlang.nif_error(:nif_not_loaded)

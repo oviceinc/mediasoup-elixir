@@ -187,19 +187,35 @@ pub fn consumer_dump(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeW
 pub fn consumer_event(
     consumer: ResourceArc<ConsumerRef>,
     pid: rustler::LocalPid,
+    event_filter: Vec<Atom>,
 ) -> NifResult<(Atom,)> {
     let consumer = consumer.get_resource()?;
 
-    crate::reg_callback!(pid, consumer, on_close);
-    crate::reg_callback!(pid, consumer, on_pause);
-    crate::reg_callback!(pid, consumer, on_resume);
-    crate::reg_callback!(pid, consumer, on_producer_pause);
-    crate::reg_callback!(pid, consumer, on_producer_resume);
+    if event_filter.contains(&atoms::on_close()) {
+        crate::reg_callback!(pid, consumer, on_close);
+    }
+    if event_filter.contains(&atoms::on_pause()) {
+        crate::reg_callback!(pid, consumer, on_pause);
+    }
+    if event_filter.contains(&atoms::on_resume()) {
+        crate::reg_callback!(pid, consumer, on_resume);
+    }
+    if event_filter.contains(&atoms::on_producer_pause()) {
+        crate::reg_callback!(pid, consumer, on_producer_pause);
+    }
+    if event_filter.contains(&atoms::on_producer_resume()) {
+        crate::reg_callback!(pid, consumer, on_producer_resume);
+    }
 
-    crate::reg_callback!(pid, consumer, on_producer_close);
-    crate::reg_callback!(pid, consumer, on_transport_close);
+    if event_filter.contains(&atoms::on_producer_close()) {
+        crate::reg_callback!(pid, consumer, on_producer_close);
+    }
 
-    {
+    if event_filter.contains(&atoms::on_transport_close()) {
+        crate::reg_callback!(pid, consumer, on_transport_close);
+    }
+
+    if event_filter.contains(&atoms::on_layers_change()) {
         let pid = pid.clone();
         consumer
             .on_layers_change(move |layer| {
@@ -210,7 +226,7 @@ pub fn consumer_event(
             })
             .detach();
     }
-    {
+    if event_filter.contains(&atoms::on_score()) {
         //let pid = pid.clone();
         consumer
             .on_score(move |score| {
