@@ -21,4 +21,38 @@ defmodule Mediasoup do
 
   @type num_sctp_streams :: %{OS: integer(), MIS: integer()}
   @type transport_listen_ip :: %{:ip => String.t(), optional(:announcedIp) => String.t() | nil}
+
+  def get_remote_node_ip(to_node) do
+    from = self()
+
+    Node.spawn_link(to_node, fn ->
+      send(from, {:gethost, :inet.gethostname()})
+    end)
+
+    hostname =
+      receive do
+        {:gethost, {:ok, hostname}} -> hostname
+      end
+
+    with {:ok, ip} <- :inet.getaddr(hostname, :inet) do
+      {:ok, to_string(:inet.ntoa(ip))}
+    end
+  end
+
+  @doc """
+  Get local ip from node.
+  used in Router.pipe_producer_to_router for default implementation
+  """
+  def get_remote_node_ip(from_node, to_node) do
+    from = self()
+
+    Node.spawn_link(from_node, fn ->
+      node_ip = get_remote_node_ip(to_node)
+      send(from, {:get_remote_node_ip, node_ip})
+    end)
+
+    receive do
+      {:get_remote_node_ip, result} -> result
+    end
+  end
 end

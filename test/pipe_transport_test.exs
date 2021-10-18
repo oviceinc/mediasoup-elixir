@@ -104,6 +104,14 @@ defmodule PipeTransportTest do
     IntegrateTest.PipeTransportTest.pipe_produce_consume_with_map(process_worker)
   end
 
+  test "multiple_pipe_to_router", %{
+    struct_worker: struct_worker,
+    process_worker: process_worker
+  } do
+    IntegrateTest.PipeTransportTest.multiple_pipe_to_router(struct_worker)
+    IntegrateTest.PipeTransportTest.multiple_pipe_to_router(process_worker)
+  end
+
   test "close_event", %{struct_worker: struct_worker, process_worker: process_worker} do
     IntegrateTest.PipeTransportTest.close_event(struct_worker)
     IntegrateTest.PipeTransportTest.close_event(process_worker)
@@ -111,5 +119,23 @@ defmodule PipeTransportTest do
 
   test "close_router_event", %{struct_worker: _struct_worker, process_worker: process_worker} do
     IntegrateTest.PipeTransportTest.close_router_event(process_worker)
+  end
+
+  test "producer_close_are_transmitted_to_pipe_consumer", %{
+    struct_worker: _struct_worker,
+    process_worker: process_worker
+  } do
+    IntegrateTest.PipeTransportTest.producer_close_are_transmitted_to_pipe_consumer(
+      process_worker
+    )
+  end
+
+  test "consumer_close_are_transmitted_to_pipe_consumer", %{
+    struct_worker: _struct_worker,
+    process_worker: process_worker
+  } do
+    IntegrateTest.PipeTransportTest.consumer_close_are_transmitted_to_pipe_consumer(
+      process_worker
+    )
   end
 end

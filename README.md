@@ -24,6 +24,7 @@ They have an almost same interface, The only difference is how it create.
 * Pros
   * Can be sent to remote node
   * Extensive language support for the process lifetime
+  * Can be pipe_producer_to_router to router in remote node
 * Cons
   * Has message passing overhead in function call
 

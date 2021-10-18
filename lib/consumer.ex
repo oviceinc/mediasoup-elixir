@@ -225,6 +225,11 @@ defmodule Mediasoup.Consumer do
     Nif.consumer_event(reference, pid, event_types)
   end
 
+  def handle_info({:on_close}, %{struct: struct} = state) do
+    Consumer.close(struct)
+    {:noreply, state}
+  end
+
   defmodule Options do
     @moduledoc """
     https://mediasoup.org/documentation/v3/mediasoup/api/#ConsumerOptions
@@ -234,7 +239,7 @@ defmodule Mediasoup.Consumer do
 
     @type t :: %Options{
             producer_id: String.t(),
-            rtp_capabilities: :audio | :video | nil,
+            rtp_capabilities: map(),
             paused: boolean | nil,
             preferred_layers: term | nil,
             pipe: boolean | nil
