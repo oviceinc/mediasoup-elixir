@@ -114,14 +114,21 @@ pub fn producer_dump(producer: ResourceArc<ProducerRef>) -> NifResult<JsonSerdeW
 pub fn producer_event(
     producer: ResourceArc<ProducerRef>,
     pid: rustler::LocalPid,
+    event_types: Vec<Atom>,
 ) -> NifResult<(rustler::Atom,)> {
     let producer = producer.get_resource()?;
 
-    crate::reg_callback!(pid, producer, on_close);
-    crate::reg_callback!(pid, producer, on_pause);
-    crate::reg_callback!(pid, producer, on_resume);
+    if event_types.contains(&atoms::on_close()) {
+        crate::reg_callback!(pid, producer, on_close);
+    }
+    if event_types.contains(&atoms::on_pause()) {
+        crate::reg_callback!(pid, producer, on_pause);
+    }
+    if event_types.contains(&atoms::on_resume()) {
+        crate::reg_callback!(pid, producer, on_resume);
+    }
 
-    {
+    if event_types.contains(&atoms::on_video_orientation_change()) {
         let pid = pid.clone();
         producer
             .on_video_orientation_change(move |orientation| {
@@ -135,7 +142,7 @@ pub fn producer_event(
             })
             .detach();
     }
-    {
+    if event_types.contains(&atoms::on_score()) {
         //let pid = pid.clone();
         producer
             .on_score(move |score| {

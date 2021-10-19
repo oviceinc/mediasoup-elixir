@@ -230,12 +230,19 @@ pub fn pipe_transport_dump(
 pub fn pipe_transport_event(
     transport: ResourceArc<PipeTransportRef>,
     pid: rustler::LocalPid,
+    event_types: Vec<Atom>,
 ) -> NifResult<(Atom,)> {
     let transport = transport.get_resource()?;
 
-    crate::reg_callback_once!(pid, transport, on_close);
-    crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
-    crate::reg_callback_json_clone_param!(pid, transport, on_tuple);
+    if event_types.contains(&atoms::on_close()) {
+        crate::reg_callback_once!(pid, transport, on_close);
+    }
+    if event_types.contains(&atoms::on_sctp_state_change()) {
+        crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
+    }
+    if event_types.contains(&atoms::on_tuple()) {
+        crate::reg_callback_json_clone_param!(pid, transport, on_tuple);
+    }
 
     Ok((atoms::ok(),))
 }

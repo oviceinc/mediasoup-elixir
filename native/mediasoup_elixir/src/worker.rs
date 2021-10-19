@@ -96,6 +96,7 @@ pub fn worker_update_settings(
 pub fn worker_event(
     worker: ResourceArc<WorkerRef>,
     pid: rustler::LocalPid,
+    event_types: Vec<rustler::Atom>,
 ) -> NifResult<(rustler::Atom,)> {
     let worker = worker.get_resource()?;
 
@@ -111,8 +112,11 @@ pub fn worker_event(
             })
             .detach();
     }*/
-    crate::reg_callback!(pid, worker, on_close);
-    {
+    if event_types.contains(&atoms::on_close()) {
+        crate::reg_callback!(pid, worker, on_close);
+    }
+
+    if event_types.contains(&atoms::on_dead()) {
         worker
             .on_dead(move |reason| match reason {
                 Ok(_) => send_msg_from_other_thread(pid, (atoms::on_dead(),)),

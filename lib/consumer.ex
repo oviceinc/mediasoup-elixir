@@ -189,13 +189,40 @@ defmodule Mediasoup.Consumer do
     Nif.consumer_request_key_frame(reference)
   end
 
-  @spec event(t, pid) :: {:ok} | {:error}
-  def event(%Consumer{pid: pid}, listener) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener]})
+  @type event_type ::
+          :on_close
+          | :on_pause
+          | :on_resume
+          | :on_producer_resume
+          | :on_producer_pause
+          | :on_producer_close
+          | :on_transport_close
+          | :on_score
+          | :on_layers_change
+
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  def event(
+        consumer,
+        listener,
+        event_types \\ [
+          :on_close,
+          :on_pause,
+          :on_resume,
+          :on_producer_resume,
+          :on_producer_pause,
+          :on_producer_close,
+          :on_transport_close,
+          :on_score,
+          :on_layers_change
+        ]
+      )
+
+  def event(%Consumer{pid: pid}, listener, event_types) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%Consumer{reference: reference}, pid) do
-    Nif.consumer_event(reference, pid)
+  def event(%Consumer{reference: reference}, pid, event_types) do
+    Nif.consumer_event(reference, pid, event_types)
   end
 
   defmodule Options do

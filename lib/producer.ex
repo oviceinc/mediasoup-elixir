@@ -115,13 +115,32 @@ defmodule Mediasoup.Producer do
     Nif.producer_paused(reference)
   end
 
-  @spec event(t, pid) :: {:ok} | {:error}
-  def event(%Producer{pid: pid}, listener) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener]})
+  @type event_type ::
+          :on_close
+          | :on_pause
+          | :on_resume
+          | :on_video_orientation_change
+          | :on_score
+
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  def event(
+        producer,
+        listener,
+        event_types \\ [
+          :on_close,
+          :on_pause,
+          :on_resume,
+          :on_video_orientation_change,
+          :on_score
+        ]
+      )
+
+  def event(%Producer{pid: pid}, listener, event_types) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%Producer{reference: reference}, pid) do
-    Nif.producer_event(reference, pid)
+  def event(%Producer{reference: reference}, pid, event_types) do
+    Nif.producer_event(reference, pid, event_types)
   end
 
   defmodule Options do

@@ -243,15 +243,25 @@ pub fn webrtc_transport_sctp_state(
 pub fn webrtc_transport_event(
     transport: ResourceArc<WebRtcTransportRef>,
     pid: rustler::LocalPid,
+    event_types: Vec<Atom>,
 ) -> NifResult<(Atom,)> {
     let transport = transport.get_resource()?;
 
-    crate::reg_callback_once!(pid, transport, on_close);
-    crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
-    crate::reg_callback_json_param!(pid, transport, on_ice_state_change);
-    crate::reg_callback_json_param!(pid, transport, on_dtls_state_change);
+    if event_types.contains(&atoms::on_close()) {
+        crate::reg_callback_once!(pid, transport, on_close);
+    }
 
-    {
+    if event_types.contains(&atoms::on_sctp_state_change()) {
+        crate::reg_callback_json_param!(pid, transport, on_sctp_state_change);
+    }
+    if event_types.contains(&atoms::on_ice_state_change()) {
+        crate::reg_callback_json_param!(pid, transport, on_ice_state_change);
+    }
+    if event_types.contains(&atoms::on_dtls_state_change()) {
+        crate::reg_callback_json_param!(pid, transport, on_dtls_state_change);
+    }
+
+    if event_types.contains(&atoms::on_ice_selected_tuple_change()) {
         transport
             .on_ice_selected_tuple_change(move |arg| {
                 send_msg_from_other_thread(

@@ -128,13 +128,26 @@ defmodule Mediasoup.Worker do
     GenServer.call(pid, {:dump, []})
   end
 
-  @spec event(t | pid, pid) :: {:ok} | {:error}
-  def event(%Worker{reference: reference}, pid) do
-    Nif.worker_event(reference, pid)
+  @type event_type ::
+          :on_close
+          | :on_worker_close
+
+  @spec event(t | pid, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  def event(
+        worker,
+        listener,
+        event_types \\ [
+          :on_close,
+          :on_worker_close
+        ]
+      )
+
+  def event(%Worker{reference: reference}, pid, event_types) do
+    Nif.worker_event(reference, pid, event_types)
   end
 
-  def event(pid, lisener) do
-    GenServer.call(pid, {:event, [lisener]})
+  def event(pid, lisener, event_types) do
+    GenServer.call(pid, {:event, [lisener, event_types]})
   end
 
   @type start_link_opt :: {:settings, Settings.t() | map()}

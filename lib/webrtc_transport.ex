@@ -254,12 +254,31 @@ defmodule Mediasoup.WebRtcTransport do
     Nif.webrtc_transport_dump(reference)
   end
 
-  @spec event(t, pid) :: {:ok} | {:error, :terminated}
-  def event(%WebRtcTransport{pid: pid}, listener) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener]})
+  @type event_type ::
+          :on_close
+          | :on_sctp_state_change
+          | :on_ice_state_change
+          | :on_dtls_state_change
+          | :on_ice_selected_tuple_change
+
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  def event(
+        transport,
+        listener,
+        event_types \\ [
+          :on_close,
+          :on_sctp_state_change,
+          :on_ice_state_change,
+          :on_dtls_state_change,
+          :on_ice_selected_tuple_change
+        ]
+      )
+
+  def event(%WebRtcTransport{pid: pid}, listener, event_types) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%WebRtcTransport{reference: reference}, pid) do
-    Nif.webrtc_transport_event(reference, pid)
+  def event(%WebRtcTransport{reference: reference}, pid, event_types) do
+    Nif.webrtc_transport_event(reference, pid, event_types)
   end
 end
