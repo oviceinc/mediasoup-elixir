@@ -122,11 +122,11 @@ defmodule Mediasoup.Producer do
           | :on_video_orientation_change
           | :on_score
 
-  @spec event(t, pid, event_filter :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
         producer,
         listener,
-        event_filter \\ [
+        event_types \\ [
           :on_close,
           :on_pause,
           :on_resume,
@@ -135,12 +135,12 @@ defmodule Mediasoup.Producer do
         ]
       )
 
-  def event(%Producer{pid: pid}, listener, event_filter) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener, event_filter]})
+  def event(%Producer{pid: pid}, listener, event_types) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%Producer{reference: reference}, pid, event_filter) do
-    Nif.producer_event(reference, pid, event_filter)
+  def event(%Producer{reference: reference}, pid, event_types) do
+    Nif.producer_event(reference, pid, event_types)
   end
 
   defmodule Options do

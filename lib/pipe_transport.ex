@@ -163,22 +163,22 @@ defmodule Mediasoup.PipeTransport do
           | :on_sctp_state_change
           | :on_tuple
 
-  @spec event(t, pid, event_filter :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
         transport,
         listener,
-        event_filter \\ [
+        event_types \\ [
           :on_close,
           :on_sctp_state_change,
           :on_tuple
         ]
       )
 
-  def event(%PipeTransport{pid: pid}, listener, event_filter) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener, event_filter]})
+  def event(%PipeTransport{pid: pid}, listener, event_types) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%PipeTransport{reference: reference}, pid, event_filter) do
-    Nif.pipe_transport_event(reference, pid, event_filter)
+  def event(%PipeTransport{reference: reference}, pid, event_types) do
+    Nif.pipe_transport_event(reference, pid, event_types)
   end
 end

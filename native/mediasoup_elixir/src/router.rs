@@ -137,14 +137,14 @@ pub fn router_dump(router: ResourceArc<RouterRef>) -> NifResult<JsonSerdeWrap<Ro
 pub fn router_event(
     router: ResourceArc<RouterRef>,
     pid: rustler::LocalPid,
-    event_filter: Vec<rustler::Atom>,
+    event_types: Vec<rustler::Atom>,
 ) -> NifResult<(rustler::Atom,)> {
     let router = router.get_resource()?;
 
-    if event_filter.contains(&atoms::on_close()) {
+    if event_types.contains(&atoms::on_close()) {
         crate::reg_callback!(pid, router, on_close);
     }
-    if event_filter.contains(&atoms::on_worker_close()) {
+    if event_types.contains(&atoms::on_worker_close()) {
         crate::reg_callback!(pid, router, on_worker_close);
     }
 

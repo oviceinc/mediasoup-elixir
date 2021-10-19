@@ -132,22 +132,22 @@ defmodule Mediasoup.Worker do
           :on_close
           | :on_worker_close
 
-  @spec event(t | pid, pid, event_filter :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t | pid, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
         worker,
         listener,
-        event_filter \\ [
+        event_types \\ [
           :on_close,
           :on_worker_close
         ]
       )
 
-  def event(%Worker{reference: reference}, pid, event_filter) do
-    Nif.worker_event(reference, pid, event_filter)
+  def event(%Worker{reference: reference}, pid, event_types) do
+    Nif.worker_event(reference, pid, event_types)
   end
 
-  def event(pid, lisener, event_filter) do
-    GenServer.call(pid, {:event, [lisener, event_filter]})
+  def event(pid, lisener, event_types) do
+    GenServer.call(pid, {:event, [lisener, event_types]})
   end
 
   @type start_link_opt :: {:settings, Settings.t() | map()}

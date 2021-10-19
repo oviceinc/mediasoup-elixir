@@ -200,11 +200,11 @@ defmodule Mediasoup.Consumer do
           | :on_score
           | :on_layers_change
 
-  @spec event(t, pid, event_filter :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
         consumer,
         listener,
-        event_filter \\ [
+        event_types \\ [
           :on_close,
           :on_pause,
           :on_resume,
@@ -217,12 +217,12 @@ defmodule Mediasoup.Consumer do
         ]
       )
 
-  def event(%Consumer{pid: pid}, listener, event_filter) when is_pid(pid) do
-    GenServer.call(pid, {:event, [listener, event_filter]})
+  def event(%Consumer{pid: pid}, listener, event_types) when is_pid(pid) do
+    GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%Consumer{reference: reference}, pid, event_filter) do
-    Nif.consumer_event(reference, pid, event_filter)
+  def event(%Consumer{reference: reference}, pid, event_types) do
+    Nif.consumer_event(reference, pid, event_types)
   end
 
   defmodule Options do
