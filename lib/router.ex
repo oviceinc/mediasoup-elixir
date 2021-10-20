@@ -37,7 +37,8 @@ defmodule Mediasoup.Router do
             num_sctp_streams: num_sctp_streams() | nil,
             enable_rtx: boolean() | nil,
             enable_srtp: boolean() | nil,
-            get_remote_node_ip: (node, node -> String.t())
+            get_remote_node_ip:
+              (node, node -> {:ok, String.t()} | {:error, message :: String.t() | atom()})
           }
   end
 

@@ -29,19 +29,28 @@ defmodule Mediasoup do
       send(from, {:gethost, :inet.gethostname()})
     end)
 
-    hostname =
+    gethostresult =
       receive do
-        {:gethost, {:ok, hostname}} -> hostname
+        {:gethost, result} -> result
+      after
+        5000 ->
+          {:error, "timeout: gethostname"}
       end
 
-    with {:ok, ip} <- :inet.getaddr(hostname, :inet) do
+    with {:ok, hostname} <- gethostresult,
+         {:ok, ip} <- :inet.getaddr(hostname, :inet) do
       {:ok, to_string(:inet.ntoa(ip))}
     end
   end
 
   @doc """
   Get local ip from node.
-  used in Router.pipe_producer_to_router for default implementation
+  used in Router.pipe_producer_to_router for default implementation.
+
+  Returns `{:ok, ipaddress} | {:error, reason}`.
+
+  1. execute gethostname on remote(connection to) node
+  2. execute getaddr by hostname on local(connection from) node
   """
   def get_remote_node_ip(from_node, to_node) do
     from = self()
@@ -53,6 +62,9 @@ defmodule Mediasoup do
 
     receive do
       {:get_remote_node_ip, result} -> result
+    after
+      5000 ->
+        {:error, "timeout: get_remote_node_ip"}
     end
   end
 end
