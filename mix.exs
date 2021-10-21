@@ -12,7 +12,7 @@ defmodule MediasoupElixir.MixProject do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
-        dialyzer: :test,
+        dialyzer: :dialyzer,
         "coveralls.detail": :test,
         "coveralls.lcov": :test
       ],
@@ -34,12 +34,15 @@ defmodule MediasoupElixir.MixProject do
   defp deps do
     [
       {:rustler, "~> 0.22.0"},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: :dialyzer, runtime: false},
       {:excoveralls, "~> 0.14.2", only: :test},
+      {:local_cluster, "~> 1.2", only: :test},
+      {:global_flags, "~> 1.0"},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
     ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/integration"]
+  defp elixirc_paths(:dialyzer), do: ["lib", "test/integration"]
   defp elixirc_paths(_), do: ["lib"]
 end
