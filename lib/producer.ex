@@ -143,6 +143,21 @@ defmodule Mediasoup.Producer do
     Nif.producer_event(reference, pid, event_types)
   end
 
+  def handle_info({:on_resume}, %{struct: struct} = state) do
+    Producer.resume(struct)
+    {:noreply, state}
+  end
+
+  def handle_info({:on_pause}, %{struct: struct} = state) do
+    Producer.pause(struct)
+    {:noreply, state}
+  end
+
+  def handle_info({:on_close}, %{struct: struct} = state) do
+    Producer.close(struct)
+    {:noreply, state}
+  end
+
   defmodule Options do
     @moduledoc """
     https://mediasoup.org/documentation/v3/mediasoup/api/#ProducerOptions
@@ -193,8 +208,12 @@ defmodule Mediasoup.PipedProducer do
           reference: reference
         }
 
-  @spec into_producer(t) :: {:ok, Producer.t()} | {:error, message :: term}
+  @spec into_producer(t | Producer.t()) :: {:ok, Producer.t()} | {:error, message :: term}
   def into_producer(%PipedProducer{reference: reference}) do
     Nif.piped_producer_into_producer(reference)
+  end
+
+  def into_producer(%Producer{} = producer) do
+    {:ok, producer}
   end
 end

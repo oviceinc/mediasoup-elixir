@@ -27,7 +27,8 @@ defmodule Mediasoup.Router do
       enable_sctp: nil,
       num_sctp_streams: nil,
       enable_rtx: nil,
-      enable_srtp: nil
+      enable_srtp: nil,
+      get_remote_node_ip: &Mediasoup.get_remote_node_ip/2
     ]
 
     @type t :: %PipeToRouterOptions{
@@ -35,7 +36,9 @@ defmodule Mediasoup.Router do
             enable_sctp: boolean() | nil,
             num_sctp_streams: num_sctp_streams() | nil,
             enable_rtx: boolean() | nil,
-            enable_srtp: boolean() | nil
+            enable_srtp: boolean() | nil,
+            get_remote_node_ip:
+              (node, node -> {:ok, String.t()} | {:error, message :: String.t() | atom()})
           }
   end
 
@@ -91,27 +94,34 @@ defmodule Mediasoup.Router do
   @spec pipe_producer_to_router(t, producer_id :: String.t(), PipeToRouterOptions.t()) ::
           {:ok, PipeToRouterResult.t()} | {:error, String.t()}
   def pipe_producer_to_router(
-        %Router{pid: pid},
+        %Router{pid: pid} = router,
         producer_id,
         %PipeToRouterOptions{} = option
       )
       when is_pid(pid) do
-    GenServer.call(pid, {:pipe_producer_to_router, [producer_id, option]})
-  end
+    alias Mediasoup.{Consumer, Producer, Transport}
 
-  def pipe_producer_to_router(
-        router,
-        producer_id,
-        %PipeToRouterOptions{router: %Router{pid: pid}} = option
-      )
-      when is_pid(pid) do
-    # need check same node
-    router_struct = Router.struct(pid)
+    with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
+           get_or_create_pipe_transport_pair(router, option),
+         {:ok, pipe_consumer} <-
+           Transport.consume(local_pipe_transport, %Consumer.Options{
+             producer_id: producer_id,
+             rtp_capabilities: Router.rtp_capabilities(router)
+           }),
+         {:ok, pipe_producer} <-
+           Transport.produce(remote_pipe_transport, %Producer.Options{
+             id: producer_id,
+             kind: Consumer.kind(pipe_consumer),
+             rtp_parameters: Consumer.rtp_parameters(pipe_consumer),
+             paused: Consumer.producer_paused?(pipe_consumer)
+           }) do
+      # Pipe events from the pipe Consumer to the pipe Producer.
+      Consumer.event(pipe_consumer, pipe_producer.pid, [:on_close, :on_pause, :on_resume])
+      # Pipe events from the pipe Producer to the pipe Consumer.
+      Producer.event(pipe_producer, pipe_consumer.pid, [:on_close])
 
-    pipe_producer_to_router(router, producer_id, %{
-      option
-      | router: router_struct
-    })
+      {:ok, %{pipe_producer: pipe_producer, pipe_consumer: pipe_consumer}}
+    end
   end
 
   def pipe_producer_to_router(
@@ -185,5 +195,117 @@ defmodule Mediasoup.Router do
 
   def event(%Router{reference: reference}, pid, event_types) do
     Nif.router_event(reference, pid, event_types)
+  end
+
+  def handle_call({:get_node}, _from, state) do
+    {:reply, Node.self(), state}
+  end
+
+  def handle_call(
+        {:get_pipe_transport_pair, id},
+        _from,
+        %{mapped_pipe_transports: mapped_pipe_transports} = state
+      ) do
+    case Map.fetch(mapped_pipe_transports, id) do
+      {:ok, pair} -> {:reply, pair, state}
+      _ -> {:reply, nil, state}
+    end
+  end
+
+  def handle_call({:get_pipe_transport_pair, _id}, _from, state) do
+    {:reply, nil, state}
+  end
+
+  def handle_call(
+        {:put_pipe_transport_pair, id, pair},
+        _from,
+        %{mapped_pipe_transports: mapped_pipe_transports} = state
+      ) do
+    {:reply, :ok, %{state | mapped_pipe_transports: Map.put(mapped_pipe_transports, id, pair)}}
+  end
+
+  def handle_call({:put_pipe_transport_pair, id, pair}, _from, state) do
+    {:reply, :ok, Map.put(state, :mapped_pipe_transports, %{id => pair})}
+  end
+
+  def handle_call(message, from, state) do
+    super(message, from, state)
+  end
+
+  defp get_node(%Router{pid: pid}) when is_pid(pid) do
+    GenServer.call(pid, {:get_node})
+  end
+
+  defp get_pipe_transport_pair(
+         %Router{pid: pid},
+         %PipeToRouterOptions{router: remote_router}
+       )
+       when is_pid(pid) do
+    GenServer.call(pid, {:get_pipe_transport_pair, Router.id(remote_router)})
+  end
+
+  defp put_pipe_transport_pair(
+         %Router{pid: pid},
+         %PipeToRouterOptions{router: remote_router},
+         pair
+       )
+       when is_pid(pid) do
+    GenServer.call(pid, {:put_pipe_transport_pair, Router.id(remote_router), pair})
+  end
+
+  defp get_or_create_pipe_transport_pair(
+         %Router{pid: pid} = router,
+         %PipeToRouterOptions{router: %Router{pid: _pid2}} = option
+       )
+       when is_pid(pid) do
+    case get_pipe_transport_pair(router, option) do
+      nil ->
+        create_pipe_transport_pair(router, option)
+
+      pair ->
+        {:ok, pair}
+    end
+  end
+
+  defp create_pipe_transport_pair(
+         %Router{pid: _pid} = router,
+         %PipeToRouterOptions{
+           router: %Router{pid: _pid2} = remote_router,
+           enable_sctp: enable_sctp,
+           num_sctp_streams: num_sctp_streams,
+           enable_rtx: enable_rtx,
+           enable_srtp: enable_srtp,
+           get_remote_node_ip: get_remote_node_ip
+         } = option
+       ) do
+    local_node = get_node(router)
+    remote_node = get_node(remote_router)
+
+    pipe_option = %PipeTransport.Options{
+      listen_ip: %{ip: "127.0.0.1"},
+      enable_sctp: enable_sctp,
+      num_sctp_streams: num_sctp_streams,
+      enable_rtx: enable_rtx,
+      enable_srtp: enable_srtp
+    }
+
+    with {:ok, remote_ip} <- get_remote_node_ip.(local_node, remote_node),
+         {:ok, local_ip} <- get_remote_node_ip.(remote_node, local_node),
+         {:ok, local_pipe_transport} <-
+           Router.create_pipe_transport(router, pipe_option),
+         {:ok, remote_pipe_transport} <-
+           Router.create_pipe_transport(remote_router, pipe_option) do
+      %{"localPort" => local_port} = PipeTransport.tuple(local_pipe_transport)
+      %{"localPort" => remote_port} = PipeTransport.tuple(remote_pipe_transport)
+
+      with {:ok} <-
+             PipeTransport.connect(local_pipe_transport, %{ip: remote_ip, port: remote_port}),
+           {:ok} <-
+             PipeTransport.connect(remote_pipe_transport, %{ip: local_ip, port: local_port}) do
+        pair = %{local: local_pipe_transport, remote: remote_pipe_transport}
+        put_pipe_transport_pair(router, option, pair)
+        {:ok, pair}
+      end
+    end
   end
 end

@@ -3,6 +3,42 @@ defmodule Mediasoup.ProcessWrap do
    Utilities for wrap NifStruct to Process
   """
 
+  defmodule EventProxy do
+    @moduledoc """
+      Event proxy module for rustler because rustler(nif) can only use local pid.
+    """
+    use GenServer
+
+    def start(opt) do
+      pid = Keyword.fetch!(opt, :pid)
+      GenServer.start(__MODULE__, %{pid: pid}, [])
+    end
+
+    def init(%{pid: pid} = init_arg) do
+      Process.monitor(pid)
+      {:ok, init_arg}
+    end
+
+    def handle_info(
+          {:EXIT, _pid, reason},
+          state
+        ) do
+      {:stop, reason, state}
+    end
+
+    def handle_info(
+          {:DOWN, _ref, :process, _shutdownpid, reason},
+          state
+        ) do
+      {:stop, reason, state}
+    end
+
+    def handle_info(message, %{pid: pid} = state) do
+      send(pid, message)
+      {:noreply, state}
+    end
+  end
+
   defmodule Base do
     @moduledoc """
      Wrap NifStruct to Process without children process
@@ -98,6 +134,20 @@ defmodule Mediasoup.ProcessWrap do
             end
 
           {:reply, ret, state}
+        end
+
+        def handle_call({:event, [listener, event_types]}, _from, %{struct: struct} = state) do
+          result =
+            try do
+              # create proxy process because rustler can only use local pid.
+              __MODULE__.event(struct, listener, event_types)
+            rescue
+              e in ArgumentError ->
+                {:ok, listener} = EventProxy.start(pid: listener)
+                __MODULE__.event(struct, listener, event_types)
+            end
+
+          {:reply, result, state}
         end
 
         def handle_call({function, option}, _from, %{struct: struct} = state) do

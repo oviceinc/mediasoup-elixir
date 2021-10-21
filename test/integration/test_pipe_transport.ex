@@ -794,6 +794,40 @@ defmodule IntegrateTest.PipeTransportTest do
       })
   end
 
+  def multiple_pipe_to_router(worker) do
+    {_worker, router1, router2, transport1, _transport2} = init(worker)
+
+    {:ok, router3} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, audio_producer} = WebRtcTransport.produce(transport1, audio_producer_options())
+
+    {:ok, _} =
+      Router.pipe_producer_to_router(router1, audio_producer.id, %Router.PipeToRouterOptions{
+        router: router2
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+    # Pause the videoProducer.
+    assert {:ok} === Producer.pause(video_producer)
+
+    {:ok, _} =
+      Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
+        router: router2
+      })
+
+    {:ok, _} =
+      Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
+        router: router3
+      })
+
+    assert 3 == Mediasoup.Router.dump(router1)["transportIds"] |> length
+    assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
+    assert 1 == Mediasoup.Router.dump(router3)["transportIds"] |> length
+  end
+
   def close_event(worker) do
     {_worker, router1, _router2, _transport1, _transport2} = init(worker)
 
@@ -820,5 +854,61 @@ defmodule IntegrateTest.PipeTransportTest do
     Mediasoup.Router.close(router1)
     assert Mediasoup.Transport.closed?(pipe_transport)
     assert_receive {:on_close}
+  end
+
+  def producer_close_are_transmitted_to_pipe_consumer(worker) do
+    {_worker, router1, router2, transport1, _transport2} = init(worker)
+
+    {:ok, audio_producer} = WebRtcTransport.produce(transport1, audio_producer_options())
+
+    {:ok, _} =
+      Router.pipe_producer_to_router(router1, audio_producer.id, %Router.PipeToRouterOptions{
+        router: router2
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+    # Pause the videoProducer.
+    assert {:ok} === Producer.pause(video_producer)
+
+    {:ok, %{pipe_consumer: pipe_consumer, pipe_producer: pipe_producer}} =
+      Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
+        router: router2
+      })
+
+    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
+
+    Mediasoup.Consumer.close(pipe_consumer)
+
+    Process.sleep(100)
+    assert Mediasoup.Consumer.closed?(pipe_consumer)
+    assert Mediasoup.Producer.closed?(pipe_producer)
+  end
+
+  def consumer_close_are_transmitted_to_pipe_consumer(worker) do
+    {_worker, router1, router2, transport1, _transport2} = init(worker)
+
+    {:ok, audio_producer} = WebRtcTransport.produce(transport1, audio_producer_options())
+
+    {:ok, _} =
+      Router.pipe_producer_to_router(router1, audio_producer.id, %Router.PipeToRouterOptions{
+        router: router2
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+    # Pause the videoProducer.
+    assert {:ok} === Producer.pause(video_producer)
+
+    {:ok, %{pipe_consumer: pipe_consumer, pipe_producer: pipe_producer}} =
+      Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
+        router: router2
+      })
+
+    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
+
+    Mediasoup.Producer.close(pipe_producer)
+
+    Process.sleep(100)
+    assert Mediasoup.Consumer.closed?(pipe_consumer)
+    assert Mediasoup.Producer.closed?(pipe_producer)
   end
 end
