@@ -37,7 +37,8 @@ defmodule MediasoupElixir.MixProject do
       {:dialyxir, "~> 1.0", only: :dialyzer, runtime: false},
       {:excoveralls, "~> 0.14.2", only: :test},
       {:local_cluster, "~> 1.2", only: :test},
-      {:global_flags, "~> 1.0"},
+      # global_flags used in local_cluster
+      {:global_flags, "~> 1.0", only: :test},
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
     ]
   end
