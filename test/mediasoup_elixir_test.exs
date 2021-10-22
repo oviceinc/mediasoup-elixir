@@ -13,4 +13,15 @@ defmodule MediasoupElixirTest do
              logLevel: :debug
            })
   end
+
+  test "get_remote_node_ip" do
+    assert match?({:ok, _ip}, Mediasoup.Utility.get_remote_node_ip(Node.self(), Node.self()))
+  end
+
+  test "get_remote_node_ip_different_node" do
+    assert match?(
+             {:ok, _ip},
+             Mediasoup.Utility.get_remote_node_ip_different_node(Node.self(), Node.self())
+           )
+  end
 end

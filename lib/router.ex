@@ -28,7 +28,8 @@ defmodule Mediasoup.Router do
       num_sctp_streams: nil,
       enable_rtx: nil,
       enable_srtp: nil,
-      get_remote_node_ip: &Mediasoup.get_remote_node_ip/2
+      get_remote_node_ip: &Mediasoup.Utility.get_remote_node_ip/2,
+      get_listen_ip: &Mediasoup.Utility.get_listen_ip/2
     ]
 
     @type t :: %PipeToRouterOptions{
@@ -38,6 +39,8 @@ defmodule Mediasoup.Router do
             enable_rtx: boolean() | nil,
             enable_srtp: boolean() | nil,
             get_remote_node_ip:
+              (node, node -> {:ok, String.t()} | {:error, message :: String.t() | atom()}),
+            get_listen_ip:
               (node, node -> {:ok, String.t()} | {:error, message :: String.t() | atom()})
           }
   end
@@ -275,26 +278,33 @@ defmodule Mediasoup.Router do
            num_sctp_streams: num_sctp_streams,
            enable_rtx: enable_rtx,
            enable_srtp: enable_srtp,
-           get_remote_node_ip: get_remote_node_ip
+           get_remote_node_ip: get_remote_node_ip,
+           get_listen_ip: get_listen_ip
          } = option
        ) do
     local_node = get_node(router)
     remote_node = get_node(remote_router)
 
-    pipe_option = %PipeTransport.Options{
-      listen_ip: %{ip: "127.0.0.1"},
-      enable_sctp: enable_sctp,
-      num_sctp_streams: num_sctp_streams,
-      enable_rtx: enable_rtx,
-      enable_srtp: enable_srtp
-    }
-
     with {:ok, remote_ip} <- get_remote_node_ip.(local_node, remote_node),
          {:ok, local_ip} <- get_remote_node_ip.(remote_node, local_node),
+         {:ok, local_listen_ip} <- get_listen_ip.(local_node, remote_node),
+         {:ok, remote_listen_ip} <- get_listen_ip.(remote_node, local_node),
          {:ok, local_pipe_transport} <-
-           Router.create_pipe_transport(router, pipe_option),
+           Router.create_pipe_transport(router, %PipeTransport.Options{
+             listen_ip: %{ip: local_listen_ip},
+             enable_sctp: enable_sctp,
+             num_sctp_streams: num_sctp_streams,
+             enable_rtx: enable_rtx,
+             enable_srtp: enable_srtp
+           }),
          {:ok, remote_pipe_transport} <-
-           Router.create_pipe_transport(remote_router, pipe_option) do
+           Router.create_pipe_transport(remote_router, %PipeTransport.Options{
+             listen_ip: %{ip: remote_listen_ip},
+             enable_sctp: enable_sctp,
+             num_sctp_streams: num_sctp_streams,
+             enable_rtx: enable_rtx,
+             enable_srtp: enable_srtp
+           }) do
       %{"localPort" => local_port} = PipeTransport.tuple(local_pipe_transport)
       %{"localPort" => remote_port} = PipeTransport.tuple(remote_pipe_transport)
 
