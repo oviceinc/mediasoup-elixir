@@ -4,6 +4,9 @@ defmodule Mediasoup do
   """
   alias Mediasoup.{Worker, Nif}
 
+  @version Mix.Project.config()[:version]
+  def version(), do: @version
+
   @doc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#mediasoup-createWorker
   """
