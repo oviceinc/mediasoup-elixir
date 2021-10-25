@@ -53,6 +53,8 @@ jobs:
       run: mix format --check-formatted
     - name: Run check formatted on rust
       run: cargo fmt --all -- --check
+    - name: start epmd daemon for cluster tests
+      run: epmd -daemon
     - name: Run tests
       run: mix test
     - name: Run cargo test

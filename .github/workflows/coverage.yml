@@ -40,6 +40,8 @@ jobs:
           restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
       - name: Install dependencies
         run: mix deps.get
+      - name: start epmd daemon for cluster tests
+        run: epmd -daemon
       - name: Run test coverage
         run: mix coveralls.lcov -o coverage
 
@@ -90,6 +92,8 @@ jobs:
 
       - name: Install dependencies
         run: mix deps.get
+      - name: start epmd daemon for cluster tests
+        run: epmd -daemon
       - name: Run test coverage
         run: mix coveralls.lcov -o coverage
 
