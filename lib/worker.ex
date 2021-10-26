@@ -40,6 +40,29 @@ defmodule Mediasoup.Worker do
     end
   end
 
+  defmodule UpdateableSettings do
+    @moduledoc """
+    https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerUpdateableSettings
+    """
+    defstruct log_level: nil,
+              log_tags: nil
+
+    @type t :: %UpdateableSettings{
+            log_level: Worker.log_level() | nil,
+            log_tags: [Worker.log_tag()] | nil
+          }
+
+    @spec from_map(map) :: t()
+    def from_map(%{} = map) do
+      map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
+
+      %UpdateableSettings{
+        log_level: map["logLevel"],
+        log_tags: map["logTags"]
+      }
+    end
+  end
+
   @enforce_keys [:id, :reference]
   defstruct [:id, :reference]
   @type t :: %Worker{id: String.t(), reference: reference}
@@ -70,10 +93,12 @@ defmodule Mediasoup.Worker do
             optional(:dtlsPrivateKeyFile) => String.t()
           }
           | Settings.t()
-  @type update_option :: %{
-          optional(:logLevel) => log_level,
-          optional(:logTags) => [log_tag]
-        }
+  @type update_option ::
+          %{
+            optional(:logLevel) => log_level,
+            optional(:logTags) => [log_tag]
+          }
+          | UpdateableSettings.t()
 
   def id(%Worker{id: id}) do
     id
@@ -93,21 +118,30 @@ defmodule Mediasoup.Worker do
   end
 
   @spec create_router(t | pid, Router.create_option()) :: {:ok, Router.t()} | {:error}
-  def create_router(%Worker{reference: reference}, option) do
-    Nif.worker_create_router(reference, option)
-  end
 
   def create_router(pid, option) when is_pid(pid) do
     GenServer.call(pid, {:start_child, Router, :create_router, [option]})
   end
 
+  def create_router(%Worker{reference: reference}, %Router.Options{} = option) do
+    Nif.worker_create_router(reference, option)
+  end
+
+  def create_router(worker, option) do
+    create_router(worker, Router.Options.from_map(option))
+  end
+
   @spec update_settings(t | pid, update_option) :: {:ok} | {:error}
-  def update_settings(%Worker{reference: reference}, settings) do
+  def update_settings(pid, settings) when is_pid(pid) do
+    GenServer.call(pid, {:update_settings, [settings]})
+  end
+
+  def update_settings(%Worker{reference: reference}, %UpdateableSettings{} = settings) do
     Nif.worker_update_settings(reference, settings)
   end
 
-  def update_settings(pid, settings) when is_pid(pid) do
-    GenServer.call(pid, {:update_settings, [settings]})
+  def update_settings(worker, settings) do
+    update_settings(worker, UpdateableSettings.from_map(settings))
   end
 
   @spec closed?(t | pid) :: boolean

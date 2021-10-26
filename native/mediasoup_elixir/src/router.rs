@@ -8,8 +8,8 @@ use crate::webrtc_transport::{WebRtcTransportOptionsStruct, WebRtcTransportStruc
 use crate::RouterRef;
 use futures_lite::future;
 use mediasoup::producer::ProducerId;
-use mediasoup::router::{PipeToRouterOptions, Router, RouterDump, RouterId};
-use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized};
+use mediasoup::router::{PipeToRouterOptions, Router, RouterDump, RouterId, RouterOptions};
+use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized, RtpCodecCapability};
 use rustler::{Error, NifResult, NifStruct, ResourceArc};
 
 #[derive(NifStruct)]
@@ -180,6 +180,22 @@ pub fn router_event(
     */
 
     Ok((atoms::ok(),))
+}
+
+#[derive(NifStruct)]
+#[module = "Mediasoup.Router.Options"]
+pub struct RouterOptionsStruct {
+    pub media_codecs: Option<JsonSerdeWrap<Vec<RtpCodecCapability>>>,
+}
+
+impl RouterOptionsStruct {
+    pub fn to_option(&self) -> RouterOptions {
+        let mut value = RouterOptions::default();
+        if let Some(media_codecs) = &self.media_codecs {
+            value.media_codecs = media_codecs.to_vec();
+        }
+        value
+    }
 }
 
 #[derive(NifStruct)]
