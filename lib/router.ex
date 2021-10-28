@@ -9,9 +9,41 @@ defmodule Mediasoup.Router do
   defstruct [:id, :reference, :pid]
   @type t :: %Router{id: String.t(), reference: reference | nil, pid: pid | nil}
 
-  @type rtpCapabilities :: map
+  @type media_codec :: %{
+          :kind => :audio | :video | String.t(),
+          :mimeType => String.t(),
+          :clockRate => integer(),
+          :channels => integer(),
+          :parameters => map(),
+          :rtcpFeedback => [map()],
+          optional(:payloadType) => integer(),
+          optional(:preferredPayloadType) => integer()
+        }
+  @type rtpCapabilities :: any
 
-  @type create_option :: map
+  @type create_option :: Mediasoup.Router.Options.t() | map
+
+  defmodule Options do
+    @moduledoc """
+    https://mediasoup.org/documentation/v3/mediasoup/api/#RouterOptions
+    """
+
+    @enforce_keys [:media_codecs]
+    defstruct media_codecs: nil
+
+    @type t :: %Options{
+            media_codecs: [Mediasoup.Router.media_codec()]
+          }
+
+    @spec from_map(map) :: t()
+    def from_map(%{} = map) do
+      map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
+
+      %Options{
+        media_codecs: map["mediaCodecs"]
+      }
+    end
+  end
 
   defmodule PipeToRouterOptions do
     @moduledoc """

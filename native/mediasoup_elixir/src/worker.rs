@@ -1,17 +1,14 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::router::RouterStruct;
+use crate::router::{RouterOptionsStruct, RouterStruct};
 use crate::{send_msg_from_other_thread, WorkerRef};
 use futures_lite::future;
-use mediasoup::router::RouterOptions;
-use mediasoup::rtp_parameters::RtpCodecCapability;
 use mediasoup::worker::{
     Worker, WorkerDtlsFiles, WorkerDump, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
     WorkerUpdateSettings,
 };
 use mediasoup::worker_manager::WorkerManager;
 use rustler::{Error, NifResult, NifStruct, ResourceArc};
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 #[derive(NifStruct)]
@@ -44,7 +41,7 @@ pub fn worker_close(worker: ResourceArc<WorkerRef>) -> NifResult<(rustler::Atom,
 #[rustler::nif]
 pub fn worker_create_router(
     worker: ResourceArc<WorkerRef>,
-    option: JsonSerdeWrap<SerRouterOptions>,
+    option: RouterOptionsStruct,
 ) -> NifResult<(rustler::Atom, RouterStruct)> {
     let worker = worker.get_resource()?;
 
@@ -78,11 +75,11 @@ pub fn worker_closed(worker: ResourceArc<WorkerRef>) -> Result<bool, Error> {
 #[rustler::nif]
 pub fn worker_update_settings(
     worker: ResourceArc<WorkerRef>,
-    settings: JsonSerdeWrap<SerWorkerUpdateSettings>,
+    settings: WorkerUpdateableSettingsStruct,
 ) -> NifResult<(rustler::Atom,)> {
     let worker = worker.get_resource()?;
 
-    let settings = settings.to_setting()?;
+    let settings = settings.try_to_setting()?;
 
     future::block_on(async move {
         return worker.update_settings(settings).await;
@@ -144,39 +141,20 @@ pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, WorkerStruct)> {
 }
 
 #[rustler::nif]
-pub fn create_worker(settings: SerWorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
-    let settings = settings.to_setting()?;
+pub fn create_worker(settings: WorkerSettingsStruct) -> NifResult<(rustler::Atom, WorkerStruct)> {
+    let settings = settings.try_to_setting()?;
     create_worker_impl(settings)
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct SerRouterOptions {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub media_codecs: Option<Vec<RtpCodecCapability>>,
+#[derive(NifStruct)]
+#[module = "Mediasoup.Worker.UpdateableSettings"]
+pub struct WorkerUpdateableSettingsStruct {
+    pub log_level: Option<JsonSerdeWrap<String>>,
+    pub log_tags: Option<JsonSerdeWrap<Vec<String>>>,
 }
 
-impl SerRouterOptions {
-    fn to_option(&self) -> RouterOptions {
-        let mut value = RouterOptions::default();
-        if let Some(media_codecs) = &self.media_codecs {
-            value.media_codecs = media_codecs.to_vec();
-        }
-        value
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct SerWorkerUpdateSettings {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_level: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_tags: Option<Vec<String>>,
-}
-
-impl SerWorkerUpdateSettings {
-    fn to_setting(&self) -> Result<WorkerUpdateSettings, Error> {
+impl WorkerUpdateableSettingsStruct {
+    fn try_to_setting(&self) -> Result<WorkerUpdateSettings, Error> {
         let mut value = WorkerUpdateSettings::default();
 
         if let Some(log_level) = &self.log_level {
@@ -189,26 +167,19 @@ impl SerWorkerUpdateSettings {
     }
 }
 
-#[derive(Serialize, Deserialize, NifStruct)]
+#[derive(NifStruct)]
 #[module = "Mediasoup.Worker.Settings"]
-#[serde(rename_all = "camelCase")]
-pub struct SerWorkerSettings {
-    #[serde(skip_serializing_if = "Option::is_none")]
+pub struct WorkerSettingsStruct {
     pub log_level: Option<JsonSerdeWrap<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub log_tags: Option<JsonSerdeWrap<Vec<String>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub rtc_min_port: Option<u16>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub rtc_max_port: Option<u16>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub dtls_certificate_file: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub dtls_private_key_file: Option<String>,
 }
 
-impl SerWorkerSettings {
-    fn to_setting(&self) -> Result<WorkerSettings, Error> {
+impl WorkerSettingsStruct {
+    fn try_to_setting(&self) -> Result<WorkerSettings, Error> {
         let mut value = WorkerSettings::default();
         if let Some(log_level) = &self.log_level {
             value.log_level = log_level_from_string(log_level.as_str())?
