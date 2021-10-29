@@ -31,7 +31,7 @@ defmodule ClusterTest do
   end
 
   @tag :cluster
-  test "pipe ", %{nodes: [node1]} do
+  test "pipe_producer_to_router between nodes", %{nodes: [node1]} do
     {_worker, _worker2, router1, router2, transport1, _transport2} = init(node1)
 
     {:ok, audio_producer} = WebRtcTransport.produce(transport1, audio_producer_options())

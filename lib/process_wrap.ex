@@ -53,12 +53,12 @@ defmodule Mediasoup.ProcessWrap do
 
         def start_link(opt) do
           struct = Keyword.fetch!(opt, :struct)
-          GenServer.start_link(__MODULE__, struct, opt)
+          GenServer.start_link(__MODULE__, %{struct: struct}, opt)
         end
 
-        def init(struct) do
+        def init(state) do
           Process.flag(:trap_exit, true)
-          {:ok, %{struct: struct}}
+          {:ok, state}
         end
 
         def handle_call(
@@ -72,10 +72,10 @@ defmodule Mediasoup.ProcessWrap do
         def handle_call({:event, [listener, event_types]}, _from, %{struct: struct} = state) do
           result =
             try do
-              # create proxy process because rustler can only use local pid.
               __MODULE__.event(struct, listener, event_types)
             rescue
               e in ArgumentError ->
+                # create proxy process because rustler can only use local pid.
                 {:ok, listener} = EventProxy.start(pid: listener)
                 __MODULE__.event(struct, listener, event_types)
             end
@@ -92,7 +92,7 @@ defmodule Mediasoup.ProcessWrap do
           :ok
         end
 
-        defoverridable start_link: 1, init: 1, handle_call: 3
+        defoverridable start_link: 1, init: 1, handle_call: 3, terminate: 2
       end
     end
   end
@@ -103,30 +103,17 @@ defmodule Mediasoup.ProcessWrap do
     """
     defmacro __using__(_opts) do
       quote do
-        use GenServer, restart: :temporary
-
-        def struct(pid) when is_pid(pid) do
-          GenServer.call(pid, {:struct, []})
-        end
+        use Base
 
         def start_link(opt) do
-          struct = Keyword.fetch!(opt, :struct)
-          GenServer.start_link(__MODULE__, struct, opt)
+          super(opt)
         end
 
-        def init(struct) do
+        def init(state) do
           Process.flag(:trap_exit, true)
           {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
-          {:ok, %{struct: struct, supervisor: supervisor}}
-        end
-
-        def handle_call(
-              {:struct, []},
-              _from,
-              %{struct: struct} = state
-            ) do
-          {:reply, struct, state}
+          {:ok, Map.put(state, :supervisor, supervisor)}
         end
 
         def handle_call(
@@ -150,22 +137,8 @@ defmodule Mediasoup.ProcessWrap do
           {:reply, ret, state}
         end
 
-        def handle_call({:event, [listener, event_types]}, _from, %{struct: struct} = state) do
-          result =
-            try do
-              # create proxy process because rustler can only use local pid.
-              __MODULE__.event(struct, listener, event_types)
-            rescue
-              e in ArgumentError ->
-                {:ok, listener} = EventProxy.start(pid: listener)
-                __MODULE__.event(struct, listener, event_types)
-            end
-
-          {:reply, result, state}
-        end
-
-        def handle_call({function, option}, _from, %{struct: struct} = state) do
-          {:reply, apply(__MODULE__, function, [struct | option]), state}
+        def handle_call(message, from, state) do
+          super(message, from, state)
         end
 
         def terminate(reason, %{struct: struct, supervisor: supervisor} = _state) do
@@ -174,7 +147,7 @@ defmodule Mediasoup.ProcessWrap do
           :ok
         end
 
-        defoverridable start_link: 1, init: 1, handle_call: 3
+        defoverridable start_link: 1, init: 1, handle_call: 3, terminate: 2
       end
     end
   end
