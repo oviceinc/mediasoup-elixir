@@ -69,6 +69,20 @@ defmodule Mediasoup.ProcessWrap do
           {:reply, struct, state}
         end
 
+        def handle_call({:event, [listener, event_types]}, _from, %{struct: struct} = state) do
+          result =
+            try do
+              # create proxy process because rustler can only use local pid.
+              __MODULE__.event(struct, listener, event_types)
+            rescue
+              e in ArgumentError ->
+                {:ok, listener} = EventProxy.start(pid: listener)
+                __MODULE__.event(struct, listener, event_types)
+            end
+
+          {:reply, result, state}
+        end
+
         def handle_call({function, option}, _from, %{struct: struct} = state) do
           {:reply, apply(__MODULE__, function, [struct | option]), state}
         end
