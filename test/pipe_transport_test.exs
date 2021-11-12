@@ -138,4 +138,14 @@ defmodule PipeTransportTest do
       process_worker
     )
   end
+
+  test "called in two Routers passing one to each other as argument generates a single a single PipeTransport pair",
+       %{
+         struct_worker: _struct_worker,
+         process_worker: process_worker
+       } do
+    IntegrateTest.PipeTransportTest.called_in_two_Routers_passing_one_to_each_other_as_argument_generates_a_single_a_single_PipeTransport_pair(
+      process_worker
+    )
+  end
 end

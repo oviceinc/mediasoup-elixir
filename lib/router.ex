@@ -281,7 +281,7 @@ defmodule Mediasoup.Router do
 
   defp put_pipe_transport_pair(
          %Router{pid: pid},
-         %PipeToRouterOptions{router: remote_router},
+         %Router{} = remote_router,
          pair
        )
        when is_pid(pid) do
@@ -312,7 +312,7 @@ defmodule Mediasoup.Router do
            enable_srtp: enable_srtp,
            get_remote_node_ip: get_remote_node_ip,
            get_listen_ip: get_listen_ip
-         } = option
+         }
        ) do
     local_node = get_node(router)
     remote_node = get_node(remote_router)
@@ -345,7 +345,13 @@ defmodule Mediasoup.Router do
            {:ok} <-
              PipeTransport.connect(remote_pipe_transport, %{ip: local_ip, port: local_port}) do
         pair = %{local: local_pipe_transport, remote: remote_pipe_transport}
-        put_pipe_transport_pair(router, option, pair)
+        put_pipe_transport_pair(router, remote_router, pair)
+
+        put_pipe_transport_pair(remote_router, router, %{
+          local: remote_pipe_transport,
+          remote: local_pipe_transport
+        })
+
         {:ok, pair}
       end
     end

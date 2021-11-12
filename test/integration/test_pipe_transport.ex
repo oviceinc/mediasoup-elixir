@@ -911,4 +911,37 @@ defmodule IntegrateTest.PipeTransportTest do
     assert Mediasoup.Consumer.closed?(pipe_consumer)
     assert Mediasoup.Producer.closed?(pipe_producer)
   end
+
+  def called_in_two_Routers_passing_one_to_each_other_as_argument_generates_a_single_a_single_PipeTransport_pair(
+        worker
+      ) do
+    {_worker, router1, router2, transport1, transport2} = init(worker)
+
+    {:ok, audio_producer1} = WebRtcTransport.produce(transport1, audio_producer_options())
+    {:ok, audio_producer2} = WebRtcTransport.produce(transport2, audio_producer_options())
+
+    {:ok, _} =
+      Router.pipe_producer_to_router(
+        router2,
+        Producer.id(audio_producer2),
+        %Router.PipeToRouterOptions{
+          router: router1
+        }
+      )
+
+    assert 2 == Mediasoup.Router.dump(router1)["transportIds"] |> length
+    assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
+
+    {:ok, _} =
+      Router.pipe_producer_to_router(
+        router1,
+        Producer.id(audio_producer1),
+        %Router.PipeToRouterOptions{
+          router: router2
+        }
+      )
+
+    assert 2 == Mediasoup.Router.dump(router1)["transportIds"] |> length
+    assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
+  end
 end
