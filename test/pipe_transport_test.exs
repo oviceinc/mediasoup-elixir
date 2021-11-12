@@ -2,140 +2,98 @@ defmodule PipeTransportTest do
   use ExUnit.Case
 
   setup do
-    {:ok, struct_worker} = Mediasoup.create_worker()
+    {:ok, worker} = Mediasoup.Worker.start_link()
 
-    {:ok, process_worker} = Mediasoup.Worker.start_link()
-
-    %{struct_worker: struct_worker, process_worker: process_worker}
+    %{worker: worker}
   end
 
   test "pipe_to_router_succeeds_with_audio", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_audio(struct_worker)
-    IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_audio(process_worker)
+    IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_audio(worker)
   end
 
   test "pipe_to_router_succeeds_with_video", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_video(struct_worker)
-    IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_video(process_worker)
+    IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_video(worker)
   end
 
   test "create_with_fixed_port_succeeds", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.create_with_fixed_port_succeeds(struct_worker)
-    IntegrateTest.PipeTransportTest.create_with_fixed_port_succeeds(process_worker)
+    IntegrateTest.PipeTransportTest.create_with_fixed_port_succeeds(worker)
   end
 
   test "create_with_enable_rtx_succeeds", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.create_with_enable_rtx_succeeds(struct_worker)
-    IntegrateTest.PipeTransportTest.create_with_enable_rtx_succeeds(process_worker)
+    IntegrateTest.PipeTransportTest.create_with_enable_rtx_succeeds(worker)
   end
 
   test "create_with_enable_srtp_succeeds", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.create_with_enable_srtp_succeeds(struct_worker)
-    IntegrateTest.PipeTransportTest.create_with_enable_srtp_succeeds(process_worker)
+    IntegrateTest.PipeTransportTest.create_with_enable_srtp_succeeds(worker)
   end
 
   test "create_with_invalid_srtp_parameters_fails", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.create_with_invalid_srtp_parameters_fails(struct_worker)
-    IntegrateTest.PipeTransportTest.create_with_invalid_srtp_parameters_fails(process_worker)
+    IntegrateTest.PipeTransportTest.create_with_invalid_srtp_parameters_fails(worker)
   end
 
   test "consume_for_pipe_producer_succeeds", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.consume_for_pipe_producer_succeeds(struct_worker)
-    IntegrateTest.PipeTransportTest.consume_for_pipe_producer_succeeds(process_worker)
+    IntegrateTest.PipeTransportTest.consume_for_pipe_producer_succeeds(worker)
   end
 
   test "producer_pause_resume_are_transmitted_to_pipe_consumer", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.producer_pause_resume_are_transmitted_to_pipe_consumer(
-      struct_worker
-    )
-
-    IntegrateTest.PipeTransportTest.producer_pause_resume_are_transmitted_to_pipe_consumer(
-      process_worker
-    )
+    IntegrateTest.PipeTransportTest.producer_pause_resume_are_transmitted_to_pipe_consumer(worker)
   end
 
   test "pipe_to_router_called_twice_generates_single_pair", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.pipe_to_router_called_twice_generates_single_pair(
-      struct_worker
-    )
-
-    IntegrateTest.PipeTransportTest.pipe_to_router_called_twice_generates_single_pair(
-      process_worker
-    )
+    IntegrateTest.PipeTransportTest.pipe_to_router_called_twice_generates_single_pair(worker)
   end
 
-  test "pipe_produce_consume", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.PipeTransportTest.pipe_produce_consume(struct_worker)
-    IntegrateTest.PipeTransportTest.pipe_produce_consume(process_worker)
+  test "pipe_produce_consume", %{worker: worker} do
+    IntegrateTest.PipeTransportTest.pipe_produce_consume(worker)
   end
 
   test "pipe_produce_consume_with_map", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.pipe_produce_consume_with_map(struct_worker)
-    IntegrateTest.PipeTransportTest.pipe_produce_consume_with_map(process_worker)
+    IntegrateTest.PipeTransportTest.pipe_produce_consume_with_map(worker)
   end
 
   test "multiple_pipe_to_router", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.multiple_pipe_to_router(struct_worker)
-    IntegrateTest.PipeTransportTest.multiple_pipe_to_router(process_worker)
+    IntegrateTest.PipeTransportTest.multiple_pipe_to_router(worker)
   end
 
-  test "close_event", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.PipeTransportTest.close_event(struct_worker)
-    IntegrateTest.PipeTransportTest.close_event(process_worker)
+  test "close_event", %{worker: worker} do
+    IntegrateTest.PipeTransportTest.close_event(worker)
   end
 
-  test "close_router_event", %{struct_worker: _struct_worker, process_worker: process_worker} do
-    IntegrateTest.PipeTransportTest.close_router_event(process_worker)
+  test "close_router_event", %{worker: worker} do
+    IntegrateTest.PipeTransportTest.close_router_event(worker)
   end
 
   test "producer_close_are_transmitted_to_pipe_consumer", %{
-    struct_worker: _struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.producer_close_are_transmitted_to_pipe_consumer(
-      process_worker
-    )
+    IntegrateTest.PipeTransportTest.producer_close_are_transmitted_to_pipe_consumer(worker)
   end
 
   test "consumer_close_are_transmitted_to_pipe_consumer", %{
-    struct_worker: _struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.PipeTransportTest.consumer_close_are_transmitted_to_pipe_consumer(
-      process_worker
-    )
+    IntegrateTest.PipeTransportTest.consumer_close_are_transmitted_to_pipe_consumer(worker)
   end
 end
