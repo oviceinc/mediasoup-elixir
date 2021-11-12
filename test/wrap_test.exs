@@ -1,6 +1,6 @@
-defmodule ProcessWrapEventProxyTest do
+defmodule NifWrapEventProxyTest do
   use ExUnit.Case
-  alias Mediasoup.ProcessWrap.EventProxy
+  alias Mediasoup.NifWrap.EventProxy
 
   test "message proxy" do
     {:ok, proxy} = EventProxy.start(pid: self())

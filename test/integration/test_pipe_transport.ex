@@ -286,7 +286,6 @@ defmodule IntegrateTest.PipeTransportTest do
              "score" => 10
            }
 
-    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
     assert pipe_producer.id === audio_producer.id
     assert "audio" === pipe_producer.kind
     refute pipe_producer.rtp_parameters["mid"]
@@ -376,8 +375,6 @@ defmodule IntegrateTest.PipeTransportTest do
              "producerScores" => [0, 0, 0, 0],
              "score" => 10
            }
-
-    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
 
     assert pipe_producer.id === video_producer.id
     assert "video" === pipe_producer.kind
@@ -874,8 +871,6 @@ defmodule IntegrateTest.PipeTransportTest do
       Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
         router: router2
       })
-
-    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
 
     Mediasoup.Consumer.close(pipe_consumer)
 

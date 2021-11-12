@@ -2,12 +2,13 @@ defmodule Mediasoup.Router do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Router
   """
-  alias Mediasoup.{Router, WebRtcTransport, PipeTransport, Nif}
-  use Mediasoup.ProcessWrap.WithChildren
+  alias Mediasoup.{Router, WebRtcTransport, PipeTransport, NifWrap, Nif}
+  require NifWrap
+  use GenServer, restart: :temporary
 
   @enforce_keys [:id]
-  defstruct [:id, :reference, :pid]
-  @type t :: %Router{id: String.t(), reference: reference | nil, pid: pid | nil}
+  defstruct [:id, :pid]
+  @type t :: %Router{id: String.t(), pid: pid}
 
   @type media_codec :: %{
           :kind => :audio | :video | String.t(),
@@ -82,7 +83,7 @@ defmodule Mediasoup.Router do
 
     @type t :: %PipeToRouterResult{
             pipe_consumer: Mediasoup.Consumer.t() | nil,
-            pipe_producer: Mediasoup.PipedProducer.t() | nil
+            pipe_producer: Mediasoup.Producer.t() | nil
           }
   end
 
@@ -90,22 +91,14 @@ defmodule Mediasoup.Router do
     id
   end
 
-  @spec close(t) :: {:ok} | {:error}
-  def close(%Router{pid: pid}) when is_pid(pid) do
+  @spec close(t) :: :ok
+  def close(%Router{pid: pid}) do
     GenServer.stop(pid)
   end
 
-  def close(%Router{reference: reference}) do
-    Nif.router_close(reference)
-  end
-
   @spec closed?(t) :: boolean
-  def closed?(%Router{pid: pid}) when is_pid(pid) do
+  def closed?(%Router{pid: pid}) do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
-  end
-
-  def closed?(%Router{reference: reference}) do
-    Nif.router_closed(reference)
   end
 
   @spec create_webrtc_transport(t, WebRtcTransport.create_option()) ::
@@ -113,13 +106,8 @@ defmodule Mediasoup.Router do
   def create_webrtc_transport(
         %Router{pid: pid},
         %WebRtcTransport.Options{} = option
-      )
-      when is_pid(pid) do
-    GenServer.call(pid, {:start_child, WebRtcTransport, :create_webrtc_transport, [option]})
-  end
-
-  def create_webrtc_transport(%Router{reference: reference}, %WebRtcTransport.Options{} = option) do
-    Nif.router_create_webrtc_transport(reference, option)
+      ) do
+    GenServer.call(pid, {:create_webrtc_transport, [option]})
   end
 
   def create_webrtc_transport(router, %{} = option) do
@@ -129,11 +117,10 @@ defmodule Mediasoup.Router do
   @spec pipe_producer_to_router(t, producer_id :: String.t(), PipeToRouterOptions.t()) ::
           {:ok, PipeToRouterResult.t()} | {:error, String.t()}
   def pipe_producer_to_router(
-        %Router{pid: pid} = router,
+        %Router{} = router,
         producer_id,
         %PipeToRouterOptions{} = option
-      )
-      when is_pid(pid) do
+      ) do
     alias Mediasoup.{Consumer, Producer, Transport}
 
     with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
@@ -159,55 +146,27 @@ defmodule Mediasoup.Router do
     end
   end
 
-  def pipe_producer_to_router(
-        %Router{reference: reference},
-        producer_id,
-        %PipeToRouterOptions{} = option
-      ) do
-    Nif.router_pipe_producer_to_router(reference, producer_id, option)
-  end
-
   @spec create_pipe_transport(
           Router.t(),
           PipeTransport.Options.t()
         ) :: {:ok, PipeTransport.t()} | {:error, String.t()}
-  def create_pipe_transport(%Router{pid: pid}, %PipeTransport.Options{} = option)
-      when is_pid(pid) do
-    GenServer.call(pid, {:start_child, PipeTransport, :create_pipe_transport, [option]})
-  end
-
-  def create_pipe_transport(
-        %Router{reference: reference},
-        %PipeTransport.Options{} = option
-      ) do
-    Nif.router_create_pipe_transport(reference, option)
+  def create_pipe_transport(%Router{pid: pid}, %PipeTransport.Options{} = option) do
+    GenServer.call(pid, {:create_pipe_transport, [option]})
   end
 
   @spec can_consume?(t, String.t(), rtpCapabilities) :: boolean
-  def can_consume?(%Router{pid: pid}, producer_id, rtp_capabilities) when is_pid(pid) do
+  def can_consume?(%Router{pid: pid}, producer_id, rtp_capabilities) do
     GenServer.call(pid, {:can_consume?, [producer_id, rtp_capabilities]})
   end
 
-  def can_consume?(%Router{reference: reference}, producer_id, rtp_capabilities) do
-    Nif.router_can_consume(reference, producer_id, rtp_capabilities)
-  end
-
   @spec rtp_capabilities(t) :: Router.rtpCapabilities()
-  def rtp_capabilities(%Router{pid: pid}) when is_pid(pid) do
+  def rtp_capabilities(%Router{pid: pid}) do
     GenServer.call(pid, {:rtp_capabilities, []})
   end
 
-  def rtp_capabilities(%Router{reference: reference}) do
-    Nif.router_rtp_capabilities(reference)
-  end
-
   @spec dump(t) :: map | {:error}
-  def dump(%Router{pid: pid}) when is_pid(pid) do
+  def dump(%Router{pid: pid}) do
     GenServer.call(pid, {:dump, []})
-  end
-
-  def dump(%Router{reference: reference}) do
-    Nif.router_dump(reference)
   end
 
   @type event_type ::
@@ -224,12 +183,83 @@ defmodule Mediasoup.Router do
         ]
       )
 
-  def event(%Router{pid: pid}, listener, event_types) when is_pid(pid) do
+  def event(%Router{pid: pid}, listener, event_types) do
     GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%Router{reference: reference}, pid, event_types) do
-    Nif.router_event(reference, pid, event_types)
+  @spec struct_from_pid(pid()) :: Router.t()
+  def struct_from_pid(pid) do
+    GenServer.call(pid, {:struct_from_pid, []})
+  end
+
+  # GenServer callbacks
+
+  def start_link(opt) do
+    reference = Keyword.fetch!(opt, :reference)
+    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
+  end
+
+  def init(state) do
+    Process.flag(:trap_exit, true)
+    {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
+
+    {:ok, Map.put(state, :supervisor, supervisor)}
+  end
+
+  def handle_call(
+        {:event, [listener, event_types]},
+        _from,
+        %{reference: reference} = state
+      ) do
+    result =
+      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
+        pid when is_pid(pid) -> Nif.router_event(reference, pid, event_types)
+      end
+
+    {:reply, result, state}
+  end
+
+  def handle_call(
+        {:struct_from_pid, _arg},
+        _from,
+        %{reference: reference} = state
+      ) do
+    {:reply,
+     %Router{
+       pid: self(),
+       id: Nif.router_id(reference)
+     }, state}
+  end
+
+  NifWrap.def_handle_call_nif(%{
+    closed?: &Nif.router_closed/1,
+    dump: &Nif.router_dump/1,
+    can_consume?: &Nif.router_can_consume/3,
+    rtp_capabilities: &Nif.router_rtp_capabilities/1
+  })
+
+  def handle_call(
+        {:create_pipe_transport, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.router_create_pipe_transport(reference, option)
+      |> NifWrap.handle_create_result(PipeTransport, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
+        {:create_webrtc_transport, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.router_create_webrtc_transport(reference, option)
+      |> NifWrap.handle_create_result(WebRtcTransport, supervisor)
+
+    {:reply, ret, state}
   end
 
   def handle_call({:get_node}, _from, state) do
@@ -263,19 +293,20 @@ defmodule Mediasoup.Router do
     {:reply, :ok, Map.put(state, :mapped_pipe_transports, %{id => pair})}
   end
 
-  def handle_call(message, from, state) do
-    super(message, from, state)
+  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
+    Nif.router_close(reference)
+    DynamicSupervisor.stop(supervisor, reason)
+    :ok
   end
 
-  defp get_node(%Router{pid: pid}) when is_pid(pid) do
+  defp get_node(%Router{pid: pid}) do
     GenServer.call(pid, {:get_node})
   end
 
   defp get_pipe_transport_pair(
          %Router{pid: pid},
          %PipeToRouterOptions{router: remote_router}
-       )
-       when is_pid(pid) do
+       ) do
     GenServer.call(pid, {:get_pipe_transport_pair, Router.id(remote_router)})
   end
 
@@ -283,16 +314,14 @@ defmodule Mediasoup.Router do
          %Router{pid: pid},
          %PipeToRouterOptions{router: remote_router},
          pair
-       )
-       when is_pid(pid) do
+       ) do
     GenServer.call(pid, {:put_pipe_transport_pair, Router.id(remote_router), pair})
   end
 
   defp get_or_create_pipe_transport_pair(
-         %Router{pid: pid} = router,
+         %Router{} = router,
          %PipeToRouterOptions{router: %Router{pid: _pid2}} = option
-       )
-       when is_pid(pid) do
+       ) do
     case get_pipe_transport_pair(router, option) do
       nil ->
         create_pipe_transport_pair(router, option)

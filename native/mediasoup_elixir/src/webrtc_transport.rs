@@ -1,9 +1,9 @@
 use crate::atoms;
-use crate::consumer::{ConsumerOptionsStruct, ConsumerStruct};
+use crate::consumer::ConsumerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
-use crate::producer::{ProducerOptionsStruct, ProducerStruct};
-use crate::{send_msg_from_other_thread, WebRtcTransportRef};
+use crate::producer::ProducerOptionsStruct;
+use crate::{send_msg_from_other_thread, ConsumerRef, ProducerRef, WebRtcTransportRef};
 use futures_lite::future;
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{
@@ -14,30 +14,17 @@ use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use mediasoup::webrtc_transport::{
-    TransportListenIps, WebRtcTransport, WebRtcTransportDump, WebRtcTransportOptions,
+    TransportListenIps, WebRtcTransportDump, WebRtcTransportOptions,
     WebRtcTransportRemoteParameters, WebRtcTransportStat,
 };
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
 
-#[derive(NifStruct)]
-#[module = "Mediasoup.WebRtcTransport"]
-pub struct WebRtcTransportStruct {
-    id: JsonSerdeWrap<TransportId>,
-    reference: ResourceArc<WebRtcTransportRef>,
-}
-impl WebRtcTransportStruct {
-    pub fn from(transport: WebRtcTransport) -> Self {
-        Self {
-            id: transport.id().into(),
-            reference: WebRtcTransportRef::resource(transport),
-        }
-    }
-}
-
 #[rustler::nif]
-pub fn webrtc_transport_id(transport: ResourceArc<WebRtcTransportRef>) -> NifResult<String> {
+pub fn webrtc_transport_id(
+    transport: ResourceArc<WebRtcTransportRef>,
+) -> NifResult<JsonSerdeWrap<TransportId>> {
     let transport = transport.get_resource()?;
-    Ok(transport.id().to_string())
+    Ok(transport.id().into())
 }
 
 #[rustler::nif]
@@ -58,7 +45,7 @@ pub fn webrtc_transport_closed(transport: ResourceArc<WebRtcTransportRef>) -> Ni
 pub fn webrtc_transport_consume(
     transport: ResourceArc<WebRtcTransportRef>,
     option: ConsumerOptionsStruct,
-) -> NifResult<(Atom, ConsumerStruct)> {
+) -> NifResult<(Atom, ResourceArc<ConsumerRef>)> {
     let transport = transport.get_resource()?;
 
     let option: ConsumerOptions = option.to_option();
@@ -66,7 +53,7 @@ pub fn webrtc_transport_consume(
     let r = future::block_on(async move { transport.consume(option).await })
         .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok((atoms::ok(), ConsumerStruct::from(r)))
+    Ok((atoms::ok(), ConsumerRef::resource(r)))
 }
 
 #[rustler::nif]
@@ -88,7 +75,7 @@ pub fn webrtc_transport_connect(
 pub fn webrtc_transport_produce(
     transport: ResourceArc<WebRtcTransportRef>,
     option: ProducerOptionsStruct,
-) -> NifResult<(Atom, ProducerStruct)> {
+) -> NifResult<(Atom, ResourceArc<ProducerRef>)> {
     let transport = transport.get_resource()?;
     let option: ProducerOptions = option.to_option();
 
@@ -96,7 +83,7 @@ pub fn webrtc_transport_produce(
         return transport.produce(option).await;
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), ProducerStruct::from(producer)))
+    Ok((atoms::ok(), ProducerRef::resource(producer)))
 }
 
 #[rustler::nif]

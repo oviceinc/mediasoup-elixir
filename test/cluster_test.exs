@@ -82,7 +82,6 @@ defmodule ClusterTest do
              "score" => 10
            }
 
-    {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
     assert pipe_producer.id === audio_producer.id
     assert "audio" === pipe_producer.kind
     refute pipe_producer.rtp_parameters["mid"]

@@ -1,30 +1,15 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::router::{RouterOptionsStruct, RouterStruct};
-use crate::{send_msg_from_other_thread, WorkerRef};
+use crate::router::RouterOptionsStruct;
+use crate::{send_msg_from_other_thread, RouterRef, WorkerRef};
 use futures_lite::future;
 use mediasoup::worker::{
-    Worker, WorkerDtlsFiles, WorkerDump, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
+    WorkerDtlsFiles, WorkerDump, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
     WorkerUpdateSettings,
 };
 use mediasoup::worker_manager::WorkerManager;
 use rustler::{Error, NifResult, NifStruct, ResourceArc};
 use std::path::PathBuf;
-
-#[derive(NifStruct)]
-#[module = "Mediasoup.Worker"]
-pub struct WorkerStruct {
-    id: JsonSerdeWrap<WorkerId>,
-    reference: ResourceArc<WorkerRef>,
-}
-impl WorkerStruct {
-    pub fn from(worker: Worker) -> Self {
-        Self {
-            id: worker.id().into(),
-            reference: WorkerRef::resource(worker),
-        }
-    }
-}
 
 #[rustler::nif]
 pub fn worker_id(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerId>> {
@@ -42,7 +27,7 @@ pub fn worker_close(worker: ResourceArc<WorkerRef>) -> NifResult<(rustler::Atom,
 pub fn worker_create_router(
     worker: ResourceArc<WorkerRef>,
     option: RouterOptionsStruct,
-) -> NifResult<(rustler::Atom, RouterStruct)> {
+) -> NifResult<(rustler::Atom, ResourceArc<RouterRef>)> {
     let worker = worker.get_resource()?;
 
     let option = option.to_option();
@@ -52,7 +37,7 @@ pub fn worker_create_router(
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok((atoms::ok(), RouterStruct::from(router)))
+    Ok((atoms::ok(), RouterRef::resource(router)))
 }
 
 #[rustler::nif]
@@ -125,23 +110,27 @@ pub fn worker_event(
     Ok((atoms::ok(),))
 }
 
-fn create_worker_impl(settings: WorkerSettings) -> NifResult<(rustler::Atom, WorkerStruct)> {
+fn create_worker_impl(
+    settings: WorkerSettings,
+) -> NifResult<(rustler::Atom, ResourceArc<WorkerRef>)> {
     let worker_manager = WorkerManager::new();
 
     let worker = future::block_on(async move {
         return worker_manager.create_worker(settings).await;
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), WorkerStruct::from(worker)))
+    Ok((atoms::ok(), WorkerRef::resource(worker)))
 }
 
 #[rustler::nif(name = "create_worker")]
-pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, WorkerStruct)> {
+pub fn create_worker_no_arg() -> NifResult<(rustler::Atom, ResourceArc<WorkerRef>)> {
     create_worker_impl(WorkerSettings::default())
 }
 
 #[rustler::nif]
-pub fn create_worker(settings: WorkerSettingsStruct) -> NifResult<(rustler::Atom, WorkerStruct)> {
+pub fn create_worker(
+    settings: WorkerSettingsStruct,
+) -> NifResult<(rustler::Atom, ResourceArc<WorkerRef>)> {
     let settings = settings.try_to_setting()?;
     create_worker_impl(settings)
 }
