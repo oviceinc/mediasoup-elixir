@@ -4,41 +4,47 @@ use crate::send_msg_from_other_thread;
 use crate::ConsumerRef;
 use futures_lite::future;
 use mediasoup::consumer::{
-    Consumer, ConsumerDump, ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore,
-    ConsumerStats, ConsumerType,
+    ConsumerDump, ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerStats,
+    ConsumerType,
 };
 use mediasoup::producer::ProducerId;
 use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
-
-#[derive(NifStruct)]
-#[module = "Mediasoup.Consumer"]
-pub struct ConsumerStruct {
-    id: JsonSerdeWrap<ConsumerId>,
-    producer_id: JsonSerdeWrap<ProducerId>,
-    kind: JsonSerdeWrap<MediaKind>,
-    r#type: JsonSerdeWrap<ConsumerType>,
-    rtp_parameters: JsonSerdeWrap<RtpParameters>,
-    reference: ResourceArc<ConsumerRef>,
-}
-impl ConsumerStruct {
-    pub fn from(consumer: Consumer) -> Self {
-        Self {
-            id: consumer.id().into(),
-            producer_id: consumer.producer_id().into(),
-            kind: consumer.kind().into(),
-            r#type: consumer.r#type().into(),
-            rtp_parameters: consumer.rtp_parameters().clone().into(),
-            reference: ConsumerRef::resource(consumer),
-        }
-    }
-}
 
 #[rustler::nif]
 pub fn consumer_id(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerId>> {
     let consumer = consumer.get_resource()?;
     Ok(consumer.id().into())
 }
+
+#[rustler::nif]
+pub fn consumer_producer_id(
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<JsonSerdeWrap<ProducerId>> {
+    let consumer = consumer.get_resource()?;
+    Ok(consumer.producer_id().into())
+}
+
+#[rustler::nif]
+pub fn consumer_kind(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<MediaKind>> {
+    let consumer = consumer.get_resource()?;
+    Ok(consumer.kind().into())
+}
+
+#[rustler::nif]
+pub fn consumer_type(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerType>> {
+    let consumer = consumer.get_resource()?;
+    Ok(consumer.r#type().into())
+}
+
+#[rustler::nif]
+pub fn consumer_rtp_parameters(
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<JsonSerdeWrap<RtpParameters>> {
+    let consumer = consumer.get_resource()?;
+    Ok(consumer.rtp_parameters().clone().into())
+}
+
 #[rustler::nif]
 pub fn consumer_close(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
     consumer.close();

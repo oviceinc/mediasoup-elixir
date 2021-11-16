@@ -2,8 +2,9 @@ defmodule Mediasoup.Worker do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Worker
   """
-  alias Mediasoup.{Worker, Router, Nif}
-  use Mediasoup.ProcessWrap.WithChildren
+  alias Mediasoup.{Worker, Router, NifWrap, Nif}
+  require Mediasoup.NifWrap
+  use GenServer
 
   defmodule Settings do
     @moduledoc """
@@ -63,9 +64,7 @@ defmodule Mediasoup.Worker do
     end
   end
 
-  @enforce_keys [:id, :reference]
-  defstruct [:id, :reference]
-  @type t :: %Worker{id: String.t(), reference: reference}
+  @type t :: pid
 
   @type log_level :: :debug | :warn | :error | :none
   @type log_tag ::
@@ -100,87 +99,54 @@ defmodule Mediasoup.Worker do
           }
           | UpdateableSettings.t()
 
-  def id(%Worker{id: id}) do
-    id
-  end
-
-  def id(pid) when is_pid(pid) do
+  def id(pid) do
     GenServer.call(pid, {:id, []})
   end
 
-  @spec close(t | pid) :: {:ok} | {:error}
-  def close(%Worker{reference: reference}) do
-    Nif.worker_close(reference)
-  end
-
-  def close(pid) when is_pid(pid) do
+  def close(pid) do
     GenServer.stop(pid)
   end
 
-  @spec create_router(t | pid, Router.create_option()) :: {:ok, Router.t()} | {:error}
-
-  def create_router(pid, option) when is_pid(pid) do
-    GenServer.call(pid, {:start_child, Router, :create_router, [option]})
-  end
-
-  def create_router(%Worker{reference: reference}, %Router.Options{} = option) do
-    Nif.worker_create_router(reference, option)
+  @spec create_router(t, Router.create_option()) :: {:ok, Router.t()} | {:error}
+  def create_router(pid, %Router.Options{} = option) do
+    GenServer.call(pid, {:create_router, [option]})
   end
 
   def create_router(worker, option) do
     create_router(worker, Router.Options.from_map(option))
   end
 
-  @spec update_settings(t | pid, update_option) :: {:ok} | {:error}
-  def update_settings(pid, settings) when is_pid(pid) do
+  @spec update_settings(t, update_option) :: {:ok} | {:error}
+  def update_settings(pid, %UpdateableSettings{} = settings) do
     GenServer.call(pid, {:update_settings, [settings]})
-  end
-
-  def update_settings(%Worker{reference: reference}, %UpdateableSettings{} = settings) do
-    Nif.worker_update_settings(reference, settings)
   end
 
   def update_settings(worker, settings) do
     update_settings(worker, UpdateableSettings.from_map(settings))
   end
 
-  @spec closed?(t | pid) :: boolean
-  def closed?(%Worker{reference: reference}) do
-    Nif.worker_closed(reference)
-  end
-
-  def closed?(pid) when is_pid(pid) do
+  @spec closed?(t) :: boolean
+  def closed?(pid) do
     !Process.alive?(pid)
   end
 
-  @spec dump(t | pid) :: map
-  def dump(%Worker{reference: reference}) do
-    Nif.worker_dump(reference)
-  end
-
-  def dump(pid) when is_pid(pid) do
+  @spec dump(t) :: map
+  def dump(pid) do
     GenServer.call(pid, {:dump, []})
   end
 
   @type event_type ::
           :on_close
           | :on_worker_close
-
-  @spec event(t | pid, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
-        worker,
-        listener,
+        pid,
+        lisener,
         event_types \\ [
           :on_close,
           :on_worker_close
         ]
-      )
-
-  def event(%Worker{reference: reference}, pid, event_types) do
-    Nif.worker_event(reference, pid, event_types)
-  end
-
-  def event(pid, lisener, event_types) do
+      ) do
     GenServer.call(pid, {:event, [lisener, event_types]})
   end
 
@@ -194,17 +160,58 @@ defmodule Mediasoup.Worker do
 
   # GenServer callbacks
   def init(settings) do
-    {:ok, worker} =
-      if settings != nil do
-        Mediasoup.create_worker(settings)
-      else
-        Mediasoup.create_worker()
-      end
+    {:ok, worker} = create_worker(settings)
 
     Process.flag(:trap_exit, true)
-
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
+    {:ok, %{reference: worker, supervisor: supervisor}}
+  end
 
-    {:ok, %{struct: worker, supervisor: supervisor}}
+  NifWrap.def_handle_call_nif(%{
+    id: &Nif.worker_id/1,
+    update_settings: &Nif.worker_update_settings/2,
+    dump: &Nif.worker_dump/1
+  })
+
+  def handle_call(
+        {:create_router, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.worker_create_router(reference, option)
+      |> NifWrap.handle_create_result(Router, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
+        {:event, [listener, event_types]},
+        _from,
+        %{reference: reference} = state
+      ) do
+    case NifWrap.EventProxy.wrap_if_remote_node(listener) do
+      pid when is_pid(pid) -> Nif.worker_event(reference, pid, event_types)
+    end
+
+    {:reply, :ok, state}
+  end
+
+  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
+    Nif.worker_close(reference)
+    DynamicSupervisor.stop(supervisor, reason)
+    :ok
+  end
+
+  defp create_worker(settings) when is_nil(settings) do
+    Nif.create_worker()
+  end
+
+  defp create_worker(%Worker.Settings{} = settings) do
+    Nif.create_worker(settings)
+  end
+
+  defp create_worker(option) do
+    Nif.create_worker(Worker.Settings.from_map(option))
   end
 end

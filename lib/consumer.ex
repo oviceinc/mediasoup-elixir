@@ -2,10 +2,12 @@ defmodule Mediasoup.Consumer do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Consumer
   """
-  alias Mediasoup.{Consumer, Nif}
-  use Mediasoup.ProcessWrap.Base
-  @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters, :reference]
-  defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :reference, :pid]
+  alias Mediasoup.{Consumer, NifWrap, Nif}
+  require NifWrap
+  use GenServer, restart: :temporary
+
+  @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters]
+  defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :pid]
 
   @type t :: %Consumer{
           id: String.t(),
@@ -13,8 +15,7 @@ defmodule Mediasoup.Consumer do
           kind: kind,
           type: type,
           rtp_parameters: rtpParameters,
-          reference: reference | nil,
-          pid: pid | nil
+          pid: pid
         }
 
   @type rtpParameters :: map
@@ -25,168 +26,109 @@ defmodule Mediasoup.Consumer do
   @type kind :: String.t()
   @type type :: String.t()
 
-  def id(%Consumer{id: id}) do
+  @spec id(t) :: String.t()
+  def id(%{id: id}) do
     id
   end
 
-  def producer_id(%Consumer{producer_id: producer_id}) do
+  @spec producer_id(t) :: String.t()
+  def producer_id(%{producer_id: producer_id}) do
     producer_id
   end
 
-  def kind(%Consumer{kind: kind}) do
+  @spec kind(t) :: kind
+  def kind(%{kind: kind}) do
     kind
   end
 
-  def type(%Consumer{type: type}) do
+  @spec type(t) :: type
+  def type(%{type: type}) do
     type
   end
 
-  def rtp_parameters(%Consumer{rtp_parameters: rtp_parameters}) do
+  @spec rtp_parameters(t) :: rtpParameters
+  def rtp_parameters(%{rtp_parameters: rtp_parameters}) do
     rtp_parameters
   end
 
-  @spec close(t) :: {:ok} | {:error}
-  def close(%Consumer{pid: pid}) when is_pid(pid) do
+  @spec close(t) :: :ok
+  def close(%Consumer{pid: pid}) do
     GenServer.stop(pid)
   end
 
-  def close(%Consumer{reference: reference}) do
-    Nif.consumer_close(reference)
-  end
-
   @spec dump(t) :: map | {:error}
-  def dump(%Consumer{pid: pid}) when is_pid(pid) do
+  def dump(%Consumer{pid: pid}) do
     GenServer.call(pid, {:dump, []})
   end
 
-  def dump(%Consumer{reference: reference}) do
-    Nif.consumer_dump(reference)
-  end
-
   @spec closed?(t) :: boolean
-  def closed?(%Consumer{pid: pid}) when is_pid(pid) do
+  def closed?(%Consumer{pid: pid}) do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
-  def closed?(%Consumer{reference: reference}) do
-    Nif.consumer_closed(reference)
-  end
-
   @spec paused?(t) :: boolean
-  def paused?(%Consumer{pid: pid}) when is_pid(pid) do
+  def paused?(%Consumer{pid: pid}) do
     GenServer.call(pid, {:paused?, []})
   end
 
-  def paused?(%Consumer{reference: reference}) do
-    Nif.consumer_paused(reference)
-  end
-
   @spec producer_paused?(t) :: boolean
-  def producer_paused?(%Consumer{pid: pid}) when is_pid(pid) do
+  def producer_paused?(%Consumer{pid: pid}) do
     GenServer.call(pid, {:producer_paused?, []})
   end
 
-  def producer_paused?(%Consumer{reference: reference}) do
-    Nif.consumer_producer_paused(reference)
-  end
-
   @spec priority(t) :: number
-  def priority(%Consumer{pid: pid}) when is_pid(pid) do
+  def priority(%Consumer{pid: pid}) do
     GenServer.call(pid, {:priority, []})
   end
 
-  def priority(%Consumer{reference: reference}) do
-    Nif.consumer_priority(reference)
-  end
-
   @spec score(t) :: map
-  def score(%Consumer{pid: pid}) when is_pid(pid) do
+  def score(%Consumer{pid: pid}) do
     GenServer.call(pid, {:score, []})
   end
 
-  def score(%Consumer{reference: reference}) do
-    Nif.consumer_score(reference)
-  end
-
   @spec preferred_layers(t) :: any
-  def preferred_layers(%Consumer{pid: pid}) when is_pid(pid) do
+  def preferred_layers(%Consumer{pid: pid}) do
     GenServer.call(pid, {:preferred_layers, []})
   end
 
-  def preferred_layers(%Consumer{reference: reference}) do
-    Nif.consumer_preferred_layers(reference)
-  end
-
   @spec current_layers(t) :: any
-  def current_layers(%Consumer{pid: pid}) when is_pid(pid) do
+  def current_layers(%Consumer{pid: pid}) do
     GenServer.call(pid, {:current_layers, []})
   end
 
-  def current_layers(%Consumer{reference: reference}) do
-    Nif.consumer_current_layers(reference)
-  end
-
   @spec get_stats(t) :: any
-  def get_stats(%Consumer{pid: pid}) when is_pid(pid) do
+  def get_stats(%Consumer{pid: pid}) do
     GenServer.call(pid, {:get_stats, []})
   end
 
-  def get_stats(%Consumer{reference: reference}) do
-    Nif.consumer_get_stats(reference)
-  end
-
   @spec pause(t) :: {:ok} | {:error}
-  def pause(%Consumer{pid: pid}) when is_pid(pid) do
+  def pause(%Consumer{pid: pid}) do
     GenServer.call(pid, {:pause, []})
   end
 
-  def pause(%Consumer{reference: reference}) do
-    Nif.consumer_pause(reference)
-  end
-
   @spec resume(t) :: {:ok} | {:error}
-  def resume(%Consumer{pid: pid}) when is_pid(pid) do
+  def resume(%Consumer{pid: pid}) do
     GenServer.call(pid, {:resume, []})
   end
 
-  def resume(%Consumer{reference: reference}) do
-    Nif.consumer_resume(reference)
-  end
-
   @spec set_preferred_layers(t, map) :: {:ok} | {:error}
-  def set_preferred_layers(%Consumer{pid: pid}, layer) when is_pid(pid) do
+  def set_preferred_layers(%Consumer{pid: pid}, layer) do
     GenServer.call(pid, {:set_preferred_layers, [layer]})
   end
 
-  def set_preferred_layers(%Consumer{reference: reference}, layer) do
-    Nif.consumer_set_preferred_layers(reference, layer)
-  end
-
   @spec set_priority(t, integer) :: {:ok} | {:error}
-  def set_priority(%Consumer{pid: pid}, priority) when is_pid(pid) do
+  def set_priority(%Consumer{pid: pid}, priority) do
     GenServer.call(pid, {:set_priority, [priority]})
   end
 
-  def set_priority(%Consumer{reference: reference}, priority) do
-    Nif.consumer_set_priority(reference, priority)
-  end
-
   @spec unset_priority(t) :: {:ok} | {:error}
-  def unset_priority(%Consumer{pid: pid}) when is_pid(pid) do
+  def unset_priority(%Consumer{pid: pid}) do
     GenServer.call(pid, {:unset_priority, []})
   end
 
-  def unset_priority(%Consumer{reference: reference}) do
-    Nif.consumer_unset_priority(reference)
-  end
-
   @spec request_key_frame(t) :: {:ok} | {:error}
-  def request_key_frame(%Consumer{pid: pid}) when is_pid(pid) do
+  def request_key_frame(%Consumer{pid: pid}) do
     GenServer.call(pid, {:request_key_frame, []})
-  end
-
-  def request_key_frame(%Consumer{reference: reference}) do
-    Nif.consumer_request_key_frame(reference)
   end
 
   @type event_type ::
@@ -202,7 +144,7 @@ defmodule Mediasoup.Consumer do
 
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
-        consumer,
+        %Consumer{pid: pid},
         listener,
         event_types \\ [
           :on_close,
@@ -215,19 +157,81 @@ defmodule Mediasoup.Consumer do
           :on_score,
           :on_layers_change
         ]
-      )
-
-  def event(%Consumer{pid: pid}, listener, event_types) when is_pid(pid) do
+      ) do
     GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%Consumer{reference: reference}, pid, event_types) do
-    Nif.consumer_event(reference, pid, event_types)
+  @spec struct_from_pid(pid()) :: Consumer.t()
+  def struct_from_pid(pid) when is_pid(pid) do
+    GenServer.call(pid, {:struct_from_pid, []})
   end
 
-  def handle_info({:on_close}, %{struct: struct} = state) do
-    Consumer.close(struct)
-    {:noreply, state}
+  # GenServer callbacks
+
+  def start_link(opt) do
+    reference = Keyword.fetch!(opt, :reference)
+    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
+  end
+
+  def init(state) do
+    Process.flag(:trap_exit, true)
+    {:ok, state}
+  end
+
+  def handle_call(
+        {:event, [listener, event_types]},
+        _from,
+        %{reference: reference} = state
+      ) do
+    result =
+      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
+        pid when is_pid(pid) -> Nif.consumer_event(reference, pid, event_types)
+      end
+
+    {:reply, result, state}
+  end
+
+  def handle_call(
+        {:struct_from_pid, _arg},
+        _from,
+        %{reference: reference} = state
+      ) do
+    {:reply,
+     %Consumer{
+       pid: self(),
+       id: Nif.consumer_id(reference),
+       producer_id: Nif.consumer_producer_id(reference),
+       kind: Nif.consumer_kind(reference),
+       type: Nif.consumer_type(reference),
+       rtp_parameters: Nif.consumer_rtp_parameters(reference)
+     }, state}
+  end
+
+  NifWrap.def_handle_call_nif(%{
+    closed?: &Nif.consumer_closed/1,
+    dump: &Nif.consumer_dump/1,
+    paused?: &Nif.consumer_paused/1,
+    producer_paused?: &Nif.consumer_producer_paused/1,
+    priority: &Nif.consumer_priority/1,
+    score: &Nif.consumer_score/1,
+    preferred_layers: &Nif.consumer_preferred_layers/1,
+    current_layers: &Nif.consumer_current_layers/1,
+    get_stats: &Nif.consumer_get_stats/1,
+    pause: &Nif.consumer_pause/1,
+    resume: &Nif.consumer_resume/1,
+    set_preferred_layers: &Nif.consumer_set_preferred_layers/2,
+    set_priority: &Nif.consumer_set_priority/2,
+    unset_priority: &Nif.consumer_unset_priority/1,
+    request_key_frame: &Nif.consumer_request_key_frame/1
+  })
+
+  def handle_info({:on_close}, state) do
+    {:stop, :normal, state}
+  end
+
+  def terminate(_reason, %{reference: reference} = _state) do
+    Nif.consumer_close(reference)
+    :ok
   end
 
   defmodule Options do

@@ -1,35 +1,19 @@
 use crate::atoms;
-use crate::consumer::{ConsumerOptionsStruct, ConsumerStruct};
+use crate::consumer::ConsumerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
-use crate::producer::{ProducerOptionsStruct, ProducerStruct};
-use crate::PipeTransportRef;
+use crate::producer::ProducerOptionsStruct;
+use crate::{ConsumerRef, PipeTransportRef, ProducerRef};
 use futures_lite::future;
 use mediasoup::data_structures::{SctpState, TransportListenIp, TransportTuple};
 use mediasoup::pipe_transport::{
-    PipeTransport, PipeTransportDump, PipeTransportOptions, PipeTransportRemoteParameters,
-    PipeTransportStat,
+    PipeTransportDump, PipeTransportOptions, PipeTransportRemoteParameters, PipeTransportStat,
 };
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
 
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
-
-#[derive(NifStruct)]
-#[module = "Mediasoup.PipeTransport"]
-pub struct PipeTransportStruct {
-    id: JsonSerdeWrap<TransportId>,
-    reference: ResourceArc<PipeTransportRef>,
-}
-impl PipeTransportStruct {
-    pub fn from(transport: PipeTransport) -> Self {
-        Self {
-            id: transport.id().into(),
-            reference: PipeTransportRef::resource(transport),
-        }
-    }
-}
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.PipeTransport.Options"]
@@ -89,9 +73,11 @@ impl PipeTransportOptionsStruct {
 }
 
 #[rustler::nif]
-pub fn pipe_transport_id(transport: ResourceArc<PipeTransportRef>) -> NifResult<String> {
+pub fn pipe_transport_id(
+    transport: ResourceArc<PipeTransportRef>,
+) -> NifResult<JsonSerdeWrap<TransportId>> {
     let transport = transport.get_resource()?;
-    Ok(transport.id().to_string())
+    Ok(transport.id().into())
 }
 
 #[rustler::nif]
@@ -120,7 +106,7 @@ pub fn pipe_transport_tuple(
 pub fn pipe_transport_consume(
     transport: ResourceArc<PipeTransportRef>,
     option: ConsumerOptionsStruct,
-) -> NifResult<(Atom, ConsumerStruct)> {
+) -> NifResult<(Atom, ResourceArc<ConsumerRef>)> {
     let transport = transport.get_resource()?;
 
     let option = option.to_option();
@@ -128,7 +114,7 @@ pub fn pipe_transport_consume(
     let r = future::block_on(async move { transport.consume(option).await })
         .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok((atoms::ok(), ConsumerStruct::from(r)))
+    Ok((atoms::ok(), ConsumerRef::resource(r)))
 }
 
 #[rustler::nif]
@@ -150,7 +136,7 @@ pub fn pipe_transport_connect(
 pub fn pipe_transport_produce(
     transport: ResourceArc<PipeTransportRef>,
     option: ProducerOptionsStruct,
-) -> NifResult<(Atom, ProducerStruct)> {
+) -> NifResult<(Atom, ResourceArc<ProducerRef>)> {
     let transport = transport.get_resource()?;
     let option = option.to_option();
 
@@ -158,7 +144,7 @@ pub fn pipe_transport_produce(
         return transport.produce(option).await;
     })
     .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), ProducerStruct::from(producer)))
+    Ok((atoms::ok(), ProducerRef::resource(producer)))
 }
 
 #[rustler::nif]

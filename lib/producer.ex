@@ -2,19 +2,21 @@ defmodule Mediasoup.Producer do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Producer
   """
-  alias Mediasoup.{Producer, Nif}
-  use Mediasoup.ProcessWrap.Base
-  @enforce_keys [:id, :kind, :type, :rtp_parameters, :reference, :pid]
-  defstruct [:id, :kind, :type, :rtp_parameters, :reference, :pid]
+  alias Mediasoup.{Producer, NifWrap, Nif}
+  require NifWrap
+  use GenServer, restart: :temporary
 
-  @type t :: %Producer{
-          id: String.t(),
-          kind: kind,
-          type: type,
-          rtp_parameters: rtpParameters,
-          reference: reference | nil,
-          pid: pid | nil
-        }
+  @enforce_keys [:id, :kind, :type, :rtp_parameters, :pid]
+  defstruct [:id, :kind, :type, :rtp_parameters, :pid]
+
+  @type t ::
+          %Producer{
+            id: String.t(),
+            kind: kind,
+            type: type,
+            rtp_parameters: rtpParameters,
+            pid: pid()
+          }
 
   @type rtpParameters :: map
 
@@ -24,95 +26,64 @@ defmodule Mediasoup.Producer do
   @type kind :: String.t()
   @type type :: String.t()
 
-  def id(%Producer{id: id}) do
+  @spec id(t) :: String.t()
+  def id(%{id: id}) do
     id
   end
 
   @spec kind(t) :: String.t()
-  def kind(%Producer{kind: kind}) do
+  def kind(%{kind: kind}) do
     kind
   end
 
   @spec type(t) :: String.t()
-  def type(%Producer{type: type}) do
+  def type(%{type: type}) do
     type
   end
 
   @spec rtp_parameters(t) :: rtpParameters()
-  def rtp_parameters(%Producer{rtp_parameters: rtp_parameters}) do
+  def rtp_parameters(%{rtp_parameters: rtp_parameters}) do
     rtp_parameters
   end
 
-  @spec close(t) :: {:ok} | {:error}
-  def close(%Producer{pid: pid}) when is_pid(pid) do
+  @spec close(t) :: :ok
+  def close(%Producer{pid: pid}) do
     GenServer.stop(pid)
   end
 
-  def close(%Producer{reference: reference}) do
-    Nif.producer_close(reference)
-  end
-
   @spec dump(t) :: map
-  def dump(%Producer{pid: pid}) when is_pid(pid) do
+  def dump(%Producer{pid: pid}) do
     GenServer.call(pid, {:dump, []})
   end
 
-  def dump(%Producer{reference: reference}) do
-    Nif.producer_dump(reference)
-  end
-
   @spec pause(t) :: {:ok} | {:error}
-  def pause(%Producer{pid: pid}) when is_pid(pid) do
+  def pause(%Producer{pid: pid}) do
     GenServer.call(pid, {:pause, []})
   end
 
-  def pause(%Producer{reference: reference}) do
-    Nif.producer_pause(reference)
-  end
-
   @spec resume(t) :: {:ok} | {:error}
-  def resume(%Producer{pid: pid}) when is_pid(pid) do
+  def resume(%Producer{pid: pid}) do
     GenServer.call(pid, {:resume, []})
   end
 
-  def resume(%Producer{reference: reference}) do
-    Nif.producer_resume(reference)
-  end
-
   @spec score(t) :: list() | {:error}
-  def score(%Producer{pid: pid}) when is_pid(pid) do
+  def score(%Producer{pid: pid}) do
     GenServer.call(pid, {:score, []})
   end
 
-  def score(%Producer{reference: reference}) do
-    Nif.producer_score(reference)
-  end
-
   @spec get_stats(t) :: list() | {:error}
-  def get_stats(%Producer{pid: pid}) when is_pid(pid) do
+  def get_stats(%Producer{pid: pid}) do
     GenServer.call(pid, {:get_stats, []})
   end
 
-  def get_stats(%Producer{reference: reference}) do
-    Nif.producer_get_stats(reference)
-  end
-
   @spec closed?(t) :: boolean()
-  def closed?(%Producer{pid: pid}) when is_pid(pid) do
+  def closed?(%Producer{pid: pid}) do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
-  def closed?(%Producer{reference: reference}) do
-    Nif.producer_closed(reference)
-  end
-
   @spec paused?(t) :: boolean() | {:error}
-  def paused?(%Producer{pid: pid}) when is_pid(pid) do
+  def paused?(%Producer{pid: pid}) do
     GenServer.call(pid, {:paused?, []})
-  end
-
-  def paused?(%Producer{reference: reference}) do
-    Nif.producer_paused(reference)
   end
 
   @type event_type ::
@@ -124,7 +95,7 @@ defmodule Mediasoup.Producer do
 
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
-        producer,
+        %Producer{pid: pid},
         listener,
         event_types \\ [
           :on_close,
@@ -133,29 +104,82 @@ defmodule Mediasoup.Producer do
           :on_video_orientation_change,
           :on_score
         ]
-      )
-
-  def event(%Producer{pid: pid}, listener, event_types) when is_pid(pid) do
+      ) do
     GenServer.call(pid, {:event, [listener, event_types]})
   end
 
-  def event(%Producer{reference: reference}, pid, event_types) do
-    Nif.producer_event(reference, pid, event_types)
+  @spec struct_from_pid(pid()) :: Producer.t()
+  def struct_from_pid(pid) when is_pid(pid) do
+    GenServer.call(pid, {:struct_from_pid, []})
   end
 
-  def handle_info({:on_resume}, %{struct: struct} = state) do
-    Producer.resume(struct)
+  # GenServer callbacks
+
+  def start_link(opt) do
+    reference = Keyword.fetch!(opt, :reference)
+    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
+  end
+
+  def init(state) do
+    Process.flag(:trap_exit, true)
+    {:ok, state}
+  end
+
+  def handle_call(
+        {:event, [listener, event_types]},
+        _from,
+        %{reference: reference} = state
+      ) do
+    result =
+      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
+        pid when is_pid(pid) -> Nif.producer_event(reference, pid, event_types)
+      end
+
+    {:reply, result, state}
+  end
+
+  def handle_call(
+        {:struct_from_pid, _arg},
+        _from,
+        %{reference: reference} = state
+      ) do
+    {:reply,
+     %Producer{
+       pid: self(),
+       id: Nif.producer_id(reference),
+       kind: Nif.producer_kind(reference),
+       type: Nif.producer_type(reference),
+       rtp_parameters: Nif.producer_rtp_parameters(reference)
+     }, state}
+  end
+
+  NifWrap.def_handle_call_nif(%{
+    closed?: &Nif.producer_closed/1,
+    dump: &Nif.producer_dump/1,
+    paused?: &Nif.producer_paused/1,
+    score: &Nif.producer_score/1,
+    get_stats: &Nif.producer_get_stats/1,
+    pause: &Nif.producer_pause/1,
+    resume: &Nif.producer_resume/1
+  })
+
+  def handle_info({:on_resume}, %{reference: reference} = state) do
+    Nif.producer_resume(reference)
     {:noreply, state}
   end
 
-  def handle_info({:on_pause}, %{struct: struct} = state) do
-    Producer.pause(struct)
+  def handle_info({:on_pause}, %{reference: reference} = state) do
+    Nif.producer_pause(reference)
     {:noreply, state}
   end
 
-  def handle_info({:on_close}, %{struct: struct} = state) do
-    Producer.close(struct)
-    {:noreply, state}
+  def handle_info({:on_close}, state) do
+    {:stop, :normal, state}
+  end
+
+  def terminate(_reason, %{reference: reference} = _state) do
+    Nif.producer_close(reference)
+    :ok
   end
 
   defmodule Options do
@@ -197,21 +221,9 @@ end
 
 defmodule Mediasoup.PipedProducer do
   @moduledoc """
-  https://mediasoup.org/documentation/v3/mediasoup/api/#Producer
-  Same as [`Producer`], but will not be closed when gc.
+  @deprecated Remove soom.
   """
-  alias Mediasoup.{Producer, PipedProducer, Nif}
-  @enforce_keys [:reference]
-  defstruct [:reference]
-
-  @type t :: %PipedProducer{
-          reference: reference
-        }
-
-  @spec into_producer(t | Producer.t()) :: {:ok, Producer.t()} | {:error, message :: term}
-  def into_producer(%PipedProducer{reference: reference}) do
-    Nif.piped_producer_into_producer(reference)
-  end
+  alias Mediasoup.Producer
 
   def into_producer(%Producer{} = producer) do
     {:ok, producer}

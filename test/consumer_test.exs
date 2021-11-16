@@ -2,66 +2,52 @@ defmodule ConsumerTest do
   use ExUnit.Case
 
   setup do
-    {:ok, struct_worker} = Mediasoup.create_worker()
+    {:ok, worker} = Mediasoup.Worker.start_link()
 
-    {:ok, process_worker} = Mediasoup.Worker.start_link()
-
-    %{struct_worker: struct_worker, process_worker: process_worker}
+    %{worker: worker}
   end
 
-  test "consume_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.consume_succeeds(struct_worker)
-    IntegrateTest.ConsumerTest.consume_succeeds(process_worker)
+  test "consume_succeeds", %{worker: worker} do
+    IntegrateTest.ConsumerTest.consume_succeeds(worker)
   end
 
-  test "close", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.close(struct_worker)
-    IntegrateTest.ConsumerTest.close(process_worker)
+  test "close", %{worker: worker} do
+    IntegrateTest.ConsumerTest.close(worker)
   end
 
   test "consume_incompatible_rtp_capabilities", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.ConsumerTest.consume_incompatible_rtp_capabilities(struct_worker)
-    IntegrateTest.ConsumerTest.consume_incompatible_rtp_capabilities(process_worker)
+    IntegrateTest.ConsumerTest.consume_incompatible_rtp_capabilities(worker)
   end
 
-  test "dump_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.dump_succeeds(struct_worker)
-    IntegrateTest.ConsumerTest.dump_succeeds(process_worker)
+  test "dump_succeeds", %{worker: worker} do
+    IntegrateTest.ConsumerTest.dump_succeeds(worker)
   end
 
-  test "get_stats_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.get_stats_succeeds(struct_worker)
-    IntegrateTest.ConsumerTest.get_stats_succeeds(process_worker)
+  test "get_stats_succeeds", %{worker: worker} do
+    IntegrateTest.ConsumerTest.get_stats_succeeds(worker)
   end
 
-  test "pause_resume_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.pause_resume_succeeds(struct_worker)
-    IntegrateTest.ConsumerTest.pause_resume_succeeds(process_worker)
+  test "pause_resume_succeeds", %{worker: worker} do
+    IntegrateTest.ConsumerTest.pause_resume_succeeds(worker)
   end
 
   test "set_preferred_layers_succeeds", %{
-    struct_worker: struct_worker,
-    process_worker: process_worker
+    worker: worker
   } do
-    IntegrateTest.ConsumerTest.set_preferred_layers_succeeds(struct_worker)
-    IntegrateTest.ConsumerTest.set_preferred_layers_succeeds(process_worker)
+    IntegrateTest.ConsumerTest.set_preferred_layers_succeeds(worker)
   end
 
-  test "unset_priority_succeeds", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.unset_priority_succeeds(struct_worker)
-    IntegrateTest.ConsumerTest.unset_priority_succeeds(process_worker)
+  test "unset_priority_succeeds", %{worker: worker} do
+    IntegrateTest.ConsumerTest.unset_priority_succeeds(worker)
   end
 
-  test "request_key_frame", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.request_key_frame(struct_worker)
-    IntegrateTest.ConsumerTest.request_key_frame(process_worker)
+  test "request_key_frame", %{worker: worker} do
+    IntegrateTest.ConsumerTest.request_key_frame(worker)
   end
 
-  test "close_event", %{struct_worker: struct_worker, process_worker: process_worker} do
-    IntegrateTest.ConsumerTest.close_event(struct_worker)
-    IntegrateTest.ConsumerTest.close_event(process_worker)
+  test "close_event", %{worker: worker} do
+    IntegrateTest.ConsumerTest.close_event(worker)
   end
 end
