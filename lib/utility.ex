@@ -3,6 +3,7 @@ defmodule Mediasoup.Utility do
   Utilities
   """
 
+  @doc false
   def get_remote_node_ip_different_node(to_node) do
     gethostresult = :rpc.call(to_node, :inet, :gethostname, [], 5000)
 
@@ -12,6 +13,7 @@ defmodule Mediasoup.Utility do
     end
   end
 
+  @doc false
   def get_remote_node_ip_different_node(from_node, to_node) do
     :rpc.call(from_node, Mediasoup.Utility, :get_remote_node_ip_different_node, [to_node], 5000)
   end
@@ -23,7 +25,7 @@ defmodule Mediasoup.Utility do
   end
 
   @doc """
-  Get local ip from node.
+  Get local ip from nodes.
   used in Router.pipe_producer_to_router for default implementation.
 
   Returns `{:ok, ipaddress} | {:error, reason}`.
@@ -35,6 +37,14 @@ defmodule Mediasoup.Utility do
     get_remote_node_ip_different_node(from_node, to_node)
   end
 
+  @doc """
+  Get listen ip from nodes.
+  used in Router.pipe_producer_to_router for default implementation.
+
+  Returns `{:ok, ipaddress}`.
+  When from_node and to_node is same, return {:ok, "127.0.0.1"}, Otherwise return {:ok, "0.0.0.0"}
+
+  """
   def get_listen_ip(from_node, to_node) when from_node == to_node do
     {:ok, "127.0.0.1"}
   end

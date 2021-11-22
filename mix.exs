@@ -19,6 +19,15 @@ defmodule MediasoupElixir.MixProject do
       dialyzer: [
         plt_add_apps: [:mix, :ex_unit],
         check_plt: true
+      ],
+      # Docs
+      name: "mediasoup_elixir",
+      source_url: "https://github.com/oviceinc/mediasoup-elixir",
+      homepage_url: "https://github.com/oviceinc/mediasoup-elixir",
+      docs: [
+        # The main page in the docs
+        main: "mediasoup_elixir",
+        extras: ["README.md"]
       ]
     ]
   end
@@ -39,7 +48,8 @@ defmodule MediasoupElixir.MixProject do
       {:local_cluster, "~> 1.2", only: :test},
       # global_flags used in local_cluster
       {:global_flags, "~> 1.0", only: :test},
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.24", only: :dev, runtime: false}
     ]
   end
 

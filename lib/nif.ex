@@ -1,8 +1,8 @@
 defmodule Mediasoup.Nif do
-  @moduledoc """
-  Nif interface for mediasoup
-  Do not use directly
-  """
+  @moduledoc false
+  # Nif interface for mediasoup
+  # Do not use directly
+
   use Rustler, otp_app: :mediasoup_elixir, crate: :mediasoup_elixir
 
   alias Mediasoup.{Worker, Router}

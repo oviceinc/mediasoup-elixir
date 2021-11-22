@@ -1,12 +1,10 @@
 defmodule Mediasoup.NifWrap do
-  @moduledoc """
-   Utilities for wrap Nif
-  """
+  @moduledoc false
+  # Utilities for wrap Nif
 
   defmodule EventProxy do
-    @moduledoc """
-      Event proxy module for rustler because rustler(nif) can only use local pid.
-    """
+    @moduledoc false
+    # Event proxy module for rustler because rustler(nif) can only use local pid.
     use GenServer
 
     def start(opt) do

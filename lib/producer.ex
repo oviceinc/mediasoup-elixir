@@ -12,8 +12,8 @@ defmodule Mediasoup.Producer do
   @type t ::
           %Producer{
             id: String.t(),
-            kind: kind,
-            type: type,
+            kind: mediaKind,
+            type: producerType,
             rtp_parameters: rtpParameters,
             pid: pid()
           }
@@ -23,65 +23,114 @@ defmodule Mediasoup.Producer do
   @typedoc """
     audio or video
   """
-  @type kind :: String.t()
-  @type type :: String.t()
+  @type mediaKind :: String.t()
+  @typedoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#ProducerType
+    “simple” or “simulcast” or “svc”
+  """
+  @type producerType :: String.t()
 
   @spec id(t) :: String.t()
+  @doc """
+  Producer identifier.
+  """
   def id(%{id: id}) do
     id
   end
 
-  @spec kind(t) :: String.t()
+  @spec kind(t) :: mediaKind
+  @doc """
+    The media kind
+  """
   def kind(%{kind: kind}) do
     kind
   end
 
-  @spec type(t) :: String.t()
+  @spec type(t) :: producerType
+  @doc """
+    Producer type.
+    https://mediasoup.org/documentation/v3/mediasoup/api/#ProducerType
+  """
   def type(%{type: type}) do
     type
   end
 
   @spec rtp_parameters(t) :: rtpParameters()
+  @doc """
+    RtpParameters.
+    https://mediasoup.org/documentation/v3/mediasoup/rtp-parameters-and-capabilities/#RtpParameters
+  """
   def rtp_parameters(%{rtp_parameters: rtp_parameters}) do
     rtp_parameters
   end
 
   @spec close(t) :: :ok
+  @doc """
+    Closes the producer. Triggers a “producerclose” event in all its associated consumers.
+    https://mediasoup.org/documentation/v3/mediasoup/api/#producer-close
+  """
   def close(%Producer{pid: pid}) do
     GenServer.stop(pid)
   end
 
   @spec dump(t) :: map
+  @doc """
+  Dump internal stat for Producer.
+  """
   def dump(%Producer{pid: pid}) do
     GenServer.call(pid, {:dump, []})
   end
 
   @spec pause(t) :: {:ok} | {:error}
+  @doc """
+  Pauses the producer (no RTP is sent to its associated consumers). Triggers a “producerpause” event in all its associated consumers.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#producer-pause
+  """
   def pause(%Producer{pid: pid}) do
     GenServer.call(pid, {:pause, []})
   end
 
   @spec resume(t) :: {:ok} | {:error}
+  @doc """
+  Resumes the producer (RTP is sent again to its associated consumers). Triggers a “producerresume” event in all its associated consumers.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#producer-resume
+  """
   def resume(%Producer{pid: pid}) do
     GenServer.call(pid, {:resume, []})
   end
 
   @spec score(t) :: list() | {:error}
+  @doc """
+  The score of each RTP stream being received, representing their tranmission quality.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#producer-score
+  """
   def score(%Producer{pid: pid}) do
     GenServer.call(pid, {:score, []})
   end
 
   @spec get_stats(t) :: list() | {:error}
+  @doc """
+  Returns current RTC statistics of the producer.
+  Check the [RTC Statistics](https://mediasoup.org/documentation/v3/mediasoup/rtc-statistics/)
+  section for more details (TypeScript-oriented, but concepts apply here as well).
+  """
   def get_stats(%Producer{pid: pid}) do
     GenServer.call(pid, {:get_stats, []})
   end
 
   @spec closed?(t) :: boolean()
+  @doc """
+  Tells whether the given producer is closed on the local node.
+  """
   def closed?(%Producer{pid: pid}) do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
   @spec paused?(t) :: boolean() | {:error}
+  @doc """
+  Whether the producer is paused.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#producer-paused
+  """
   def paused?(%Producer{pid: pid}) do
     GenServer.call(pid, {:paused?, []})
   end
@@ -94,6 +143,9 @@ defmodule Mediasoup.Producer do
           | :on_score
 
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @doc """
+  Starts observing event.
+  """
   def event(
         %Producer{pid: pid},
         listener,
@@ -225,6 +277,9 @@ defmodule Mediasoup.PipedProducer do
   """
   alias Mediasoup.Producer
 
+  @doc """
+  @deprecated Remove soom.
+  """
   def into_producer(%Producer{} = producer) do
     {:ok, producer}
   end

@@ -87,22 +87,36 @@ defmodule Mediasoup.Router do
           }
   end
 
+  @spec id(Mediasoup.Router.t()) :: String.t()
+  @doc """
+  Router identifier.
+  """
   def id(%Router{id: id}) do
     id
   end
 
   @spec close(t) :: :ok
+  @doc """
+    Closes the router.
+  """
   def close(%Router{pid: pid}) do
     GenServer.stop(pid)
   end
 
   @spec closed?(t) :: boolean
+  @doc """
+  Tells whether the given router is closed on the local node.
+  """
   def closed?(%Router{pid: pid}) do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
   @spec create_webrtc_transport(t, WebRtcTransport.create_option()) ::
           {:ok, WebRtcTransport.t()} | {:error, String.t()}
+  @doc """
+  Creates a new webrtc transport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#router-createWebRtcTransport
+  """
   def create_webrtc_transport(
         %Router{pid: pid},
         %WebRtcTransport.Options{} = option
@@ -116,6 +130,11 @@ defmodule Mediasoup.Router do
 
   @spec pipe_producer_to_router(t, producer_id :: String.t(), PipeToRouterOptions.t()) ::
           {:ok, PipeToRouterResult.t()} | {:error, String.t()}
+
+  @doc """
+  Pipes the given media or data producer into another router.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#router-pipeToRouter
+  """
   def pipe_producer_to_router(
         %Router{} = router,
         producer_id,
@@ -162,21 +181,36 @@ defmodule Mediasoup.Router do
           Router.t(),
           PipeTransport.Options.t()
         ) :: {:ok, PipeTransport.t()} | {:error, String.t()}
+  @doc """
+  Creates a new pipe transport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#router-createPipeTransport
+  """
   def create_pipe_transport(%Router{pid: pid}, %PipeTransport.Options{} = option) do
     GenServer.call(pid, {:create_pipe_transport, [option]})
   end
 
   @spec can_consume?(t, String.t(), rtpCapabilities) :: boolean
+  @doc """
+  Whether the given RTP capabilities are valid to consume the given producer.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#router-canConsume
+  """
   def can_consume?(%Router{pid: pid}, producer_id, rtp_capabilities) do
     GenServer.call(pid, {:can_consume?, [producer_id, rtp_capabilities]})
   end
 
   @spec rtp_capabilities(t) :: Router.rtpCapabilities()
+  @doc """
+  An Object with the RTP capabilities of the router.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#router-rtpCapabilities
+  """
   def rtp_capabilities(%Router{pid: pid}) do
     GenServer.call(pid, {:rtp_capabilities, []})
   end
 
   @spec dump(t) :: map | {:error}
+  @doc """
+  Dump internal stat for Router.
+  """
   def dump(%Router{pid: pid}) do
     GenServer.call(pid, {:dump, []})
   end
@@ -186,6 +220,9 @@ defmodule Mediasoup.Router do
           | :on_dead
 
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @doc """
+  Starts observing event.
+  """
   def event(
         router,
         listener,

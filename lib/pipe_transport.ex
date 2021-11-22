@@ -39,28 +39,52 @@ defmodule Mediasoup.PipeTransport do
           }
   end
 
+  @typedoc """
+  https://mediasoup.org/documentation/v3/mediasoup/sctp-parameters/#SctpParameters
+  """
+  @type sctp_parameters_t :: map()
+
+  @typedoc """
+  https://mediasoup.org/documentation/v3/mediasoup/srtp-parameters/#SrtpParameters
+  """
+  @type srtp_parameters_t :: map()
+
   @type connect_option :: %{
           :ip => String.t(),
           :port => integer,
-          optional(:srtpParameters) => map() | nil
+          optional(:srtpParameters) => srtp_parameters_t() | nil
         }
 
+  @doc """
+  PipeTransport identifier.
+  """
+  @spec id(t) :: String.t()
   def id(%PipeTransport{id: id}) do
     id
   end
 
   @spec close(t) :: :ok
+  @doc """
+  Closes the PipeTransport.
+  """
   def close(%PipeTransport{pid: pid}) do
     GenServer.stop(pid)
   end
 
   @spec closed?(t) :: boolean
+  @doc """
+  Tells whether the given PipeTransport is closed on the local node.
+  """
   def closed?(%PipeTransport{pid: pid}) do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::
           {:ok, Consumer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to send audio or video RTP (or SRTP depending on the transport class). This is the way to extract media from mediasoup.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consume
+  """
   def consume(%PipeTransport{pid: pid}, %Consumer.Options{} = option) do
     GenServer.call(pid, {:consume, [option]})
   end
@@ -70,12 +94,20 @@ defmodule Mediasoup.PipeTransport do
   end
 
   @spec connect(t, option :: connect_option()) :: {:ok} | {:error, String.t() | :terminated}
+  @doc """
+  Provides the pipe RTP transport with the remote parameters.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-connect
+  """
   def connect(%PipeTransport{pid: pid}, option) do
     GenServer.call(pid, {:connect, [option]})
   end
 
   @spec produce(t, Producer.Options.t() | map()) ::
           {:ok, Producer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to receive audio or video RTP (or SRTP depending on the transport class). This is the way to inject media into mediasoup.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-produce
+  """
   def produce(%PipeTransport{pid: pid}, %Producer.Options{} = option) do
     GenServer.call(pid, {:produce, [option]})
   end
@@ -86,31 +118,62 @@ defmodule Mediasoup.PipeTransport do
 
   @type transport_stat :: map
   @spec get_stats(t) :: list(transport_stat) | {:error, :terminated}
+  @doc """
+  Returns current RTC statistics of the pipe transport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-getStats
+  """
   def get_stats(%PipeTransport{pid: pid}) do
     GenServer.call(pid, {:get_stats, []})
   end
 
-  @spec tuple(t) :: map() | {:error, :terminated}
+  @typedoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#TransportTuple
+  """
+  @type transport_tuple :: map
+
+  @spec tuple(t) :: transport_tuple() | {:error, :terminated}
+  @doc """
+  The transport tuple. It refers to both RTP and RTCP since pipe transports use RTCP-mux by design.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-tuple
+  """
   def tuple(%PipeTransport{pid: pid}) do
     GenServer.call(pid, {:tuple, []})
   end
 
-  @spec sctp_parameters(Mediasoup.PipeTransport.t()) :: map() | {:error, :terminated}
+  @spec sctp_parameters(Mediasoup.PipeTransport.t()) ::
+          sctp_parameters_t() | {:error, :terminated}
+  @doc """
+  Local SCTP parameters. Or undefined if SCTP is not enabled.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-sctpParameters
+  """
   def sctp_parameters(%PipeTransport{pid: pid}) do
     GenServer.call(pid, {:sctp_parameters, []})
   end
 
-  @spec srtp_parameters(Mediasoup.PipeTransport.t()) :: map() | {:error, :terminated}
+  @spec srtp_parameters(Mediasoup.PipeTransport.t()) ::
+          srtp_parameters_t() | {:error, :terminated}
+  @doc """
+  Local SRTP parameters representing the crypto suite and key material used to encrypt sending RTP and SRTP.
+  Those parameters must be given to the paired pipeTransport in the connect() method.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-srtpParameters
+  """
   def srtp_parameters(%PipeTransport{pid: pid}) do
     GenServer.call(pid, {:srtp_parameters, []})
   end
 
   @spec sctp_state(Mediasoup.PipeTransport.t()) :: String.t() | {:error, :terminated}
+  @doc """
+  Current SCTP state. Or undefined if SCTP is not enabled.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-sctpState
+  """
   def sctp_state(%PipeTransport{pid: pid}) do
     GenServer.call(pid, {:sctp_state, []})
   end
 
   @spec dump(t) :: any | {:error, :terminated}
+  @doc """
+  Dump internal stat for PipeTransport.
+  """
   def dump(%PipeTransport{pid: pid}) do
     GenServer.call(pid, {:dump, []})
   end
@@ -121,6 +184,9 @@ defmodule Mediasoup.PipeTransport do
           | :on_tuple
 
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @doc """
+  Starts observing event.
+  """
   def event(
         transport,
         listener,
