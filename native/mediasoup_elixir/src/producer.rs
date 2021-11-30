@@ -146,7 +146,7 @@ pub fn producer_event(
             .on_score(move |score| {
                 send_msg_from_other_thread(
                     pid.clone(),
-                    (atoms::on_score(), JsonSerdeWrap::new(score.clone())),
+                    (atoms::on_score(), JsonSerdeWrap::new(score.to_vec())),
                 );
             })
             .detach();

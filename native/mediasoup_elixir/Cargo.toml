@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rustler = "0.22.0"
-mediasoup = "= 0.8.5"
+mediasoup = "= 0.9.0"
 futures-lite = "1.12.0"
 serde = { version = "1.0.130", features = ["derive"] }
 serde-transcode = "1.1"
