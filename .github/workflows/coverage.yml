@@ -4,6 +4,7 @@ on: [pull_request]
 
 jobs:
   base_branch_cov:
+    timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -52,6 +53,7 @@ jobs:
           path: ./coverage/lcov.info
 
   coverage:
+    timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
       matrix:
