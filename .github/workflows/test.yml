@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  test:
+    timeout-minutes: 40
     name: Build and test
     runs-on: ubuntu-latest
     strategy:

@@ -1,8 +1,9 @@
 name: reviewdog
 on: [pull_request]
 jobs:
-  credo:
-    name: credo
+  reviewdog:
+    timeout-minutes: 40
+    name: reviewdog
     runs-on: ubuntu-latest
 
     steps:
@@ -40,58 +41,11 @@ jobs:
         REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: | 
         mix credo list --format flycheck | reviewdog -efm="%f:%l:%c: %m" -name="mix credo" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
-  cargo_check:
-    name: cargo check
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-          toolchain: '1.54.0'
-          override: true
-          components: rustfmt, clippy
-    - name: Restore dependencies cache
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - uses: reviewdog/action-setup@v1
     - name: reviewdog(cargo check)
       env:
         REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: | 
         cargo check -q --message-format=short 2>&1 | reviewdog -f=cargo-check -name="cargo check" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
-
-  clippy:
-    name: cargo clippy
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-          toolchain: '1.54.0'
-          override: true
-          components: rustfmt, clippy
-    - name: Restore dependencies cache
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - uses: reviewdog/action-setup@v1
     - name: reviewdog(clippy)
       env:
         REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
