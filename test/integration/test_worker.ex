@@ -128,4 +128,15 @@ defmodule IntegrateTest.WorkerTest do
 
     refute Worker.closed?(worker)
   end
+
+  def create_many_worker() do
+    1..200
+    |> Enum.map(fn _ ->
+      {:ok, worker} = Worker.start_link()
+      worker
+    end)
+    |> Enum.map(fn worker ->
+      Worker.close(worker)
+    end)
+  end
 end

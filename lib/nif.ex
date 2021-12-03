@@ -8,12 +8,11 @@ defmodule Mediasoup.Nif do
   alias Mediasoup.{Worker, Router}
 
   # construct worker
-  @spec create_worker() :: {:ok, reference()} | {:error, String.t()}
-  def create_worker(), do: :erlang.nif_error(:nif_not_loaded)
+  defp create_worker_async(), do: :erlang.nif_error(:nif_not_loaded)
+  defp create_worker_async(_option), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec create_worker(Worker.Settings.t()) ::
-          {:ok, reference()} | {:error, String.t()}
-  def create_worker(_option), do: :erlang.nif_error(:nif_not_loaded)
+  def create_worker(), do: create_worker_async() |> handle_async_nif_result()
+  def create_worker(option), do: create_worker_async(option) |> handle_async_nif_result()
 
   # worker
   @spec worker_create_router(reference, Router.create_option()) :: {:ok, reference()} | {:error}
@@ -185,4 +184,16 @@ defmodule Mediasoup.Nif do
   @spec producer_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def producer_event(_producer, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
   def producer_dump(_producer), do: :erlang.nif_error(:nif_not_loaded)
+
+  def handle_async_nif_result(result) do
+    case result do
+      {:ok, result_key} ->
+        receive do
+          {^result_key, msg} -> msg
+        end
+
+      error ->
+        error
+    end
+  end
 end

@@ -48,13 +48,14 @@ use crate::worker::{
     worker_dump, worker_event, worker_id, worker_update_settings,
 };
 
+use futures_lite::future;
 use mediasoup::consumer::Consumer;
 use mediasoup::pipe_transport::PipeTransport;
 use mediasoup::producer::Producer;
 use mediasoup::router::Router;
 use mediasoup::webrtc_transport::WebRtcTransport;
 use mediasoup::worker::Worker;
-use rustler::{Env, LocalPid, OwnedEnv, Term};
+use rustler::{Atom, Encoder, Env, LocalPid, OwnedEnv, Term};
 
 pub fn send_msg_from_other_thread<T>(pid: LocalPid, value: T)
 where
@@ -63,6 +64,25 @@ where
     let mut my_env = OwnedEnv::new();
     std::thread::spawn(move || {
         my_env.send_and_clear(&pid, |env| value.encode(env));
+    });
+}
+
+pub fn send_async_nif_result<T, E, Fut>(env: Env, msg: Atom, future: Fut)
+where
+    T: Encoder,
+    E: Encoder,
+    Fut: future::Future<Output = Result<T, E>> + Send + 'static,
+{
+    let pid = env.pid();
+    let mut my_env = OwnedEnv::new();
+    std::thread::spawn(move || {
+        let result = future::block_on(future);
+        match result {
+            Ok(worker) => {
+                my_env.send_and_clear(&pid, |env| (msg, (atoms::ok(), worker)).encode(env))
+            }
+            Err(err) => my_env.send_and_clear(&pid, |env| (msg, (atoms::error(), err)).encode(env)),
+        }
     });
 }
 

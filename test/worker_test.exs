@@ -36,4 +36,8 @@ defmodule WorkerTest do
   test "close_router" do
     IntegrateTest.WorkerTest.close_router()
   end
+
+  test "create_many_worker" do
+    IntegrateTest.WorkerTest.create_many_worker()
+  end
 end
