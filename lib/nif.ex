@@ -28,6 +28,13 @@ defmodule Mediasoup.Nif do
 
   defp router_dump_async(_router), do: :erlang.nif_error(:nif_not_loaded)
 
+  ## pipe_transport with async
+  defp pipe_transport_get_stats_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  defp pipe_transport_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  defp pipe_transport_consume_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  defp pipe_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  defp pipe_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+
   ## consumer with async
   defp consumer_get_stats_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   defp consumer_pause_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
@@ -41,6 +48,7 @@ defmodule Mediasoup.Nif do
   defp consumer_request_key_frame_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   defp consumer_dump_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
 
+  ## producer with async
   defp producer_pause_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
   defp producer_resume_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
   defp producer_get_stats_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
@@ -146,15 +154,26 @@ defmodule Mediasoup.Nif do
   def pipe_transport_close(_transport), do: :erlang.nif_error(:nif_not_loaded)
   @spec pipe_transport_closed(reference) :: boolean
   def pipe_transport_closed(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  def pipe_transport_consume(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
-  def pipe_transport_connect(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
-  def pipe_transport_produce(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
-  def pipe_transport_get_stats(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
+  def pipe_transport_consume(transport, option),
+    do: pipe_transport_consume_async(transport, option) |> handle_async_nif_result()
+
+  def pipe_transport_connect(transport, option),
+    do: pipe_transport_connect_async(transport, option) |> handle_async_nif_result()
+
+  def pipe_transport_produce(transport, option),
+    do: pipe_transport_produce_async(transport, option) |> handle_async_nif_result()
+
+  def pipe_transport_get_stats(transport),
+    do: pipe_transport_get_stats_async(transport) |> handle_async_nif_result() |> unwrap_ok()
+
   def pipe_transport_tuple(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_sctp_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_sctp_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def pipe_transport_srtp_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  def pipe_transport_dump(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
+  def pipe_transport_dump(transport),
+    do: pipe_transport_dump_async(transport) |> handle_async_nif_result() |> unwrap_ok()
 
   def pipe_transport_event(_transport, _pid, _event_types),
     do: :erlang.nif_error(:nif_not_loaded)
