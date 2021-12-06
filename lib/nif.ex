@@ -17,16 +17,16 @@ defmodule Mediasoup.Nif do
   defp worker_update_settings_async(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
 
   ## router with async
-  def router_create_pipe_transport_async(
-        _reference,
-        _option
-      ),
-      do: :erlang.nif_error(:nif_not_loaded)
+  defp router_create_pipe_transport_async(
+         _reference,
+         _option
+       ),
+       do: :erlang.nif_error(:nif_not_loaded)
 
-  def router_create_webrtc_transport_async(_router, _option),
+  defp router_create_webrtc_transport_async(_router, _option),
     do: :erlang.nif_error(:nif_not_loaded)
 
-  def router_dump_async(_router), do: :erlang.nif_error(:nif_not_loaded)
+  defp router_dump_async(_router), do: :erlang.nif_error(:nif_not_loaded)
 
   ## consumer with async
   defp consumer_get_stats_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
@@ -40,6 +40,11 @@ defmodule Mediasoup.Nif do
   defp consumer_unset_priority_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   defp consumer_request_key_frame_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   defp consumer_dump_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+
+  defp producer_pause_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  defp producer_resume_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  defp producer_get_stats_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  defp producer_dump_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
 
   # construct worker
   def create_worker(), do: create_worker_async() |> handle_async_nif_result()
@@ -215,9 +220,9 @@ defmodule Mediasoup.Nif do
   @spec producer_close(reference) :: {:ok} | {:error}
   def producer_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   @spec producer_pause(reference) :: {:ok} | {:error}
-  def producer_pause(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  def producer_pause(producer), do: producer_pause_async(producer) |> handle_async_nif_result()
   @spec producer_resume(reference) :: {:ok} | {:error}
-  def producer_resume(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  def producer_resume(producer), do: producer_resume_async(producer) |> handle_async_nif_result()
 
   @spec producer_closed(reference) :: boolean()
   def producer_closed(_producer), do: :erlang.nif_error(:nif_not_loaded)
@@ -227,11 +232,14 @@ defmodule Mediasoup.Nif do
   @spec producer_score(reference) :: list() | {:error}
   def producer_score(_producer), do: :erlang.nif_error(:nif_not_loaded)
   @spec producer_get_stats(reference) :: list() | {:error}
-  def producer_get_stats(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  def producer_get_stats(producer),
+    do: producer_get_stats_async(producer) |> handle_async_nif_result() |> unwrap_ok()
 
   @spec producer_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def producer_event(_producer, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
-  def producer_dump(_producer), do: :erlang.nif_error(:nif_not_loaded)
+
+  def producer_dump(producer),
+    do: producer_dump_async(producer) |> handle_async_nif_result() |> unwrap_ok()
 
   defp handle_async_nif_result(result) do
     case result do
