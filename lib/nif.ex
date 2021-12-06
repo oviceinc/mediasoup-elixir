@@ -35,6 +35,21 @@ defmodule Mediasoup.Nif do
   defp pipe_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   defp pipe_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
 
+  ## webrtc_transport with async
+  defp webrtc_transport_get_stats_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  defp webrtc_transport_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  defp webrtc_transport_restart_ice_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
+  defp webrtc_transport_set_max_incoming_bitrate_async(_transport, _bitrate),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  defp webrtc_transport_set_max_outgoing_bitrate_async(_transport, _bitrate),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  defp webrtc_transport_consume_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  defp webrtc_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  defp webrtc_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+
   ## consumer with async
   defp consumer_get_stats_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   defp consumer_pause_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
@@ -120,34 +135,51 @@ defmodule Mediasoup.Nif do
   def webrtc_transport_closed(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec webrtc_transport_consume(reference, any) :: {:ok, reference()} | {:error, String.t()}
-  def webrtc_transport_consume(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_consume(transport, option),
+    do: webrtc_transport_consume_async(transport, option) |> handle_async_nif_result()
+
   @spec webrtc_transport_connect(reference, any) :: {:ok} | {:error, String.t()}
-  def webrtc_transport_connect(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_connect(transport, option),
+    do: webrtc_transport_connect_async(transport, option) |> handle_async_nif_result()
+
   @spec webrtc_transport_produce(reference, any) :: {:ok, reference()} | {:error, String.t()}
-  def webrtc_transport_produce(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_produce(transport, option),
+    do: webrtc_transport_produce_async(transport, option) |> handle_async_nif_result()
+
   def webrtc_transport_ice_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_candidates(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_role(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_sctp_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
-  def webrtc_transport_set_max_incoming_bitrate(_transport, _bitrate),
-    do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_set_max_incoming_bitrate(transport, bitrate),
+    do:
+      webrtc_transport_set_max_incoming_bitrate_async(transport, bitrate)
+      |> handle_async_nif_result()
 
-  def webrtc_transport_set_max_outgoing_bitrate(_transport, _bitrate),
-    do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_set_max_outgoing_bitrate(transport, bitrate),
+    do:
+      webrtc_transport_set_max_outgoing_bitrate_async(transport, bitrate)
+      |> handle_async_nif_result()
 
   def webrtc_transport_ice_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  def webrtc_transport_restart_ice(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
+  def webrtc_transport_restart_ice(transport),
+    do: webrtc_transport_restart_ice_async(transport) |> handle_async_nif_result()
+
   def webrtc_transport_ice_selected_tuple(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_dtls_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_dtls_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_sctp_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  def webrtc_transport_get_stats(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
+  def webrtc_transport_get_stats(transport),
+    do: webrtc_transport_get_stats_async(transport) |> handle_async_nif_result() |> unwrap_ok()
+
   @spec webrtc_transport_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def webrtc_transport_event(_transport, _pid, _event_types),
     do: :erlang.nif_error(:nif_not_loaded)
 
-  def webrtc_transport_dump(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  def webrtc_transport_dump(transport),
+    do: webrtc_transport_dump_async(transport) |> handle_async_nif_result() |> unwrap_ok()
 
   # pipe_transport
   def pipe_transport_id(_transport), do: :erlang.nif_error(:nif_not_loaded)
