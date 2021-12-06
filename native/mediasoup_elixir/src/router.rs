@@ -2,12 +2,11 @@ use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
 use crate::pipe_transport::PipeTransportOptionsStruct;
 use crate::webrtc_transport::WebRtcTransportOptionsStruct;
-use crate::{PipeTransportRef, RouterRef, WebRtcTransportRef};
-use futures_lite::future;
+use crate::{send_async_nif_result, PipeTransportRef, RouterRef, WebRtcTransportRef};
 use mediasoup::producer::ProducerId;
-use mediasoup::router::{RouterDump, RouterId, RouterOptions};
+use mediasoup::router::{RouterId, RouterOptions};
 use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized, RtpCodecCapability};
-use rustler::{Error, NifResult, NifStruct, ResourceArc};
+use rustler::{Env, Error, NifResult, NifStruct, ResourceArc};
 
 #[rustler::nif]
 pub fn router_id(router: ResourceArc<RouterRef>) -> NifResult<JsonSerdeWrap<RouterId>> {
@@ -25,21 +24,24 @@ pub fn router_closed(router: ResourceArc<RouterRef>) -> NifResult<bool> {
     Ok(router.closed())
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "router_create_webrtc_transport_async")]
 pub fn router_create_webrtc_transport(
+    env: Env,
     router: ResourceArc<RouterRef>,
     option: WebRtcTransportOptionsStruct,
-) -> NifResult<(rustler::Atom, ResourceArc<WebRtcTransportRef>)> {
+) -> NifResult<(rustler::Atom, rustler::Atom)> {
     let router = router.get_resource()?;
     let option = option
         .try_to_option()
         .map_err(|error| Error::Term(Box::new(error.to_string())))?;
 
-    let transport = future::block_on(async move {
-        return router.create_webrtc_transport(option).await;
+    send_async_nif_result(env, async move {
+        router
+            .create_webrtc_transport(option)
+            .await
+            .map(WebRtcTransportRef::resource)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), WebRtcTransportRef::resource(transport)))
 }
 
 #[rustler::nif]
@@ -51,20 +53,22 @@ pub fn router_rtp_capabilities(
     Ok(JsonSerdeWrap::new(router.rtp_capabilities().clone()))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "router_create_pipe_transport_async")]
 pub fn router_create_pipe_transport(
+    env: Env,
     router: ResourceArc<RouterRef>,
     option: PipeTransportOptionsStruct,
-) -> NifResult<(rustler::Atom, ResourceArc<PipeTransportRef>)> {
+) -> NifResult<(rustler::Atom, rustler::Atom)> {
     let router = router.get_resource()?;
     let option = option.try_to_option()?;
 
-    let result = future::block_on(async move {
-        return router.create_pipe_transport(option).await;
+    send_async_nif_result(env, async move {
+        router
+            .create_pipe_transport(option)
+            .await
+            .map(PipeTransportRef::resource)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok((atoms::ok(), PipeTransportRef::resource(result)))
 }
 
 #[rustler::nif]
@@ -80,15 +84,20 @@ pub fn router_can_consume(
     let can_consume = router.can_consume(&producer_id, &rtp_capabilities);
     Ok(can_consume)
 }
-#[rustler::nif]
-pub fn router_dump(router: ResourceArc<RouterRef>) -> NifResult<JsonSerdeWrap<RouterDump>> {
+#[rustler::nif(name = "router_dump_async")]
+pub fn router_dump(
+    env: Env,
+    router: ResourceArc<RouterRef>,
+) -> NifResult<(rustler::Atom, rustler::Atom)> {
     let router = router.get_resource()?;
-    let dump = future::block_on(async move {
-        return router.dump().await;
-    })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
 
-    Ok(JsonSerdeWrap::new(dump))
+    send_async_nif_result(env, async move {
+        router
+            .dump()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
+    })
 }
 
 #[rustler::nif]
