@@ -16,6 +16,18 @@ defmodule Mediasoup.Nif do
   defp worker_dump_async(_worker), do: :erlang.nif_error(:nif_not_loaded)
   defp worker_update_settings_async(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
 
+  ## consumer with async
+  defp consumer_get_stats_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  defp consumer_pause_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  defp consumer_resume_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+
+  defp consumer_set_preferred_layers_async(_consumer, _referred_layers),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  defp consumer_set_priority_async(_consumer, _priority), do: :erlang.nif_error(:nif_not_loaded)
+  defp consumer_unset_priority_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  defp consumer_request_key_frame_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  defp consumer_dump_async(_consumer), do: :erlang.nif_error(:nif_not_loaded)
 
   # construct worker
   def create_worker(), do: create_worker_async() |> handle_async_nif_result()
@@ -154,18 +166,28 @@ defmodule Mediasoup.Nif do
   def consumer_score(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   def consumer_preferred_layers(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   def consumer_current_layers(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  def consumer_get_stats(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  def consumer_pause(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  def consumer_resume(_consumer), do: :erlang.nif_error(:nif_not_loaded)
 
-  def consumer_set_preferred_layers(_consumer, _referred_layers),
-    do: :erlang.nif_error(:nif_not_loaded)
+  def consumer_get_stats(consumer),
+    do: consumer_get_stats_async(consumer) |> handle_async_nif_result() |> unwrap_ok()
 
-  def consumer_set_priority(_consumer, _priority), do: :erlang.nif_error(:nif_not_loaded)
-  def consumer_unset_priority(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  def consumer_request_key_frame(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  def consumer_pause(consumer), do: consumer_pause_async(consumer) |> handle_async_nif_result()
+  def consumer_resume(consumer), do: consumer_resume_async(consumer) |> handle_async_nif_result()
 
-  def consumer_dump(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  def consumer_set_preferred_layers(consumer, referred_layers),
+    do:
+      consumer_set_preferred_layers_async(consumer, referred_layers) |> handle_async_nif_result()
+
+  def consumer_set_priority(consumer, priority),
+    do: consumer_set_priority_async(consumer, priority) |> handle_async_nif_result()
+
+  def consumer_unset_priority(consumer),
+    do: consumer_unset_priority_async(consumer) |> handle_async_nif_result()
+
+  def consumer_request_key_frame(consumer),
+    do: consumer_request_key_frame_async(consumer) |> handle_async_nif_result()
+
+  def consumer_dump(consumer),
+    do: consumer_dump_async(consumer) |> handle_async_nif_result() |> unwrap_ok()
 
   # producer
   @spec producer_id(reference) :: String.t()
