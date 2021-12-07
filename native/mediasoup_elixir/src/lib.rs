@@ -7,6 +7,7 @@ mod pipe_transport;
 mod producer;
 mod resource;
 mod router;
+mod task;
 mod webrtc_transport;
 mod worker;
 
@@ -62,24 +63,23 @@ where
     T: rustler::Encoder + Send + 'static,
 {
     let mut my_env = OwnedEnv::new();
-    std::thread::spawn(move || {
+    task::spawn(async move {
         my_env.send_and_clear(&pid, |env| value.encode(env));
-    });
+    })
+    .detach();
 }
 
-// workarounf for future created by async block is not `Send` at send_async_nif_result
-pub fn async_nif_thread_spawn<T, E, Fn, Fut>(env: Env, future: Fn) -> NifResult<(Atom, Atom)>
+pub fn send_async_nif_result<T, E, Fut>(env: Env, future: Fut) -> NifResult<(Atom, Atom)>
 where
     T: Encoder,
     E: Encoder,
-    Fut: future::Future<Output = Result<T, E>>,
-    Fn: (FnOnce() -> Fut) + Send + 'static,
+    Fut: future::Future<Output = Result<T, E>> + Send + 'static,
 {
     let pid = env.pid();
     let mut my_env = OwnedEnv::new();
     let result_key = atoms::mediasoup_async_nif_result();
-    std::thread::spawn(move || {
-        let result = future::block_on(future());
+    task::spawn(async move {
+        let result = future.await;
         match result {
             Ok(worker) => {
                 my_env.send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env))
@@ -88,17 +88,23 @@ where
                 my_env.send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env))
             }
         }
-    });
+    })
+    .detach();
 
     Ok((atoms::ok(), result_key))
 }
-pub fn send_async_nif_result<T, E, Fut>(env: Env, future: Fut) -> NifResult<(Atom, Atom)>
+
+// workaround for https://github.com/versatica/mediasoup/pull/729
+pub fn async_nif_thread_spawn<T, E, Fn, Fut>(env: Env, future: Fn) -> NifResult<(Atom, Atom)>
 where
     T: Encoder,
     E: Encoder,
-    Fut: future::Future<Output = Result<T, E>> + Send + 'static,
+    Fut: future::Future<Output = Result<T, E>>,
+    Fn: (FnOnce() -> Fut) + Send + 'static,
 {
-    async_nif_thread_spawn(env, || future)
+    send_async_nif_result(env, async move {
+        future::block_on(future())
+    })
 }
 
 rustler::init! {
