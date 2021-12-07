@@ -3,17 +3,14 @@ use crate::consumer::ConsumerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
-use crate::{ConsumerRef, PipeTransportRef, ProducerRef};
-use futures_lite::future;
+use crate::{async_nif_thread_spawn, ConsumerRef, PipeTransportRef, ProducerRef};
 use mediasoup::data_structures::{SctpState, TransportListenIp, TransportTuple};
-use mediasoup::pipe_transport::{
-    PipeTransportDump, PipeTransportOptions, PipeTransportRemoteParameters, PipeTransportStat,
-};
+use mediasoup::pipe_transport::{PipeTransportOptions, PipeTransportRemoteParameters};
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
 
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
-use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.PipeTransport.Options"]
@@ -102,77 +99,90 @@ pub fn pipe_transport_tuple(
     Ok(JsonSerdeWrap::new(transport.tuple()))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "pipe_transport_consume_async")]
 pub fn pipe_transport_consume(
+    env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: ConsumerOptionsStruct,
-) -> NifResult<(Atom, ResourceArc<ConsumerRef>)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
     let option = option.to_option();
-
-    let r = future::block_on(async move { transport.consume(option).await })
-        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok((atoms::ok(), ConsumerRef::resource(r)))
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .consume(option)
+            .await
+            .map(ConsumerRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "pipe_transport_connect_async")]
 pub fn pipe_transport_connect(
+    env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: JsonSerdeWrap<PipeTransportRemoteParameters>,
-) -> NifResult<(Atom,)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
     let option = option.clone();
-    future::block_on(async move {
-        return transport.connect(option).await;
+
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .connect(option)
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "pipe_transport_produce_async")]
 pub fn pipe_transport_produce(
+    env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: ProducerOptionsStruct,
-) -> NifResult<(Atom, ResourceArc<ProducerRef>)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
     let option = option.to_option();
 
-    let producer = future::block_on(async move {
-        return transport.produce(option).await;
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .produce(option)
+            .await
+            .map(ProducerRef::resource)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), ProducerRef::resource(producer)))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "pipe_transport_get_stats_async")]
 pub fn pipe_transport_get_stats(
+    env: Env,
     transport: ResourceArc<PipeTransportRef>,
-) -> NifResult<JsonSerdeWrap<std::vec::Vec<PipeTransportStat>>> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    let status = future::block_on(async move {
-        return transport.get_stats().await;
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .get_stats()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok(JsonSerdeWrap::new(status))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "pipe_transport_set_max_incoming_bitrate_async")]
 pub fn pipe_transport_set_max_incoming_bitrate(
+    env: Env,
     transport: ResourceArc<PipeTransportRef>,
     bitrate: u32,
-) -> NifResult<(Atom,)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    future::block_on(async move {
-        return transport.set_max_incoming_bitrate(bitrate).await;
+    async_nif_thread_spawn(env, move || async move {
+        transport
+            .set_max_incoming_bitrate(bitrate)
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
 
 #[rustler::nif]
@@ -198,18 +208,20 @@ pub fn pipe_transport_srtp_parameters(
     Ok(JsonSerdeWrap::new(transport.srtp_parameters()))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "pipe_transport_dump_async")]
 pub fn pipe_transport_dump(
+    env: Env,
     transport: ResourceArc<PipeTransportRef>,
-) -> NifResult<JsonSerdeWrap<PipeTransportDump>> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    let dump = future::block_on(async move {
-        return transport.dump().await;
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .dump()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok(JsonSerdeWrap::new(dump))
 }
 
 #[rustler::nif]

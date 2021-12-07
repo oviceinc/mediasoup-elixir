@@ -1,15 +1,13 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::send_msg_from_other_thread;
 use crate::ConsumerRef;
-use futures_lite::future;
+use crate::{send_async_nif_result, send_msg_from_other_thread};
 use mediasoup::consumer::{
-    ConsumerDump, ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerStats,
-    ConsumerType,
+    ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerType,
 };
 use mediasoup::producer::ProducerId;
 use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
-use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 
 #[rustler::nif]
 pub fn consumer_id(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerId>> {
@@ -96,97 +94,110 @@ pub fn consumer_current_layers(
     Ok(JsonSerdeWrap::new(consumer.current_layers()))
 }
 
-#[rustler::nif]
-pub fn consumer_get_stats(
-    consumer: ResourceArc<ConsumerRef>,
-) -> NifResult<JsonSerdeWrap<ConsumerStats>> {
-    let consumer = consumer.get_resource()?;
-    let status = future::block_on(async move {
-        return consumer.get_stats().await;
-    })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok(JsonSerdeWrap::new(status))
-}
-#[rustler::nif]
-pub fn consumer_pause(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
+#[rustler::nif(name = "consumer_get_stats_async")]
+pub fn consumer_get_stats(env: Env, consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom, Atom)> {
     let consumer = consumer.get_resource()?;
 
-    future::block_on(async move {
-        return consumer.pause().await;
+    send_async_nif_result(env, async move {
+        consumer
+            .get_stats()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
-#[rustler::nif]
-pub fn consumer_resume(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
+#[rustler::nif(name = "consumer_pause_async")]
+pub fn consumer_pause(env: Env, consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom, Atom)> {
     let consumer = consumer.get_resource()?;
 
-    future::block_on(async move {
-        return consumer.resume().await;
+    send_async_nif_result(env, async move {
+        consumer.pause().await.map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
+}
+#[rustler::nif(name = "consumer_resume_async")]
+pub fn consumer_resume(env: Env, consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom, Atom)> {
+    let consumer = consumer.get_resource()?;
+
+    send_async_nif_result(env, async move {
+        consumer
+            .resume()
+            .await
+            .map_err(|error| format!("{}", error))
+    })
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "consumer_set_preferred_layers_async")]
 pub fn consumer_set_preferred_layers(
+    env: Env,
     consumer: ResourceArc<ConsumerRef>,
     layer: JsonSerdeWrap<ConsumerLayers>,
-) -> NifResult<(Atom,)> {
+) -> NifResult<(Atom, Atom)> {
     let consumer = consumer.get_resource()?;
 
-    future::block_on(async move {
-        return consumer.set_preferred_layers(*layer).await;
+    send_async_nif_result(env, async move {
+        consumer
+            .set_preferred_layers(*layer)
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "consumer_set_priority_async")]
 pub fn consumer_set_priority(
+    env: Env,
     consumer: ResourceArc<ConsumerRef>,
     priority: u8,
-) -> NifResult<(Atom,)> {
+) -> NifResult<(Atom, Atom)> {
     let consumer = consumer.get_resource()?;
-    future::block_on(async move {
-        return consumer.set_priority(priority).await;
+
+    send_async_nif_result(env, async move {
+        consumer
+            .set_priority(priority)
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
-#[rustler::nif]
-pub fn consumer_unset_priority(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
+#[rustler::nif(name = "consumer_unset_priority_async")]
+pub fn consumer_unset_priority(
+    env: Env,
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<(Atom, Atom)> {
     let consumer = consumer.get_resource()?;
 
-    future::block_on(async move {
-        return consumer.unset_priority().await;
+    send_async_nif_result(env, async move {
+        consumer
+            .unset_priority()
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
-}
-
-#[rustler::nif]
-pub fn consumer_request_key_frame(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
-    let consumer = consumer.get_resource()?;
-
-    future::block_on(async move {
-        return consumer.request_key_frame().await;
-    })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
 
-#[rustler::nif]
-pub fn consumer_dump(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerDump>> {
+#[rustler::nif(name = "consumer_request_key_frame_async")]
+pub fn consumer_request_key_frame(
+    env: Env,
+    consumer: ResourceArc<ConsumerRef>,
+) -> NifResult<(Atom, Atom)> {
     let consumer = consumer.get_resource()?;
 
-    let dump = future::block_on(async move {
-        return consumer.dump().await;
+    send_async_nif_result(env, async move {
+        consumer
+            .request_key_frame()
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
+}
 
-    Ok(JsonSerdeWrap::new(dump))
+#[rustler::nif(name = "consumer_dump_async")]
+pub fn consumer_dump(env: Env, consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom, Atom)> {
+    let consumer = consumer.get_resource()?;
+
+    send_async_nif_result(env, async move {
+        consumer
+            .dump()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
+    })
 }
 
 #[rustler::nif]

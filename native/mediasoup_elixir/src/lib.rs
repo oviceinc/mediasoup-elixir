@@ -48,13 +48,14 @@ use crate::worker::{
     worker_dump, worker_event, worker_id, worker_update_settings,
 };
 
+use futures_lite::future;
 use mediasoup::consumer::Consumer;
 use mediasoup::pipe_transport::PipeTransport;
 use mediasoup::producer::Producer;
 use mediasoup::router::Router;
 use mediasoup::webrtc_transport::WebRtcTransport;
 use mediasoup::worker::Worker;
-use rustler::{Env, LocalPid, OwnedEnv, Term};
+use rustler::{Atom, Encoder, Env, LocalPid, NifResult, OwnedEnv, Term};
 
 pub fn send_msg_from_other_thread<T>(pid: LocalPid, value: T)
 where
@@ -64,6 +65,40 @@ where
     std::thread::spawn(move || {
         my_env.send_and_clear(&pid, |env| value.encode(env));
     });
+}
+
+// workarounf for future created by async block is not `Send` at send_async_nif_result
+pub fn async_nif_thread_spawn<T, E, Fn, Fut>(env: Env, future: Fn) -> NifResult<(Atom, Atom)>
+where
+    T: Encoder,
+    E: Encoder,
+    Fut: future::Future<Output = Result<T, E>>,
+    Fn: (FnOnce() -> Fut) + Send + 'static,
+{
+    let pid = env.pid();
+    let mut my_env = OwnedEnv::new();
+    let result_key = atoms::mediasoup_async_nif_result();
+    std::thread::spawn(move || {
+        let result = future::block_on(future());
+        match result {
+            Ok(worker) => {
+                my_env.send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env))
+            }
+            Err(err) => {
+                my_env.send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env))
+            }
+        }
+    });
+
+    Ok((atoms::ok(), result_key))
+}
+pub fn send_async_nif_result<T, E, Fut>(env: Env, future: Fut) -> NifResult<(Atom, Atom)>
+where
+    T: Encoder,
+    E: Encoder,
+    Fut: future::Future<Output = Result<T, E>> + Send + 'static,
+{
+    async_nif_thread_spawn(env, || future)
 }
 
 rustler::init! {

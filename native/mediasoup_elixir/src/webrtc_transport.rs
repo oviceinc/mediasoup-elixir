@@ -3,8 +3,10 @@ use crate::consumer::ConsumerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
-use crate::{send_msg_from_other_thread, ConsumerRef, ProducerRef, WebRtcTransportRef};
-use futures_lite::future;
+use crate::{
+    async_nif_thread_spawn, send_msg_from_other_thread, ConsumerRef, ProducerRef,
+    WebRtcTransportRef,
+};
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{
     DtlsParameters, DtlsState, IceParameters, IceRole, IceState, SctpState, TransportListenIp,
@@ -14,10 +16,9 @@ use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use mediasoup::webrtc_transport::{
-    TransportListenIps, WebRtcTransportDump, WebRtcTransportOptions,
-    WebRtcTransportRemoteParameters, WebRtcTransportStat,
+    TransportListenIps, WebRtcTransportOptions, WebRtcTransportRemoteParameters,
 };
-use rustler::{Atom, Error, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 
 #[rustler::nif]
 pub fn webrtc_transport_id(
@@ -41,49 +42,58 @@ pub fn webrtc_transport_closed(transport: ResourceArc<WebRtcTransportRef>) -> Ni
     }
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_consume_async")]
 pub fn webrtc_transport_consume(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: ConsumerOptionsStruct,
-) -> NifResult<(Atom, ResourceArc<ConsumerRef>)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
     let option: ConsumerOptions = option.to_option();
 
-    let r = future::block_on(async move { transport.consume(option).await })
-        .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok((atoms::ok(), ConsumerRef::resource(r)))
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .consume(option)
+            .await
+            .map(ConsumerRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_connect_async")]
 pub fn webrtc_transport_connect(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: JsonSerdeWrap<WebRtcTransportRemoteParameters>,
-) -> NifResult<(Atom,)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
     let option: WebRtcTransportRemoteParameters = option.clone();
 
-    future::block_on(async move {
-        return transport.connect(option).await;
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .connect(option)
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_produce_async")]
 pub fn webrtc_transport_produce(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: ProducerOptionsStruct,
-) -> NifResult<(Atom, ResourceArc<ProducerRef>)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
     let option: ProducerOptions = option.to_option();
 
-    let producer = future::block_on(async move {
-        return transport.produce(option).await;
+    async_nif_thread_spawn(env, || async move {
+        transport
+            .produce(option)
+            .await
+            .map(ProducerRef::resource)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(), ProducerRef::resource(producer)))
 }
 
 #[rustler::nif]
@@ -118,32 +128,36 @@ pub fn webrtc_transport_ice_role(
     Ok(JsonSerdeWrap::new(transport.ice_role()))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_set_max_incoming_bitrate_async")]
 pub fn webrtc_transport_set_max_incoming_bitrate(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     bitrate: u32,
-) -> NifResult<(Atom,)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    future::block_on(async move {
-        return transport.set_max_incoming_bitrate(bitrate).await;
+    async_nif_thread_spawn(env, move || async move {
+        transport
+            .set_max_incoming_bitrate(bitrate)
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_set_max_outgoing_bitrate_async")]
 pub fn webrtc_transport_set_max_outgoing_bitrate(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     bitrate: u32,
-) -> NifResult<(Atom,)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    future::block_on(async move {
-        return transport.set_max_outgoing_bitrate(bitrate).await;
+    async_nif_thread_spawn(env, move || async move {
+        transport
+            .set_max_outgoing_bitrate(bitrate)
+            .await
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-    Ok((atoms::ok(),))
 }
 
 #[rustler::nif]
@@ -154,46 +168,52 @@ pub fn webrtc_transport_ice_state(
     Ok(JsonSerdeWrap::new(transport.ice_state()))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_restart_ice_async")]
 pub fn webrtc_transport_restart_ice(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
-) -> NifResult<(Atom, JsonSerdeWrap<IceParameters>)> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    let ice_parameter = future::block_on(async move {
-        return transport.restart_ice().await;
+    async_nif_thread_spawn(env, move || async move {
+        transport
+            .restart_ice()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok((atoms::ok(), JsonSerdeWrap::new(ice_parameter)))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_get_stats_async")]
 pub fn webrtc_transport_get_stats(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
-) -> NifResult<JsonSerdeWrap<std::vec::Vec<WebRtcTransportStat>>> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    let status = future::block_on(async move {
-        return transport.get_stats().await;
+    async_nif_thread_spawn(env, move || async move {
+        transport
+            .get_stats()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok(JsonSerdeWrap::new(status))
 }
 
-#[rustler::nif]
+#[rustler::nif(name = "webrtc_transport_dump_async")]
 pub fn webrtc_transport_dump(
+    env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
-) -> NifResult<JsonSerdeWrap<WebRtcTransportDump>> {
+) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    let dump = future::block_on(async move {
-        return transport.dump().await;
+    async_nif_thread_spawn(env, move || async move {
+        transport
+            .dump()
+            .await
+            .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
     })
-    .map_err(|error| Error::Term(Box::new(format!("{}", error))))?;
-
-    Ok(JsonSerdeWrap::new(dump))
 }
 
 #[rustler::nif]

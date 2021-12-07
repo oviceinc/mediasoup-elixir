@@ -27,4 +27,5 @@ rustler::atoms! {
     on_layers_change,
     audio,
     video,
+    mediasoup_async_nif_result,
 }
