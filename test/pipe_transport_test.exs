@@ -96,4 +96,10 @@ defmodule PipeTransportTest do
   } do
     IntegrateTest.PipeTransportTest.consumer_close_are_transmitted_to_pipe_consumer(worker)
   end
+
+  test "no_crash_when_exited_pipe_to_router", %{
+    worker: worker
+  } do
+    IntegrateTest.PipeTransportTest.no_crash_when_exited_pipe_to_router(worker)
+  end
 end
