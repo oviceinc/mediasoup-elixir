@@ -906,4 +906,19 @@ defmodule IntegrateTest.PipeTransportTest do
     assert Mediasoup.Consumer.closed?(pipe_consumer)
     assert Mediasoup.Producer.closed?(pipe_producer)
   end
+
+  def no_crash_when_exited_pipe_to_router(worker) do
+    {_worker, router1, router2, transport1, _transport2} = init(worker)
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+    # Pause the videoProducer.
+    {:ok} = Producer.pause(video_producer)
+
+    Router.close(router2)
+
+    {:error, _} =
+      Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
+        router: router2
+      })
+  end
 end

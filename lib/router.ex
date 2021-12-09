@@ -121,6 +121,18 @@ defmodule Mediasoup.Router do
         producer_id,
         %PipeToRouterOptions{} = option
       ) do
+    try do
+      do_pipe_producer_to_router(router, producer_id, option)
+    catch
+      reason, msg -> {:error, {reason, msg}}
+    end
+  end
+
+  defp do_pipe_producer_to_router(
+         %Router{} = router,
+         producer_id,
+         %PipeToRouterOptions{} = option
+       ) do
     alias Mediasoup.{Consumer, Producer, Transport}
 
     with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
