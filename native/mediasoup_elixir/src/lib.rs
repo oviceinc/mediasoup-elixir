@@ -62,7 +62,8 @@ where
     T: rustler::Encoder + Send + 'static,
 {
     let mut my_env = OwnedEnv::new();
-    std::thread::spawn(move || {
+    let builder = std::thread::Builder::new().name("ex-mediasoup".into());
+    let _ = builder.spawn(move || {
         my_env.send_and_clear(&pid, |env| value.encode(env));
     });
 }
@@ -78,17 +79,17 @@ where
     let pid = env.pid();
     let mut my_env = OwnedEnv::new();
     let result_key = atoms::mediasoup_async_nif_result();
-    std::thread::spawn(move || {
-        let result = future::block_on(future());
-        match result {
-            Ok(worker) => {
-                my_env.send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env))
+    let builder = std::thread::Builder::new().name("ex-mediasoup".into());
+    let _ =
+        builder.spawn(move || {
+            let result = future::block_on(future());
+            match result {
+                Ok(worker) => my_env
+                    .send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env)),
+                Err(err) => my_env
+                    .send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env)),
             }
-            Err(err) => {
-                my_env.send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env))
-            }
-        }
-    });
+        });
 
     Ok((atoms::ok(), result_key))
 }
