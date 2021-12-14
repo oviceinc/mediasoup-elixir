@@ -14,8 +14,7 @@ defmodule WorkerTest do
   end
 
   test "worker with wrong settings cert" do
-    # TODO: workaround for deadlock
-    # IntegrateTest.WorkerTest.worker_with_wrong_settings_cert()
+    IntegrateTest.WorkerTest.worker_with_wrong_settings_cert()
   end
 
   test "worker_with_wrong_settings_port" do

@@ -3,7 +3,7 @@ use crate::consumer::ConsumerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
-use crate::{async_nif_thread_spawn, ConsumerRef, PipeTransportRef, ProducerRef};
+use crate::{send_async_nif_result, ConsumerRef, PipeTransportRef, ProducerRef};
 use mediasoup::data_structures::{SctpState, TransportListenIp, TransportTuple};
 use mediasoup::pipe_transport::{PipeTransportOptions, PipeTransportRemoteParameters};
 use mediasoup::sctp_parameters::SctpParameters;
@@ -108,7 +108,7 @@ pub fn pipe_transport_consume(
     let transport = transport.get_resource()?;
 
     let option = option.to_option();
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .consume(option)
             .await
@@ -127,7 +127,7 @@ pub fn pipe_transport_connect(
 
     let option = option.clone();
 
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .connect(option)
             .await
@@ -144,7 +144,7 @@ pub fn pipe_transport_produce(
     let transport = transport.get_resource()?;
     let option = option.to_option();
 
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .produce(option)
             .await
@@ -160,7 +160,7 @@ pub fn pipe_transport_get_stats(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .get_stats()
             .await
@@ -177,7 +177,7 @@ pub fn pipe_transport_set_max_incoming_bitrate(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, move || async move {
+    send_async_nif_result(env, async move {
         transport
             .set_max_incoming_bitrate(bitrate)
             .await
@@ -215,7 +215,7 @@ pub fn pipe_transport_dump(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .dump()
             .await
