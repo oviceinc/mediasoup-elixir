@@ -45,7 +45,12 @@ pub fn consumer_rtp_parameters(
 
 #[rustler::nif]
 pub fn consumer_close(consumer: ResourceArc<ConsumerRef>) -> NifResult<(Atom,)> {
-    consumer.close();
+    // workaroud for deadlock.
+    // https://github.com/versatica/mediasoup/issues/728
+    // Instead, it will leak.
+    std::thread::spawn(move || {
+        consumer.close();
+    });
     Ok((atoms::ok(),))
 }
 #[rustler::nif]

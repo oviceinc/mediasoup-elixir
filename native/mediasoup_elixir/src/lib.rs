@@ -94,19 +94,6 @@ where
     Ok((atoms::ok(), result_key))
 }
 
-// workaround for https://github.com/versatica/mediasoup/pull/729
-pub fn async_nif_thread_spawn<T, E, Fn, Fut>(env: Env, future: Fn) -> NifResult<(Atom, Atom)>
-where
-    T: Encoder,
-    E: Encoder,
-    Fut: future::Future<Output = Result<T, E>>,
-    Fn: (FnOnce() -> Fut) + Send + 'static,
-{
-    send_async_nif_result(env, async move {
-        future::block_on(future())
-    })
-}
-
 rustler::init! {
     "Elixir.Mediasoup.Nif",
     [

@@ -137,14 +137,14 @@ defmodule Mediasoup.Worker do
 
   @type event_type ::
           :on_close
-          | :on_worker_close
+          | :on_dead
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(
         pid,
         lisener,
         event_types \\ [
           :on_close,
-          :on_worker_close
+          :on_dead
         ]
       ) do
     GenServer.call(pid, {:event, [lisener, event_types]})

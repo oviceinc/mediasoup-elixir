@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rustler = "0.22.0"
-mediasoup = "= 0.8.5"
+mediasoup = { git = "https://github.com/versatica/mediasoup.git", rev ="45ac397734cdb393ab4e0b7a3ff14a93dd285db6" }
 futures-lite = "1.12.0"
 once_cell = "1.8.0"
 num_cpus = "1.13.0"

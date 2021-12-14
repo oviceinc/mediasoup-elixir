@@ -4,8 +4,7 @@ use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
 use crate::{
-    async_nif_thread_spawn, send_msg_from_other_thread, ConsumerRef, ProducerRef,
-    WebRtcTransportRef,
+    send_async_nif_result, send_msg_from_other_thread, ConsumerRef, ProducerRef, WebRtcTransportRef,
 };
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{
@@ -52,7 +51,7 @@ pub fn webrtc_transport_consume(
 
     let option: ConsumerOptions = option.to_option();
 
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .consume(option)
             .await
@@ -70,7 +69,7 @@ pub fn webrtc_transport_connect(
     let transport = transport.get_resource()?;
     let option: WebRtcTransportRemoteParameters = option.clone();
 
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .connect(option)
             .await
@@ -87,7 +86,7 @@ pub fn webrtc_transport_produce(
     let transport = transport.get_resource()?;
     let option: ProducerOptions = option.to_option();
 
-    async_nif_thread_spawn(env, || async move {
+    send_async_nif_result(env, async move {
         transport
             .produce(option)
             .await
@@ -136,7 +135,7 @@ pub fn webrtc_transport_set_max_incoming_bitrate(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, move || async move {
+    send_async_nif_result(env, async move {
         transport
             .set_max_incoming_bitrate(bitrate)
             .await
@@ -152,7 +151,7 @@ pub fn webrtc_transport_set_max_outgoing_bitrate(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, move || async move {
+    send_async_nif_result(env, async move {
         transport
             .set_max_outgoing_bitrate(bitrate)
             .await
@@ -175,7 +174,7 @@ pub fn webrtc_transport_restart_ice(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, move || async move {
+    send_async_nif_result(env, async move {
         transport
             .restart_ice()
             .await
@@ -191,7 +190,7 @@ pub fn webrtc_transport_get_stats(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, move || async move {
+    send_async_nif_result(env, async move {
         transport
             .get_stats()
             .await
@@ -207,7 +206,7 @@ pub fn webrtc_transport_dump(
 ) -> NifResult<(Atom, Atom)> {
     let transport = transport.get_resource()?;
 
-    async_nif_thread_spawn(env, move || async move {
+    send_async_nif_result(env, async move {
         transport
             .dump()
             .await
