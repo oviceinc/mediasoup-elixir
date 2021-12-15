@@ -11,7 +11,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rustler = "0.22.0"
-mediasoup = { git = "https://github.com/versatica/mediasoup.git", rev ="45ac397734cdb393ab4e0b7a3ff14a93dd285db6" }
+# Use the version with the deadlock fixed for mediasoup. When this https://github.com/versatica/mediasoup/issues/728 issue fixed, use the upstream repository.
+mediasoup = { git = "https://github.com/satoren/mediasoup.git", rev ="4dec56ed56eb576efd78a5cce7c6bb0dfa7ec9aa" } 
 futures-lite = "1.12.0"
 once_cell = "1.8.0"
 num_cpus = "1.13.0"
