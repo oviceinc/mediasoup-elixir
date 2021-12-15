@@ -234,6 +234,11 @@ defmodule IntegrateTest.ProducerTest do
   def produce_wrong_arguments(worker) do
     {_worker, _router, transport_1, _transport_2} = init(worker)
 
+    Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
+      log_level: :none,
+      log_tags: []
+    })
+
     # Empty rtp_parameters.codecs.
     {:error, message} =
       WebRtcTransport.produce(transport_1, %{
@@ -352,6 +357,11 @@ defmodule IntegrateTest.ProducerTest do
 
     {:ok, _first_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
 
+    Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
+      log_level: :none,
+      log_tags: []
+    })
+
     {:error, message} =
       WebRtcTransport.produce(transport_1, %{
         kind: "audio",
@@ -427,6 +437,11 @@ defmodule IntegrateTest.ProducerTest do
 
   def produce_no_mid_single_encoding_without_dir_or_ssrc(worker) do
     {_worker, _router, transport_1, _transport_2} = init(worker)
+
+    Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
+      log_level: :none,
+      log_tags: []
+    })
 
     {:error, message} =
       WebRtcTransport.produce(transport_1, %{

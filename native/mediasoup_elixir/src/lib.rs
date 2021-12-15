@@ -205,6 +205,8 @@ rustler::init! {
 }
 
 fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
+    env_logger::init();
+
     // This macro will take care of defining and initializing a new resource
     // object type.
     rustler::resource!(WorkerRef, env);

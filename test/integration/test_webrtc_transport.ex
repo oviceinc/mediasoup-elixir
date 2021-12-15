@@ -200,6 +200,11 @@ defmodule IntegrateTest.WebRtcTransportTest do
   def create_non_bindable_ip(worker) do
     {_worker, router} = init(worker)
 
+    Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
+      log_level: :none,
+      log_tags: []
+    })
+
     {:error, _message} =
       Router.create_webrtc_transport(router, %{
         listenIps: {
@@ -290,6 +295,11 @@ defmodule IntegrateTest.WebRtcTransportTest do
       WebRtcTransport.connect(transport, %{
         dtlsParameters: dtls_parameters
       })
+
+    Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
+      log_level: :none,
+      log_tags: []
+    })
 
     # Must fail if connected.
     {:error, _error} =
