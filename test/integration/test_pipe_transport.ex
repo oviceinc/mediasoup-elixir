@@ -506,6 +506,11 @@ defmodule IntegrateTest.PipeTransportTest do
     assert match?(%{}, srtp_parameters)
     assert String.length(srtp_parameters["keyBase64"]) == 40
 
+    Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
+      log_level: :none,
+      log_tags: []
+    })
+
     # Missing srtp_parameters.
     {:error, _message} =
       PipeTransport.connect(pipe_transport, %{ip: "127.0.0.2", port: 9999, srtpParameters: nil})
@@ -529,6 +534,11 @@ defmodule IntegrateTest.PipeTransportTest do
       Router.create_pipe_transport(router1, %PipeTransport.Options{
         listen_ip: %{ip: "127.0.0.1"}
       })
+
+    Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
+      log_level: :none,
+      log_tags: []
+    })
 
     # No SRTP enabled so passing srtp_parameters must fail.
     {:error, _message} =
@@ -663,7 +673,8 @@ defmodule IntegrateTest.PipeTransportTest do
             ip: "127.0.0.1"
           }
         },
-        enable_sctp: true
+        enable_sctp: true,
+        enable_srtp: true
       })
 
     {:ok, transport2} =
