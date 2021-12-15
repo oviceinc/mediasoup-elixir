@@ -30,9 +30,9 @@ jobs:
           target
           deps
           _build
-        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        key: lint-${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: |
-          ${{ runner.os }}-mix-
+          lint-${{ runner.os }}-mix-
     - name: Install dependencies
       run: mix deps.get
     - uses: reviewdog/action-setup@v1
