@@ -7,6 +7,7 @@ mod pipe_transport;
 mod producer;
 mod resource;
 mod router;
+mod task;
 mod webrtc_transport;
 mod worker;
 
@@ -62,44 +63,35 @@ where
     T: rustler::Encoder + Send + 'static,
 {
     let mut my_env = OwnedEnv::new();
-    let builder = std::thread::Builder::new().name("ex-mediasoup".into());
-    let _ = builder.spawn(move || {
+    task::spawn(async move {
         my_env.send_and_clear(&pid, |env| value.encode(env));
-    });
+    })
+    .detach();
 }
 
-// workarounf for future created by async block is not `Send` at send_async_nif_result
-pub fn async_nif_thread_spawn<T, E, Fn, Fut>(env: Env, future: Fn) -> NifResult<(Atom, Atom)>
-where
-    T: Encoder,
-    E: Encoder,
-    Fut: future::Future<Output = Result<T, E>>,
-    Fn: (FnOnce() -> Fut) + Send + 'static,
-{
-    let pid = env.pid();
-    let mut my_env = OwnedEnv::new();
-    let result_key = atoms::mediasoup_async_nif_result();
-    let builder = std::thread::Builder::new().name("ex-mediasoup".into());
-    let _ =
-        builder.spawn(move || {
-            let result = future::block_on(future());
-            match result {
-                Ok(worker) => my_env
-                    .send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env)),
-                Err(err) => my_env
-                    .send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env)),
-            }
-        });
-
-    Ok((atoms::ok(), result_key))
-}
 pub fn send_async_nif_result<T, E, Fut>(env: Env, future: Fut) -> NifResult<(Atom, Atom)>
 where
     T: Encoder,
     E: Encoder,
     Fut: future::Future<Output = Result<T, E>> + Send + 'static,
 {
-    async_nif_thread_spawn(env, || future)
+    let pid = env.pid();
+    let mut my_env = OwnedEnv::new();
+    let result_key = atoms::mediasoup_async_nif_result();
+    task::spawn(async move {
+        let result = future.await;
+        match result {
+            Ok(worker) => {
+                my_env.send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env))
+            }
+            Err(err) => {
+                my_env.send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env))
+            }
+        }
+    })
+    .detach();
+
+    Ok((atoms::ok(), result_key))
 }
 
 rustler::init! {
