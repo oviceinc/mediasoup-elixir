@@ -15,7 +15,7 @@ rustler = "0.22.0"
 mediasoup = { git = "https://github.com/satoren/mediasoup.git", rev ="4dec56ed56eb576efd78a5cce7c6bb0dfa7ec9aa" } 
 futures-lite = "1.12.0"
 once_cell = "1.9.0"
-num_cpus = "1.13.0"
+num_cpus = "1.13.1"
 async-executor = "1.4.1"
 serde = { version = "1.0.131", features = ["derive"] }
 serde-transcode = "1.1"
