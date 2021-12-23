@@ -39,7 +39,7 @@ defmodule MediasoupElixir.MixProject do
       {:local_cluster, "~> 1.2", only: :test},
       # global_flags used in local_cluster
       {:global_flags, "~> 1.0", only: :test},
-      {:credo, "~> 1.5", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.6", only: [:dev, :test], runtime: false}
     ]
   end
 

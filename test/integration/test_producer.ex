@@ -257,7 +257,51 @@ defmodule IntegrateTest.ProducerTest do
 
     "Request to worker failed:" <> _ = message
 
-    # TODO: need more tests
+    # Wrong apt in RTX codec.
+    {:error, message} =
+      WebRtcTransport.produce(
+        transport_1,
+        %{
+          kind: "video",
+          rtpParameters: %{
+            mid: "VIDEO",
+            codecs: [
+              %{
+                mimeType: "video/H264",
+                payloadType: 112,
+                clockRate: 90000,
+                parameters: %{
+                  "packetization-mode" => 1,
+                  "profile-level-id" => "4d0032"
+                },
+                rtcpFeedback: []
+              },
+              %{
+                mimeType: "video/rtx",
+                payloadType: 113,
+                clockRate: 90000,
+                parameters: %{
+                  "apt" => 111
+                },
+                rtcpFeedback: []
+              }
+            ],
+            headerExtensions: [],
+            encodings: [
+              %{
+                ssrc: 6666,
+                rtx: %{ssrc: 6667}
+              }
+            ],
+            rtcp: %{
+              cname: "video-1",
+              reducedSize: true
+            }
+          }
+        }
+      )
+
+    "RTP mapping error:" <> _ = message
   end
 
   def produce_unsupported_codecs(worker) do
