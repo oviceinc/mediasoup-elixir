@@ -400,4 +400,49 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert Mediasoup.Transport.closed?(transport)
     assert_receive {:on_close}
   end
+
+  def create_many_webrtc_transport() do
+    {:ok, worker} =
+      Mediasoup.Worker.start_link(
+        settings: %{
+          rtcMinPort: 30000,
+          rtcMaxPort: 30005,
+          logLevel: :none
+        }
+      )
+
+    {_worker, router} = init(worker)
+
+    transports =
+      1..6
+      |> Enum.map(fn _ ->
+        {:ok, transport} =
+          Router.create_webrtc_transport(router, %{
+            listenIps: {
+              %{
+                ip: "127.0.0.1",
+                announcedIp: "9.9.9.1"
+              }
+            }
+          })
+
+        transport
+      end)
+
+    # no more available ports
+    {:error, _} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: {
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1"
+          }
+        }
+      })
+
+    transports
+    |> Enum.map(fn transport ->
+      WebRtcTransport.close(transport)
+    end)
+  end
 end

@@ -86,6 +86,7 @@ pub fn worker_event(
     let worker = worker.get_resource()?;
 
     /* TODO: Can not create multiple instance for disposable
+    If we need this, implement at elixir side.
     {
         let pid = pid.clone();
         worker
@@ -153,7 +154,7 @@ impl WorkerUpdateableSettingsStruct {
         let mut value = WorkerUpdateSettings::default();
 
         if let Some(log_level) = &self.log_level {
-            value.log_level = Some(log_level_from_string(log_level.as_str())?)
+            value.log_level = Some(log_level_from_string(log_level)?)
         }
         if let Some(log_tags) = &self.log_tags {
             value.log_tags = Some(log_tags_from_strings(log_tags)?)
@@ -177,7 +178,7 @@ impl WorkerSettingsStruct {
     fn try_to_setting(&self) -> Result<WorkerSettings, Error> {
         let mut value = WorkerSettings::default();
         if let Some(log_level) = &self.log_level {
-            value.log_level = log_level_from_string(log_level.as_str())?
+            value.log_level = log_level_from_string(log_level)?
         }
         if let Some(log_tags) = &self.log_tags {
             value.log_tags = log_tags_from_strings(log_tags)?
@@ -204,6 +205,7 @@ fn log_level_from_string(s: &str) -> NifResult<WorkerLogLevel> {
     return match s {
         "debug" => Ok(WorkerLogLevel::Debug),
         "error" => Ok(WorkerLogLevel::Error),
+        "Err" => Ok(WorkerLogLevel::Error), // workaround for :error to "Err" by serde
         "none" => Ok(WorkerLogLevel::None),
         "warn" => Ok(WorkerLogLevel::Warn),
         _ => Err(Error::RaiseTerm(Box::new(format!(
