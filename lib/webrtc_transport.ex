@@ -67,22 +67,37 @@ defmodule Mediasoup.WebRtcTransport do
 
   @type ice_parameter :: map()
 
+  @spec id(t) :: String.t()
+  @doc """
+  WebRtcTransport identifier.
+  """
   def id(%WebRtcTransport{id: id}) do
     id
   end
 
   @spec close(t) :: :ok
+
+  @doc """
+    Closes the WebRtcTransport.
+  """
   def close(%WebRtcTransport{pid: pid}) do
     GenServer.stop(pid)
   end
 
   @spec closed?(t) :: boolean
+  @doc """
+  Tells whether the given WebRtcTransport is closed on the local node.
+  """
   def closed?(%WebRtcTransport{pid: pid}) do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::
           {:ok, Consumer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to send audio or video RTP (or SRTP depending on the transport class). This is the way to extract media from mediasoup.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consume
+  """
   def consume(%WebRtcTransport{pid: pid}, %Consumer.Options{} = option) do
     GenServer.call(pid, {:consume, [option]})
   end
@@ -93,6 +108,10 @@ defmodule Mediasoup.WebRtcTransport do
 
   @spec produce(t, Producer.Options.t() | map()) ::
           {:ok, Producer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to receive audio or video RTP (or SRTP depending on the transport class). This is the way to inject media into mediasoup.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-produce
+  """
   def produce(%WebRtcTransport{pid: pid}, %Producer.Options{} = option) do
     GenServer.call(pid, {:produce, [option]})
   end
@@ -102,28 +121,48 @@ defmodule Mediasoup.WebRtcTransport do
   end
 
   @spec connect(t, connect_option()) :: {:ok} | {:error, String.t() | :terminated}
-
+  @doc """
+  Provides the WebRTC transport with the endpoint parameters.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-connect
+  """
   def connect(%WebRtcTransport{pid: pid}, option) do
     GenServer.call(pid, {:connect, [option]})
   end
 
   @spec ice_parameters(t) :: ice_parameter() | {:error, :terminated}
+  @doc """
+  Local ICE parameters.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceParameters
+  """
   def ice_parameters(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:ice_parameters, []})
   end
 
   @spec sctp_parameters(t) :: map() | {:error, :terminated}
+  @doc """
+  Local SCTP parameters. Or undefined if SCTP is not enabled.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-sctpParameters
+  """
   def sctp_parameters(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:sctp_parameters, []})
   end
 
   @spec ice_candidates(t) :: list(any)
+
+  @doc """
+  Local ICE candidates.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceCandidates
+  """
   def ice_candidates(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:ice_candidates, []})
   end
 
   @spec ice_role(t) :: String.t() | {:error, :terminated}
 
+  @doc """
+  Local ICE role. Due to the mediasoup ICE Lite design, this is always “controlled”.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceRole
+  """
   def ice_role(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:ice_role, []})
   end
@@ -139,43 +178,75 @@ defmodule Mediasoup.WebRtcTransport do
   end
 
   @spec ice_state(t) :: String.t() | {:error, :terminated}
+
+  @doc """
+  Current ICE state.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceState
+  """
   def ice_state(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:ice_state, []})
   end
 
   @spec restart_ice(t) :: {:ok, ice_parameter} | {:error, :terminated}
 
+  @doc """
+  Current ICE state.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceState
+  """
   def restart_ice(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:restart_ice, []})
   end
 
   @spec ice_selected_tuple(t) :: String.t() | nil | {:error, :terminated}
+  @doc """
+  The selected transport tuple if ICE is in “connected” or “completed” state. It is undefined if ICE is not established (no working candidate pair was found).
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceSelectedTuple
+  """
   def ice_selected_tuple(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:ice_selected_tuple, []})
   end
 
   @spec dtls_parameters(t) :: map | {:error, :terminated}
+  @doc """
+  Local DTLS parameters.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-dtlsParameters
+  """
   def dtls_parameters(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:dtls_parameters, []})
   end
 
   @spec dtls_state(t) :: String.t() | {:error, :terminated}
+  @doc """
+  Current DTLS state.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-dtlsState
+  """
   def dtls_state(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:dtls_state, []})
   end
 
   @spec sctp_state(t) :: String.t() | {:error, :terminated}
+  @doc """
+  Current SCTP state. Or undefined if SCTP is not enabled.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-sctpState
+  """
   def sctp_state(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:sctp_state, []})
   end
 
   @type transport_stat :: map
   @spec get_stats(t) :: list(transport_stat) | {:error, :terminated}
+  @doc """
+  Returns current RTC statistics of the WebRTC transport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-getStats
+  """
   def get_stats(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:get_stats, []})
   end
 
   @spec dump(t) :: any | {:error, :terminated}
+  @doc """
+  Dump internal stat for WebRtcTransport.
+  """
   def dump(%WebRtcTransport{pid: pid}) do
     GenServer.call(pid, {:dump, []})
   end
@@ -188,6 +259,9 @@ defmodule Mediasoup.WebRtcTransport do
           | :on_ice_selected_tuple_change
 
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @doc """
+  Starts observing event.
+  """
   def event(
         transport,
         listener,

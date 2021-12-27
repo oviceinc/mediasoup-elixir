@@ -99,15 +99,25 @@ defmodule Mediasoup.Worker do
           }
           | UpdateableSettings.t()
 
+  @doc """
+  Worker identifier.
+  """
   def id(pid) do
     GenServer.call(pid, {:id, []})
   end
 
+  @doc """
+    Closes the worker.
+  """
   def close(pid) do
     GenServer.stop(pid)
   end
 
   @spec create_router(t, Router.create_option()) :: {:ok, Router.t()} | {:error}
+  @doc """
+    Creates a new router.
+    https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createRouter
+  """
   def create_router(pid, %Router.Options{} = option) do
     GenServer.call(pid, {:create_router, [option]})
   end
@@ -117,6 +127,10 @@ defmodule Mediasoup.Worker do
   end
 
   @spec update_settings(t, update_option) :: {:ok} | {:error}
+  @doc """
+    Updates the worker settings in runtime. Just a subset of the worker settings can be updated.
+    https://mediasoup.org/documentation/v3/mediasoup/api/#worker-updateSettings
+  """
   def update_settings(pid, %UpdateableSettings{} = settings) do
     GenServer.call(pid, {:update_settings, [settings]})
   end
@@ -126,11 +140,17 @@ defmodule Mediasoup.Worker do
   end
 
   @spec closed?(t) :: boolean
+  @doc """
+  Tells whether the given Worker is closed on the local node.
+  """
   def closed?(pid) do
     !Process.alive?(pid)
   end
 
   @spec dump(t) :: map
+  @doc """
+  Dump internal stat for Worker.
+  """
   def dump(pid) do
     GenServer.call(pid, {:dump, []})
   end
@@ -139,6 +159,9 @@ defmodule Mediasoup.Worker do
           :on_close
           | :on_dead
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @doc """
+  Starts observing event.
+  """
   def event(
         pid,
         lisener,
