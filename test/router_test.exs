@@ -5,7 +5,7 @@ defmodule RouterTest do
     settings = %{
       rtcMinPort: 10000,
       rtcMaxPort: 10010,
-      logLevel: :debug
+      logLevel: :error
     }
 
     {:ok, worker} = Mediasoup.Worker.start_link(settings: settings)
