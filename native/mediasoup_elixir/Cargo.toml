@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = "0.22.0"
+rustler = "0.23.0"
 # Use the version with the deadlock fixed for mediasoup. 
 mediasoup = { git = "https://github.com/versatica/mediasoup.git", rev ="ec186c5d3616c1ef622b163c3b1ce5ba9ecc67f1" } 
 futures-lite = "1.12.0"

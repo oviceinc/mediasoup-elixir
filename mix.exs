@@ -42,7 +42,7 @@ defmodule MediasoupElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:rustler, "~> 0.22.0"},
+      {:rustler, "~> 0.23.0"},
       {:dialyxir, "~> 1.0", only: :dialyzer, runtime: false},
       {:excoveralls, "~> 0.14.2", only: :test},
       {:local_cluster, "~> 1.2", only: :test},
