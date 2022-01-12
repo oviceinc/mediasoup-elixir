@@ -20,6 +20,9 @@ jobs:
         with:
           elixir-version: '1.12.0' # Define the elixir version [required]
           otp-version: '24.0' # Define the OTP version [required]
+      - name: python3-testresources
+      - name: Install python3-testresources I don't know why need this.
+        run: sudo apt-get install -y python3-testresources
       - name: Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
