@@ -44,7 +44,13 @@ jobs:
       - name: start epmd daemon for cluster tests
         run: epmd -daemon
       - name: compile
-        run: MIX_ENV=test mix compile --verbose
+        run: MIX_ENV=test mix compile
+      - name: Archive Compole Results
+        if: failure()
+        uses: actions/upload-artifact@v1
+        with:
+          name: compile-output
+          path: _build/**/output
       - name: Run test coverage
         run: mix coveralls.lcov -o coverage
 
