@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: compile-output
-          path: _build/**/output
+          path: _build/
       - name: Run test coverage
         run: mix coveralls.lcov -o coverage
 
