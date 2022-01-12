@@ -43,6 +43,8 @@ jobs:
         run: mix deps.get
       - name: start epmd daemon for cluster tests
         run: epmd -daemon
+      - name: compile
+        run: MIX_ENV=test mix compile --verbose
       - name: Run test coverage
         run: mix coveralls.lcov -o coverage
 
