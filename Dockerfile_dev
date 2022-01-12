@@ -9,7 +9,10 @@ RUN set -ex && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         gcc \
+        g++ \
+        make \
         libc6-dev \
+        python3-pip \
         wget && \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
       -y --profile minimal --default-toolchain $RUST_VERSION -c component add rustfmt clippy

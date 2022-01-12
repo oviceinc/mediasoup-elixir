@@ -4,5 +4,4 @@
 ## Installation
 ### Requirement
   * [Rust](https://www.rust-lang.org/)
-  * `make` and `c/c++ compilers` for build for mediasoup
-
+  * `make`, `python3-pip` and `c/c++ compilers` for build for mediasoup
