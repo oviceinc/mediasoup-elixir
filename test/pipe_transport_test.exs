@@ -7,6 +7,10 @@ defmodule PipeTransportTest do
     %{worker: worker}
   end
 
+  import Mediasoup.TestUtil
+  setup_all :worker_leack_setup_all
+  setup :verify_worker_leack_on_exit!
+
   test "pipe_to_router_succeeds_with_audio", %{
     worker: worker
   } do

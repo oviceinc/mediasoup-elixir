@@ -44,6 +44,9 @@ defmodule IntegrateTest.WorkerTest do
       )
 
     assert true == is_binary(worker |> Worker.id())
+
+    assert 1 <= Mediasoup.Worker.worker_count()
+
     Mediasoup.Worker.close(worker)
   end
 

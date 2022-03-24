@@ -46,7 +46,7 @@ use crate::webrtc_transport::{
 };
 use crate::worker::{
     create_worker, create_worker_no_arg, worker_close, worker_closed, worker_create_router,
-    worker_dump, worker_event, worker_id, worker_update_settings,
+    worker_dump, worker_event, worker_global_count, worker_id, worker_update_settings,
 };
 
 use futures_lite::future;
@@ -100,6 +100,7 @@ rustler::init! {
         //
         create_worker_no_arg,
         create_worker,
+        worker_global_count,
 
         // worker
         worker_id,
