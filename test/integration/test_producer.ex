@@ -211,6 +211,8 @@ defmodule IntegrateTest.ProducerTest do
     assert Producer.paused?(video_producer) === false
     assert Producer.score(video_producer) === []
 
+    # wait for the router to be notified of close
+    Process.sleep(50)
     router_dump = Router.dump(router)
 
     assert router_dump["mapProducerIdConsumerIds"] === %{
@@ -653,7 +655,7 @@ defmodule IntegrateTest.ProducerTest do
     assert_receive {:on_close}
 
     # wait for the router to be notified of close
-    Process.sleep(10)
+    Process.sleep(50)
 
     router_dump = Router.dump(router)
 

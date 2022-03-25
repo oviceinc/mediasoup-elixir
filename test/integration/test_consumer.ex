@@ -777,10 +777,8 @@ defmodule IntegrateTest.ConsumerTest do
     assert_receive {:on_close}
 
     # wait for notify close to router
-    Process.sleep(50)
-    router_dump = Router.dump(router)
-
-    assert router_dump["mapProducerIdConsumerIds"] === %{audio_producer.id => []}
+    Process.sleep(100)
+    assert Router.dump(router)["mapProducerIdConsumerIds"] === %{audio_producer.id => []}
 
     transport_1_dump = WebRtcTransport.dump(transport_1)
     assert transport_1_dump["producerIds"] == [audio_producer.id]
