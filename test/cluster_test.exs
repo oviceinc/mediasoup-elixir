@@ -68,6 +68,11 @@ defmodule ClusterTest do
                "encrypt" => false,
                "id" => 10,
                "uri" => "urn:ietf:params:rtp-hdrext:ssrc-audio-level"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 13,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
@@ -107,6 +112,11 @@ defmodule ClusterTest do
                "encrypt" => false,
                "id" => 10,
                "uri" => "urn:ietf:params:rtp-hdrext:ssrc-audio-level"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 13,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
              }
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
