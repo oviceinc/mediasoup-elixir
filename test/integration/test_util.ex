@@ -29,9 +29,22 @@ defmodule Mediasoup.TestUtil do
         end
 
         assert Mediasoup.Worker.worker_count() === 0
+        assert os_thread_count_by_name("mediasoup-task") === 0
       end)
     end
 
     :ok
+  end
+
+  def os_thread_count_by_name(name) do
+    {c, _status} =
+      case :os.type() do
+        {:unix, :linux} -> System.shell("ps -T -p #{:os.getpid()} | grep #{name} | wc -l")
+        _ -> {"0", :not_supported}
+      end
+
+    c
+    |> String.trim()
+    |> String.to_integer()
   end
 end

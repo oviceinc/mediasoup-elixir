@@ -26,7 +26,7 @@ where
 }
 
 fn create_thread_for_executor(executor: Arc<Executor<'static>>) {
-    let builder = std::thread::Builder::new().name("ex-mediasoup-worker".into());
+    let builder = std::thread::Builder::new().name("ex-mediasoup-task".into());
     let _ = builder.spawn(move || {
         let _ = future::block_on(executor.run(async {
             let future = future::pending();
