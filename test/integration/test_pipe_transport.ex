@@ -272,6 +272,11 @@ defmodule IntegrateTest.PipeTransportTest do
                "encrypt" => false,
                "id" => 10,
                "uri" => "urn:ietf:params:rtp-hdrext:ssrc-audio-level"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 13,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
@@ -311,6 +316,11 @@ defmodule IntegrateTest.PipeTransportTest do
                "encrypt" => false,
                "id" => 10,
                "uri" => "urn:ietf:params:rtp-hdrext:ssrc-audio-level"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 13,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
              }
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
@@ -362,7 +372,12 @@ defmodule IntegrateTest.PipeTransportTest do
              },
              %{"encrypt" => false, "id" => 7, "uri" => "urn:ietf:params:rtp-hdrext:framemarking"},
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
-             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"}
+             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
+             %{
+               "encrypt" => false,
+               "id" => 13,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
     assert "pipe" == pipe_consumer.type
@@ -401,7 +416,12 @@ defmodule IntegrateTest.PipeTransportTest do
              },
              %{"encrypt" => false, "id" => 7, "uri" => "urn:ietf:params:rtp-hdrext:framemarking"},
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
-             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"}
+             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
+             %{
+               "encrypt" => false,
+               "id" => 13,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             }
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
     assert Producer.paused?(pipe_producer) === true
@@ -478,7 +498,12 @@ defmodule IntegrateTest.PipeTransportTest do
                "uri" => "urn:ietf:params:rtp-hdrext:framemarking"
              },
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
-             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"}
+             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
+             %{
+               "encrypt" => false,
+               "id" => 13,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
     assert "pipe" == pipe_consumer.type

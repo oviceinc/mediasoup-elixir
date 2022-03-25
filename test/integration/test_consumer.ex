@@ -404,10 +404,8 @@ defmodule IntegrateTest.ConsumerTest do
 
     assert WebRtcTransport.dump(transport_2)["producerIds"] === []
 
-    assert WebRtcTransport.dump(transport_2)["consumerIds"] === [
-             video_consumer.id,
-             audio_consumer.id
-           ]
+    assert WebRtcTransport.dump(transport_2)["consumerIds"] |> Enum.member?(video_consumer.id)
+    assert WebRtcTransport.dump(transport_2)["consumerIds"] |> Enum.member?(audio_consumer.id)
 
     ## Video pipe
     assert true === Router.can_consume?(router, video_producer.id, consumer_device_capabilities())
