@@ -23,10 +23,24 @@ pub fn worker_id(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<Work
 
     Ok(JsonSerdeWrap::new(worker.id()))
 }
-#[rustler::nif]
-pub fn worker_close(worker: ResourceArc<WorkerRef>) -> NifResult<(rustler::Atom,)> {
-    worker.close();
-    Ok((atoms::ok(),))
+#[rustler::nif(name = "worker_close_async")]
+pub fn worker_close(
+    env: Env,
+    worker_resouce: ResourceArc<WorkerRef>,
+) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    let worker = worker_resouce.get_resource()?;
+
+    let (mut close_tx, close_rx) = async_oneshot::oneshot::<()>();
+
+    let handler = worker.on_close(move || {
+        let _ = close_tx.send(());
+    });
+
+    worker_resouce.close();
+    send_async_nif_result(env, async move {
+        let _ = handler;
+        close_rx.await.map_err(|error| format!("{:?}", error))
+    })
 }
 
 #[rustler::nif(name = "worker_create_router_async")]

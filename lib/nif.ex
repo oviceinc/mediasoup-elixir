@@ -15,6 +15,7 @@ defmodule Mediasoup.Nif do
   defp worker_create_router_async(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
   defp worker_dump_async(_worker), do: :erlang.nif_error(:nif_not_loaded)
   defp worker_update_settings_async(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
+  defp worker_close_async(_worker), do: :erlang.nif_error(:nif_not_loaded)
 
   ## router with async
   defp router_create_pipe_transport_async(
@@ -83,8 +84,9 @@ defmodule Mediasoup.Nif do
 
   @spec worker_id(reference) :: String.t()
   def worker_id(_worker), do: :erlang.nif_error(:nif_not_loaded)
-  @spec worker_close(reference) :: {:ok} | {:error}
-  def worker_close(_worker), do: :erlang.nif_error(:nif_not_loaded)
+  @spec worker_close(reference) :: {:ok} | {:error, String.t()}
+  def worker_close(worker), do: worker_close_async(worker) |> handle_async_nif_result()
+
   @spec worker_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def worker_event(_worker, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
   @spec worker_closed(reference) :: boolean

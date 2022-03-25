@@ -4,6 +4,7 @@ defmodule Mediasoup.Worker do
   """
   alias Mediasoup.{Worker, Router, NifWrap, Nif}
   require Mediasoup.NifWrap
+  require Logger
   use GenServer
 
   defmodule Settings do
@@ -230,9 +231,8 @@ defmodule Mediasoup.Worker do
   end
 
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    Nif.worker_close(reference)
     DynamicSupervisor.stop(supervisor, reason)
-    :ok
+    Nif.worker_close(reference)
   end
 
   defp create_worker(settings) when is_nil(settings) do
