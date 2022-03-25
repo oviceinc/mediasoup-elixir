@@ -1,5 +1,6 @@
 use async_executor::{Executor, Task};
 use futures_lite::future;
+use mediasoup::worker_manager::WorkerManager;
 use once_cell::sync::Lazy;
 use std::future::Future;
 use std::sync::Arc;
@@ -14,6 +15,11 @@ static EXECUTOR: Lazy<Arc<Executor<'static>>> = Lazy::new(|| {
     executor
 });
 
+static WORKER_MANAGER: Lazy<Arc<WorkerManager>> = Lazy::new(|| Arc::new(WorkerManager::new()));
+
+pub fn worker_manager() -> Arc<WorkerManager> {
+    WORKER_MANAGER.clone()
+}
 pub fn executor() -> Arc<Executor<'static>> {
     EXECUTOR.clone()
 }

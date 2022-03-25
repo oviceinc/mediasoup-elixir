@@ -1,11 +1,11 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
 use crate::router::RouterOptionsStruct;
+use crate::task;
 use crate::{send_async_nif_result, send_msg_from_other_thread, RouterRef, WorkerRef};
 use mediasoup::worker::{
     WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings, WorkerUpdateSettings,
 };
-use mediasoup::worker_manager::WorkerManager;
 use rustler::{Env, Error, NifResult, NifStruct, ResourceArc};
 use std::path::PathBuf;
 
@@ -119,7 +119,7 @@ fn create_worker_impl(
     settings: WorkerSettings,
 ) -> NifResult<(rustler::Atom, rustler::Atom)> {
     send_async_nif_result(env, async move {
-        let worker_manager = WorkerManager::new();
+        let worker_manager = task::worker_manager();
         worker_manager
             .create_worker(settings)
             .await
