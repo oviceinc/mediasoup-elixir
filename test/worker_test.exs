@@ -1,8 +1,8 @@
 defmodule WorkerTest do
   use ExUnit.Case
   import Mediasoup.TestUtil
-  setup_all :worker_leack_setup_all
-  setup :verify_worker_leack_on_exit!
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
 
   test "create_worker_with_default_settings" do
     IntegrateTest.WorkerTest.create_worker_with_default_settings()

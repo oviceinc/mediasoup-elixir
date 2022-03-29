@@ -14,8 +14,8 @@ defmodule RouterTest do
   end
 
   import Mediasoup.TestUtil
-  setup_all :worker_leack_setup_all
-  setup :verify_worker_leack_on_exit!
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
 
   test "create_router_succeeds", %{worker: worker} do
     IntegrateTest.RouterTest.create_router_succeeds(worker)

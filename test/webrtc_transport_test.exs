@@ -2,8 +2,8 @@ defmodule MediasoupElixirWebRtcTransportTest do
   use ExUnit.Case
 
   import Mediasoup.TestUtil
-  setup_all :worker_leack_setup_all
-  setup :verify_worker_leack_on_exit!
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
 
   setup do
     {:ok, worker} = Mediasoup.Worker.start_link()

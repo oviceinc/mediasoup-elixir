@@ -1,7 +1,7 @@
 defmodule Mediasoup.TestUtil do
   import ExUnit.Assertions
 
-  def worker_leack_setup_all(_context \\ %{}) do
+  def worker_leak_setup_all(_context \\ %{}) do
     with_leakcheck =
       ExUnit.configuration() |> Keyword.fetch!(:include) |> Enum.member?(:leakcheck)
 
@@ -17,7 +17,7 @@ defmodule Mediasoup.TestUtil do
     :ok
   end
 
-  def verify_worker_leack_on_exit!(_context \\ %{}) do
+  def verify_worker_leak_on_exit!(_context \\ %{}) do
     with_leakcheck =
       ExUnit.configuration() |> Keyword.fetch!(:include) |> Enum.member?(:leakcheck)
 
