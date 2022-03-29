@@ -57,7 +57,7 @@ jobs:
       run: epmd -daemon
     - name: Run tests
       run: mix test
-    - name: Leack check test
+    - name: Leak check test
       run: mix test --include leakcheck
     - name: Run cargo test
       run: cargo test
