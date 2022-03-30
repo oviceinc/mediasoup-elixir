@@ -173,6 +173,11 @@ defmodule Mediasoup.Worker do
     GenServer.call(pid, {:event, [lisener, event_types]})
   end
 
+  @spec worker_count :: non_neg_integer()
+  def worker_count() do
+    Nif.worker_global_count()
+  end
+
   @type start_link_opt :: {:settings, Settings.t() | map()}
 
   @spec start_link([start_link_opt]) :: :ignore | {:error, any} | {:ok, pid}
@@ -183,9 +188,13 @@ defmodule Mediasoup.Worker do
 
   # GenServer callbacks
   def init(settings) do
+    Process.flag(:trap_exit, true)
     {:ok, worker} = create_worker(settings)
 
-    Process.flag(:trap_exit, true)
+    if Process.whereis(Mediasoup.Worker.Registry) do
+      Registry.register(Mediasoup.Worker.Registry, :id, Nif.worker_id(worker))
+    end
+
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
     {:ok, %{reference: worker, supervisor: supervisor}}
   end

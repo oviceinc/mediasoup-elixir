@@ -13,6 +13,10 @@ defmodule ClusterTest do
     %{nodes: nodes}
   end
 
+  import Mediasoup.TestUtil
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
+
   @tag :cluster
   test "pipe_to_router_succeeds_with_audio ", %{nodes: [node1]} do
     caller = self()

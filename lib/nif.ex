@@ -73,6 +73,9 @@ defmodule Mediasoup.Nif do
   def create_worker(), do: create_worker_async() |> handle_async_nif_result()
   def create_worker(option), do: create_worker_async(option) |> handle_async_nif_result()
 
+  @spec worker_global_count :: non_neg_integer()
+  def worker_global_count(), do: :erlang.nif_error(:nif_not_loaded)
+
   # worker
   @spec worker_create_router(reference, Router.create_option()) :: {:ok, reference()} | {:error}
   def worker_create_router(worker, option),

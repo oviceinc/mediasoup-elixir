@@ -7,6 +7,10 @@ defmodule ConsumerTest do
     %{worker: worker}
   end
 
+  import Mediasoup.TestUtil
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
+
   test "consume_succeeds", %{worker: worker} do
     IntegrateTest.ConsumerTest.consume_succeeds(worker)
   end

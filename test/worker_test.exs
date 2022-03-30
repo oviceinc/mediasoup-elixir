@@ -1,5 +1,8 @@
 defmodule WorkerTest do
   use ExUnit.Case
+  import Mediasoup.TestUtil
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
 
   test "create_worker_with_default_settings" do
     IntegrateTest.WorkerTest.create_worker_with_default_settings()
@@ -39,5 +42,37 @@ defmodule WorkerTest do
 
   test "create_many_worker" do
     IntegrateTest.WorkerTest.create_many_worker()
+  end
+
+  @tag :leakcheck
+  test "worker leak check" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    Mediasoup.Worker.close(worker)
+    assert Mediasoup.Worker.worker_count() === 0
+  end
+
+  @tag :leakcheck
+  test "worker leak check concurrency" do
+    1..100
+    |> Task.async_stream(
+      fn _ ->
+        {:ok, worker} = Mediasoup.Worker.start_link()
+        Mediasoup.Worker.close(worker)
+      end,
+      max_concurrency: 8,
+      timeout: 10_000
+    )
+
+    assert Mediasoup.Worker.worker_count() === 0
+  end
+
+  test "register to registry" do
+    Registry.start_link(keys: :unique, name: Mediasoup.Worker.Registry)
+
+    {:ok, worker} = Mediasoup.Worker.start_link()
+
+    assert 1 <= Registry.lookup(Mediasoup.Worker.Registry, :id) |> Enum.count()
+
+    Mediasoup.Worker.close(worker)
   end
 end

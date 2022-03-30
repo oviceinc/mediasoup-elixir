@@ -8,6 +8,14 @@ use mediasoup::worker::{
 use mediasoup::worker_manager::WorkerManager;
 use rustler::{Env, Error, NifResult, NifStruct, ResourceArc};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static GLOBAL_WORKER_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+#[rustler::nif]
+pub fn worker_global_count() -> Result<usize, Error> {
+    Ok(GLOBAL_WORKER_COUNT.load(Ordering::Relaxed))
+}
 
 #[rustler::nif]
 pub fn worker_id(worker: ResourceArc<WorkerRef>) -> NifResult<JsonSerdeWrap<WorkerId>> {
@@ -123,7 +131,15 @@ fn create_worker_impl(
         worker_manager
             .create_worker(settings)
             .await
-            .map(WorkerRef::resource)
+            .map(|worker| {
+                GLOBAL_WORKER_COUNT.fetch_add(1, Ordering::Relaxed);
+                worker
+                    .on_close(|| {
+                        GLOBAL_WORKER_COUNT.fetch_sub(1, Ordering::Relaxed);
+                    })
+                    .detach();
+                WorkerRef::resource(worker)
+            })
             .map_err(|error| format!("{}", error))
     })
 }
