@@ -28,6 +28,7 @@ defmodule Mediasoup.TestUtil do
           assert_receive {:DOWN, ^ref, _, _, _}, 1000
         end
 
+        Process.sleep(1)
         assert Mediasoup.Worker.worker_count() === 0
       end)
     end

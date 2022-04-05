@@ -343,8 +343,8 @@ defmodule Mediasoup.Router do
   end
 
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    Nif.router_close(reference)
     DynamicSupervisor.stop(supervisor, reason)
+    Nif.router_close(reference)
     :ok
   end
 
