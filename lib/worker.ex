@@ -230,8 +230,8 @@ defmodule Mediasoup.Worker do
   end
 
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    Nif.worker_close(reference)
     DynamicSupervisor.stop(supervisor, reason)
+    Nif.worker_close(reference)
     :ok
   end
 

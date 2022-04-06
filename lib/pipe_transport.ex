@@ -281,8 +281,8 @@ defmodule Mediasoup.PipeTransport do
   end
 
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    Nif.pipe_transport_close(reference)
     DynamicSupervisor.stop(supervisor, reason)
+    Nif.pipe_transport_close(reference)
     :ok
   end
 end

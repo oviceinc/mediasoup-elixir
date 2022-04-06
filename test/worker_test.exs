@@ -48,6 +48,7 @@ defmodule WorkerTest do
   test "worker leak check" do
     {:ok, worker} = Mediasoup.Worker.start_link()
     Mediasoup.Worker.close(worker)
+    Process.sleep(1)
     assert Mediasoup.Worker.worker_count() === 0
   end
 
@@ -63,6 +64,7 @@ defmodule WorkerTest do
       timeout: 10_000
     )
 
+    Process.sleep(1)
     assert Mediasoup.Worker.worker_count() === 0
   end
 
