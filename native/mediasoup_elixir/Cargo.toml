@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 [dependencies]
 rustler = "0.23.0"
 # Workaround for thread leak by deadlock. When this https://github.com/versatica/mediasoup/issues/728#issuecomment-1078689590 issue fixed, use the upstream repository or cargo package.
-mediasoup = "0.9.3"
+mediasoup = "0.10.0"
 futures-lite = "1.12.0"
 once_cell = "1.12.0"
 num_cpus = "1.13.1"
