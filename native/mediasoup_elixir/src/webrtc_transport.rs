@@ -8,7 +8,7 @@ use crate::{
 };
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{
-    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, SctpState, TransportListenIp,
+    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, ListenIp, SctpState,
     TransportTuple,
 };
 use mediasoup::producer::ProducerOptions;
@@ -287,7 +287,7 @@ pub fn webrtc_transport_event(
 #[derive(NifStruct)]
 #[module = "Mediasoup.WebRtcTransport.Options"]
 pub struct WebRtcTransportOptionsStruct {
-    listen_ips: JsonSerdeWrap<Vec<TransportListenIp>>,
+    listen_ips: JsonSerdeWrap<Vec<ListenIp>>,
     enable_udp: Option<bool>,
     enable_tcp: Option<bool>,
     prefer_udp: Option<bool>,
