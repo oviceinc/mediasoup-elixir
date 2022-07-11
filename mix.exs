@@ -14,7 +14,8 @@ defmodule MediasoupElixir.MixProject do
         coveralls: :test,
         dialyzer: :dialyzer,
         "coveralls.detail": :test,
-        "coveralls.lcov": :test
+        "coveralls.lcov": :test,
+        "coveralls.github": :test
       ],
       dialyzer: [
         plt_add_apps: [:mix, :ex_unit],

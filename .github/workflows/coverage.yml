@@ -3,55 +3,6 @@ name: Code Coverage
 on: [pull_request]
 
 jobs:
-  base_branch_cov:
-    timeout-minutes: 40
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust:
-          - stable
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.base_ref }}
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: '1.12.0' # Define the elixir version [required]
-          otp-version: '24.0' # Define the OTP version [required]
-      - name: Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: ${{ matrix.rust }}
-            override: true
-            components: rustfmt, clippy
-      - name: Restore dependencies cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target
-            deps
-            _build
-          key: coverage-${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
-          restore-keys: coverage-${{ runner.os }}-rust-${{ matrix.rust }}-mix-
-      - name: Install dependencies
-        run: mix deps.get
-      - name: start epmd daemon for cluster tests
-        run: epmd -daemon
-      - name: Run test coverage
-        run: mix coveralls.lcov -o coverage
-
-      - name: Upload code coverage for ref branch
-        uses: actions/upload-artifact@v3
-        with:
-          name: ref-lcov.info
-          path: ./coverage/lcov.info
-
   coverage:
     timeout-minutes: 40
     runs-on: ubuntu-latest
@@ -59,7 +10,6 @@ jobs:
       matrix:
         rust:
           - stable
-    needs: base_branch_cov
     steps:
       - uses: actions/checkout@v3
       - name: Set up Elixir
@@ -87,26 +37,12 @@ jobs:
           key: coverage-${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: coverage-${{ runner.os }}-rust-${{ matrix.rust }}-mix-
 
-      - name: Download code coverage report from base branch
-        uses: actions/download-artifact@v3
-        with:
-          name: ref-lcov.info
 
       - name: Install dependencies
         run: mix deps.get
       - name: start epmd daemon for cluster tests
-        run: epmd -daemon
-      - name: Run test coverage
-        run: mix coveralls.lcov -o coverage
-
-      #  Compares two code coverage files and generates report as a comment
-      - name: Generate Code Coverage report
-        id: code-coverage
-        uses: barecheck/code-coverage-action@v0.6.1
-        with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./coverage/lcov.info"
-          base-lcov-file: "./lcov.info"
-          minimum-ratio: 0 # Fails Github action once code coverage is decreasing
-          send-summary-comment: true
-          show-annotations: "warning" # Possible options warning|error
+        run: epmd -daemon 
+      - name: Run tests with coverage
+        run: mix coveralls.github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
