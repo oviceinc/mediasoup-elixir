@@ -1,8 +1,11 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
 use crate::pipe_transport::PipeTransportOptionsStruct;
+use crate::plain_transport::PlainTransportOptionsStruct;
 use crate::webrtc_transport::WebRtcTransportOptionsStruct;
-use crate::{send_async_nif_result, PipeTransportRef, RouterRef, WebRtcTransportRef};
+use crate::{
+    send_async_nif_result, PipeTransportRef, PlainTransportRef, RouterRef, WebRtcTransportRef,
+};
 use mediasoup::producer::ProducerId;
 use mediasoup::router::{RouterId, RouterOptions};
 use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized, RtpCodecCapability};
@@ -40,6 +43,26 @@ pub fn router_create_webrtc_transport(
             .create_webrtc_transport(option)
             .await
             .map(WebRtcTransportRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
+}
+
+#[rustler::nif(name = "router_create_plain_transport_async")]
+pub fn router_create_plain_transport(
+    env: Env,
+    router: ResourceArc<RouterRef>,
+    option: PlainTransportOptionsStruct,
+) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    let router = router.get_resource()?;
+    let option = option
+        .try_to_option()
+        .map_err(|error| Error::Term(Box::new(error.to_string())))?;
+
+    send_async_nif_result(env, async move {
+        router
+            .create_plain_transport(option)
+            .await
+            .map(PlainTransportRef::resource)
             .map_err(|error| format!("{}", error))
     })
 }
