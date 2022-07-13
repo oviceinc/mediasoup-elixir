@@ -2,7 +2,7 @@ defmodule Mediasoup.Router do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Router
   """
-  alias Mediasoup.{Router, WebRtcTransport, PipeTransport, NifWrap, Nif}
+  alias Mediasoup.{Router, WebRtcTransport, PipeTransport, PlainTransport, NifWrap, Nif}
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -126,6 +126,23 @@ defmodule Mediasoup.Router do
 
   def create_webrtc_transport(router, %{} = option) do
     create_webrtc_transport(router, WebRtcTransport.Options.from_map(option))
+  end
+
+  @spec create_plain_transport(t, PlainTransport.create_option()) ::
+          {:ok, PlainTransport.t()} | {:error, String.t()}
+  @doc """
+  Creates a new webrtc transport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#router-createPlainTransport
+  """
+  def create_plain_transport(
+        %Router{pid: pid},
+        %Mediasoup.PlainTransport.Options{} = option
+      ) do
+    GenServer.call(pid, {:create_plain_transport, [option]})
+  end
+
+  def create_plain_transport(router, %{} = option) do
+    create_plain_transport(router, Mediasoup.PlainTransport.Options.from_map(option))
   end
 
   @spec pipe_producer_to_router(t, producer_id :: String.t(), PipeToRouterOptions.t()) ::
@@ -307,6 +324,18 @@ defmodule Mediasoup.Router do
     ret =
       Nif.router_create_webrtc_transport(reference, option)
       |> NifWrap.handle_create_result(WebRtcTransport, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
+        {:create_plain_transport, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.router_create_plain_transport(reference, option)
+      |> NifWrap.handle_create_result(PlainTransport, supervisor)
 
     {:reply, ret, state}
   end

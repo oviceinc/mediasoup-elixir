@@ -4,6 +4,7 @@ mod data_structure;
 mod json_serde;
 mod macros;
 mod pipe_transport;
+mod plain_transport;
 mod producer;
 mod resource;
 mod router;
@@ -24,6 +25,11 @@ use crate::pipe_transport::{
     pipe_transport_produce, pipe_transport_sctp_parameters, pipe_transport_sctp_state,
     pipe_transport_srtp_parameters, pipe_transport_tuple,
 };
+use crate::plain_transport::{
+    plain_transport_close, plain_transport_connect, plain_transport_consume, plain_transport_event,
+    plain_transport_get_stats, plain_transport_id, plain_transport_sctp_parameters,
+    plain_transport_sctp_state, plain_transport_srtp_parameters, plain_transport_tuple,
+};
 use crate::producer::{
     producer_close, producer_closed, producer_dump, producer_event, producer_get_stats,
     producer_id, producer_kind, producer_pause, producer_paused, producer_resume,
@@ -32,7 +38,8 @@ use crate::producer::{
 use crate::resource::DisposableResourceWrapper;
 use crate::router::{
     router_can_consume, router_close, router_closed, router_create_pipe_transport,
-    router_create_webrtc_transport, router_dump, router_event, router_id, router_rtp_capabilities,
+    router_create_plain_transport, router_create_webrtc_transport, router_dump, router_event,
+    router_id, router_rtp_capabilities,
 };
 use crate::webrtc_transport::{
     webrtc_transport_close, webrtc_transport_closed, webrtc_transport_connect,
@@ -52,6 +59,7 @@ use crate::worker::{
 use futures_lite::future;
 use mediasoup::consumer::Consumer;
 use mediasoup::pipe_transport::PipeTransport;
+use mediasoup::plain_transport::PlainTransport;
 use mediasoup::producer::Producer;
 use mediasoup::router::Router;
 use mediasoup::webrtc_transport::WebRtcTransport;
@@ -116,6 +124,7 @@ rustler::init! {
         router_close,
         router_closed,
         router_create_webrtc_transport,
+        router_create_plain_transport,
         router_can_consume,
         router_rtp_capabilities,
         router_create_pipe_transport,
@@ -161,6 +170,17 @@ rustler::init! {
         pipe_transport_dump,
         pipe_transport_event,
 
+        // plain transport
+        plain_transport_id,
+        plain_transport_tuple,
+        plain_transport_sctp_parameters,
+        plain_transport_sctp_state,
+        plain_transport_srtp_parameters,
+        plain_transport_connect,
+        plain_transport_get_stats,
+        plain_transport_consume,
+        plain_transport_close,
+        plain_transport_event,
 
         // consumer
         consumer_id,
@@ -214,6 +234,7 @@ fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
     rustler::resource!(RouterRef, env);
     rustler::resource!(WebRtcTransportRef, env);
     rustler::resource!(PipeTransportRef, env);
+    rustler::resource!(PlainTransportRef, env);
     rustler::resource!(ConsumerRef, env);
     rustler::resource!(ProducerRef, env);
     true
@@ -223,5 +244,6 @@ pub type WorkerRef = DisposableResourceWrapper<Worker>;
 pub type RouterRef = DisposableResourceWrapper<Router>;
 pub type WebRtcTransportRef = DisposableResourceWrapper<WebRtcTransport>;
 pub type PipeTransportRef = DisposableResourceWrapper<PipeTransport>;
+pub type PlainTransportRef = DisposableResourceWrapper<PlainTransport>;
 pub type ConsumerRef = DisposableResourceWrapper<Consumer>;
 pub type ProducerRef = DisposableResourceWrapper<Producer>;
