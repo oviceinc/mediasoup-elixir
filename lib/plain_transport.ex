@@ -158,7 +158,6 @@ defmodule Mediasoup.PlainTransport do
     connect: &Nif.plain_transport_connect/2,
     dump: &Nif.plain_transport_dump/1,
     get_stats: &Nif.plain_transport_get_stats/1,
-    consume: &Nif.plain_transport_consume/2,
     close: &Nif.plain_transport_close/1,
     # events
     event: &Nif.plain_transport_event/3
@@ -219,6 +218,18 @@ defmodule Mediasoup.PlainTransport do
        pid: self(),
        id: Nif.plain_transport_id(reference)
      }, state}
+  end
+
+  def handle_call(
+        {:consume, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.plain_transport_consume(reference, option)
+      |> NifWrap.handle_create_result(Consumer, supervisor)
+
+    {:reply, ret, state}
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::
