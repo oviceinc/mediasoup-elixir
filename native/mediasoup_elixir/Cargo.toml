@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = "0.23.0"
+rustler = "0.25.0"
 mediasoup = "0.10.0"
 mediasoup-sys = ">=0.4.2" # 0.4.1 has crash issue, so avoid it. https://github.com/versatica/mediasoup/issues/861
 futures-lite = "1.12.0"
