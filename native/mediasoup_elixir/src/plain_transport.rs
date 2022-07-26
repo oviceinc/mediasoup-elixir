@@ -4,7 +4,7 @@ use crate::json_serde::JsonSerdeWrap;
 use crate::PlainTransportRef;
 use crate::{atoms, send_async_nif_result, ConsumerRef};
 use mediasoup::consumer::ConsumerOptions;
-use mediasoup::data_structures::{ListenIp, SctpState, TransportTuple};
+use mediasoup::data_structures::{SctpState, TransportListenIp, TransportTuple};
 use mediasoup::plain_transport::{PlainTransportOptions, PlainTransportRemoteParameters};
 use mediasoup::prelude::Transport;
 use mediasoup::sctp_parameters::SctpParameters;
@@ -15,7 +15,7 @@ use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 #[derive(NifStruct)]
 #[module = "Mediasoup.PlainTransport.Options"]
 pub struct PlainTransportOptionsStruct {
-    pub listen_ip: JsonSerdeWrap<ListenIp>,
+    pub listen_ip: JsonSerdeWrap<TransportListenIp>,
     pub port: Option<u16>,
     pub rtcp_mux: Option<bool>,
     pub comedia: Option<bool>,

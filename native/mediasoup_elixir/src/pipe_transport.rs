@@ -4,7 +4,7 @@ use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
 use crate::{send_async_nif_result, ConsumerRef, PipeTransportRef, ProducerRef};
-use mediasoup::data_structures::{ListenIp, SctpState, TransportTuple};
+use mediasoup::data_structures::{SctpState, TransportListenIp, TransportTuple};
 use mediasoup::pipe_transport::{PipeTransportOptions, PipeTransportRemoteParameters};
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
@@ -16,7 +16,7 @@ use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 #[module = "Mediasoup.PipeTransport.Options"]
 pub struct PipeTransportOptionsStruct {
     /// Listening IP address.
-    pub listen_ip: JsonSerdeWrap<ListenIp>,
+    pub listen_ip: JsonSerdeWrap<TransportListenIp>,
     /// Fixed port to listen on instead of selecting automatically from Worker's port range.
     pub port: Option<u16>,
     /// Create a SCTP association.
