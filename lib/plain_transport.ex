@@ -159,6 +159,7 @@ defmodule Mediasoup.PlainTransport do
     dump: &Nif.plain_transport_dump/1,
     get_stats: &Nif.plain_transport_get_stats/1,
     close: &Nif.plain_transport_close/1,
+    closed?: &Nif.plain_transport_closed/1,
     # events
     event: &Nif.plain_transport_event/3
   })
