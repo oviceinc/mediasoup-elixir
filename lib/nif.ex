@@ -89,6 +89,9 @@ defmodule Mediasoup.Nif do
   @spec plain_transport_close(reference) :: {:ok} | {:error}
   def plain_transport_close(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
+  @spec plain_transport_closed(reference) :: boolean
+  def plain_transport_closed(_transport), do: :erlang.nif_error(:nif_not_loaded)
+
   ## plain transport event
   @spec plain_transport_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def plain_transport_event(_transport, _pid, _event_types),
