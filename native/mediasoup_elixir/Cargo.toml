@@ -14,8 +14,8 @@ rustler = "0.23.0"
 # 0.4.1 has crash issue, so avoid it. https://github.com/versatica/mediasoup/issues/883
 # 0.4.2 is crash problem remains.
 # Prior to that, compile error
-mediasoup-sys = { git = "https://github.com/satoren/mediasoup", tag = "rust-0.9.4", version = "0.3.3" }
-mediasoup = { git = "https://github.com/satoren/mediasoup", tag = "rust-0.9.4", version = "0.9.4" }
+mediasoup-sys = { git = "https://github.com/oviceinc/mediasoup", tag = "rust-0.9.4", version = "0.3.3" }
+mediasoup = { git = "https://github.com/oviceinc/mediasoup", tag = "rust-0.9.4", version = "0.9.4" }
 futures-lite = "1.12.0"
 once_cell = "1.12.0"
 num_cpus = "1.13.1"
