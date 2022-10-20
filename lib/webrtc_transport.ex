@@ -3,7 +3,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransport
   """
 
-  alias Mediasoup.{WebRtcTransport, Consumer, Producer, NifWrap, Nif}
+  alias Mediasoup.{WebRtcTransport, Consumer, Producer, NifWrap, Nif, DataConsumer, DataProducer}
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -106,6 +106,16 @@ defmodule Mediasoup.WebRtcTransport do
     consume(transport, Consumer.Options.from_map(option))
   end
 
+  @spec consume_data(t, DataConsumer.Options.t() | map()) ::
+          {:ok, DataConsumer.t()} | {:error, String.t() | :terminated}
+  def consume_data(%WebRtcTransport{pid: pid}, %DataConsumer.Options{} = option) do
+    GenServer.call(pid, {:consume_data, [option]})
+  end
+
+  def consume_data(transport, option) do
+    consume_data(transport, DataConsumer.Options.from_map(option))
+  end
+
   @spec produce(t, Producer.Options.t() | map()) ::
           {:ok, Producer.t()} | {:error, String.t() | :terminated}
   @doc """
@@ -118,6 +128,16 @@ defmodule Mediasoup.WebRtcTransport do
 
   def produce(transport, %{} = option) do
     produce(transport, Producer.Options.from_map(option))
+  end
+
+  @spec produce_data(t, DataProducer.Options.t() | map()) ::
+          {:ok, DataProducer.t()} | {:error, String.t() | :terminated}
+  def produce_data(%WebRtcTransport{pid: pid}, %DataProducer.Options{} = option) do
+    GenServer.call(pid, {:produce_data, [option]})
+  end
+
+  def produce_data(transport, %{} = option) do
+    produce_data(transport, DataProducer.Options.from_map(option))
   end
 
   @spec connect(t, connect_option()) :: {:ok} | {:error, String.t() | :terminated}
@@ -354,6 +374,18 @@ defmodule Mediasoup.WebRtcTransport do
   end
 
   def handle_call(
+        {:produce_data, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.webrtc_transport_produce_data(reference, option)
+      |> NifWrap.handle_create_result(DataProducer, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
         {:consume, [option]},
         _from,
         %{reference: reference, supervisor: supervisor} = state
@@ -361,6 +393,18 @@ defmodule Mediasoup.WebRtcTransport do
     ret =
       Nif.webrtc_transport_consume(reference, option)
       |> NifWrap.handle_create_result(Consumer, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
+        {:consume_data, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.webrtc_transport_consume_data(reference, option)
+      |> NifWrap.handle_create_result(DataConsumer, supervisor)
 
     {:reply, ret, state}
   end
