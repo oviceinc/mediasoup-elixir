@@ -50,8 +50,15 @@ defmodule Mediasoup.Nif do
     do: :erlang.nif_error(:nif_not_loaded)
 
   defp webrtc_transport_consume_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+
+  defp webrtc_transport_consume_data_async(_transport, _option),
+    do: :erlang.nif_error(:nif_not_loaded)
+
   defp webrtc_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   defp webrtc_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
+
+  defp webrtc_transport_produce_data_async(_transport, _option),
+    do: :erlang.nif_error(:nif_not_loaded)
 
   # plain transport
   ## properties
@@ -193,6 +200,10 @@ defmodule Mediasoup.Nif do
   def webrtc_transport_consume(transport, option),
     do: webrtc_transport_consume_async(transport, option) |> handle_async_nif_result()
 
+  @spec webrtc_transport_consume_data(reference, any) :: {:ok, reference()} | {:error, String.t()}
+  def webrtc_transport_consume_data(transport, option),
+    do: webrtc_transport_consume_data_async(transport, option) |> handle_async_nif_result()
+
   @spec webrtc_transport_connect(reference, any) :: {:ok} | {:error, String.t()}
   def webrtc_transport_connect(transport, option),
     do: webrtc_transport_connect_async(transport, option) |> handle_async_nif_result()
@@ -200,6 +211,10 @@ defmodule Mediasoup.Nif do
   @spec webrtc_transport_produce(reference, any) :: {:ok, reference()} | {:error, String.t()}
   def webrtc_transport_produce(transport, option),
     do: webrtc_transport_produce_async(transport, option) |> handle_async_nif_result()
+
+  @spec webrtc_transport_produce_data(reference, any) :: {:ok, reference()} | {:error, String.t()}
+  def webrtc_transport_produce_data(transport, option),
+    do: webrtc_transport_produce_data_async(transport, option) |> handle_async_nif_result()
 
   def webrtc_transport_ice_parameters(_transport), do: :erlang.nif_error(:nif_not_loaded)
   def webrtc_transport_ice_candidates(_transport), do: :erlang.nif_error(:nif_not_loaded)
@@ -314,6 +329,24 @@ defmodule Mediasoup.Nif do
   def consumer_dump(consumer),
     do: consumer_dump_async(consumer) |> handle_async_nif_result() |> unwrap_ok()
 
+  # data_consumer
+  @spec data_consumer_id(reference) :: String.t()
+  def data_consumer_id(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_producer_id(reference) :: String.t()
+  def data_consumer_producer_id(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_type(reference) :: String.t()
+  def data_consumer_type(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_sctp_stream_parameters(reference) :: term
+  def data_consumer_sctp_stream_parameters(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_label(reference) :: term
+  def data_consumer_label(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_protocol(reference) :: term
+  def data_consumer_protocol(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_close(reference) :: {:ok} | {:error}
+  def data_consumer_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_closed(reference) :: boolean
+  def data_consumer_closed(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+
   # producer
   @spec producer_id(reference) :: String.t()
   def producer_id(_producer), do: :erlang.nif_error(:nif_not_loaded)
@@ -346,6 +379,18 @@ defmodule Mediasoup.Nif do
 
   def producer_dump(producer),
     do: producer_dump_async(producer) |> handle_async_nif_result() |> unwrap_ok()
+
+  # data_producer
+  @spec data_producer_id(reference) :: String.t()
+  def data_producer_id(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_producer_type(reference) :: String.t()
+  def data_producer_type(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_producer_sctp_stream_parameters(reference) :: term
+  def data_producer_sctp_stream_parameters(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_producer_close(reference) :: {:ok} | {:error}
+  def data_producer_close(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_producer_closed(reference) :: boolean
+  def data_producer_closed(_producer), do: :erlang.nif_error(:nif_not_loaded)
 
   defp handle_async_nif_result(result) do
     case result do

@@ -1,12 +1,17 @@
 use crate::atoms;
 use crate::consumer::ConsumerOptionsStruct;
+use crate::data_consumer::DataConsumerOptionsStruct;
+use crate::data_producer::DataProducerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
 use crate::{
-    send_async_nif_result, send_msg_from_other_thread, ConsumerRef, ProducerRef, WebRtcTransportRef,
+    send_async_nif_result, send_msg_from_other_thread, ConsumerRef, DataConsumerRef,
+    DataProducerRef, ProducerRef, WebRtcTransportRef,
 };
 use mediasoup::consumer::ConsumerOptions;
+use mediasoup::data_consumer::DataConsumerOptions;
+use mediasoup::data_producer::DataProducerOptions;
 use mediasoup::data_structures::{
     DtlsParameters, DtlsState, IceParameters, IceRole, IceState, SctpState, TransportListenIp,
     TransportTuple,
@@ -60,6 +65,25 @@ pub fn webrtc_transport_consume(
     })
 }
 
+#[rustler::nif(name = "webrtc_transport_consume_data_async")]
+pub fn webrtc_transport_consume_data(
+    env: Env,
+    transport: ResourceArc<WebRtcTransportRef>,
+    option: DataConsumerOptionsStruct,
+) -> NifResult<(Atom, Atom)> {
+    let transport = transport.get_resource()?;
+
+    let option: DataConsumerOptions = option.to_option();
+
+    send_async_nif_result(env, async move {
+        transport
+            .consume_data(option)
+            .await
+            .map(DataConsumerRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
+}
+
 #[rustler::nif(name = "webrtc_transport_connect_async")]
 pub fn webrtc_transport_connect(
     env: Env,
@@ -91,6 +115,24 @@ pub fn webrtc_transport_produce(
             .produce(option)
             .await
             .map(ProducerRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
+}
+
+#[rustler::nif(name = "webrtc_transport_produce_data_async")]
+pub fn webrtc_transport_produce_data(
+    env: Env,
+    transport: ResourceArc<WebRtcTransportRef>,
+    option: DataProducerOptionsStruct,
+) -> NifResult<(Atom, Atom)> {
+    let transport = transport.get_resource()?;
+    let option: DataProducerOptions = option.to_option();
+
+    send_async_nif_result(env, async move {
+        transport
+            .produce_data(option)
+            .await
+            .map(DataProducerRef::resource)
             .map_err(|error| format!("{}", error))
     })
 }

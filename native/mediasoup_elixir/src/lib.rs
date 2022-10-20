@@ -1,5 +1,7 @@
 mod atoms;
 mod consumer;
+mod data_consumer;
+mod data_producer;
 mod data_structure;
 mod json_serde;
 mod macros;
@@ -44,23 +46,34 @@ use crate::router::{
 };
 use crate::webrtc_transport::{
     webrtc_transport_close, webrtc_transport_closed, webrtc_transport_connect,
-    webrtc_transport_consume, webrtc_transport_dtls_parameters, webrtc_transport_dtls_state,
-    webrtc_transport_dump, webrtc_transport_event, webrtc_transport_get_stats,
-    webrtc_transport_ice_candidates, webrtc_transport_ice_parameters, webrtc_transport_ice_role,
-    webrtc_transport_ice_selected_tuple, webrtc_transport_ice_state, webrtc_transport_id,
-    webrtc_transport_produce, webrtc_transport_restart_ice, webrtc_transport_sctp_parameters,
-    webrtc_transport_sctp_state, webrtc_transport_set_max_incoming_bitrate,
-    webrtc_transport_set_max_outgoing_bitrate,
+    webrtc_transport_consume, webrtc_transport_consume_data, webrtc_transport_dtls_parameters,
+    webrtc_transport_dtls_state, webrtc_transport_dump, webrtc_transport_event,
+    webrtc_transport_get_stats, webrtc_transport_ice_candidates, webrtc_transport_ice_parameters,
+    webrtc_transport_ice_role, webrtc_transport_ice_selected_tuple, webrtc_transport_ice_state,
+    webrtc_transport_id, webrtc_transport_produce, webrtc_transport_produce_data,
+    webrtc_transport_restart_ice, webrtc_transport_sctp_parameters, webrtc_transport_sctp_state,
+    webrtc_transport_set_max_incoming_bitrate, webrtc_transport_set_max_outgoing_bitrate,
 };
 use crate::worker::{
     create_worker, create_worker_no_arg, worker_close, worker_closed, worker_create_router,
     worker_dump, worker_event, worker_global_count, worker_id, worker_update_settings,
 };
 
+use data_consumer::{
+    data_consumer_close, data_consumer_closed, data_consumer_id, data_consumer_label,
+    data_consumer_producer_id, data_consumer_protocol, data_consumer_sctp_stream_parameters,
+    data_consumer_type,
+};
+use data_producer::{
+    data_producer_close, data_producer_closed, data_producer_id,
+    data_producer_sctp_stream_parameters, data_producer_type,
+};
+
 use futures_lite::future;
 use mediasoup::consumer::Consumer;
 use mediasoup::pipe_transport::PipeTransport;
 use mediasoup::plain_transport::PlainTransport;
+use mediasoup::prelude::{DataConsumer, DataProducer};
 use mediasoup::producer::Producer;
 use mediasoup::router::Router;
 use mediasoup::webrtc_transport::WebRtcTransport;
@@ -139,8 +152,10 @@ rustler::init! {
         webrtc_transport_ice_candidates,
         webrtc_transport_ice_role,
         webrtc_transport_consume,
+        webrtc_transport_consume_data,
         webrtc_transport_connect,
         webrtc_transport_produce,
+        webrtc_transport_produce_data,
         webrtc_transport_set_max_incoming_bitrate,
         webrtc_transport_set_max_outgoing_bitrate,
         webrtc_transport_ice_state,
@@ -208,6 +223,16 @@ rustler::init! {
         consumer_unset_priority,
         consumer_request_key_frame,
 
+        // data consumer
+        data_consumer_id,
+        data_consumer_producer_id,
+        data_consumer_type,
+        data_consumer_sctp_stream_parameters,
+        data_consumer_label,
+        data_consumer_protocol,
+        data_consumer_close,
+        data_consumer_closed,
+
         // producer
         producer_id,
         producer_kind,
@@ -221,7 +246,15 @@ rustler::init! {
         producer_score,
         producer_get_stats,
         producer_event,
-        producer_dump
+        producer_dump,
+
+        // data producer
+        data_producer_id,
+        data_producer_type,
+        data_producer_sctp_stream_parameters,
+        data_producer_close,
+        data_producer_closed,
+
 
     ],
     load = on_load
@@ -238,7 +271,9 @@ fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
     rustler::resource!(PipeTransportRef, env);
     rustler::resource!(PlainTransportRef, env);
     rustler::resource!(ConsumerRef, env);
+    rustler::resource!(DataConsumerRef, env);
     rustler::resource!(ProducerRef, env);
+    rustler::resource!(DataProducerRef, env);
     true
 }
 
@@ -248,4 +283,6 @@ pub type WebRtcTransportRef = DisposableResourceWrapper<WebRtcTransport>;
 pub type PipeTransportRef = DisposableResourceWrapper<PipeTransport>;
 pub type PlainTransportRef = DisposableResourceWrapper<PlainTransport>;
 pub type ConsumerRef = DisposableResourceWrapper<Consumer>;
+pub type DataConsumerRef = DisposableResourceWrapper<DataConsumer>;
 pub type ProducerRef = DisposableResourceWrapper<Producer>;
+pub type DataProducerRef = DisposableResourceWrapper<DataProducer>;
