@@ -64,6 +64,21 @@ pub fn data_consumer_closed(data_consumer: ResourceArc<DataConsumerRef>) -> NifR
     }
 }
 
+#[rustler::nif]
+pub fn data_consumer_event(
+    data_consumer: ResourceArc<DataConsumerRef>,
+    pid: rustler::LocalPid,
+    event_types: Vec<Atom>,
+) -> NifResult<(Atom,)> {
+    let data_consumer = data_consumer.get_resource()?;
+
+    if event_types.contains(&atoms::on_close()) {
+        crate::reg_callback!(pid, data_consumer, on_close);
+    }
+
+    Ok((atoms::ok(),))
+}
+
 #[derive(NifStruct)]
 #[module = "Mediasoup.DataConsumer.Options"]
 pub struct DataConsumerOptionsStruct {

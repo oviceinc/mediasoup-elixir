@@ -60,12 +60,12 @@ use crate::worker::{
 };
 
 use data_consumer::{
-    data_consumer_close, data_consumer_closed, data_consumer_id, data_consumer_label,
-    data_consumer_producer_id, data_consumer_protocol, data_consumer_sctp_stream_parameters,
-    data_consumer_type,
+    data_consumer_close, data_consumer_closed, data_consumer_event, data_consumer_id,
+    data_consumer_label, data_consumer_producer_id, data_consumer_protocol,
+    data_consumer_sctp_stream_parameters, data_consumer_type,
 };
 use data_producer::{
-    data_producer_close, data_producer_closed, data_producer_id,
+    data_producer_close, data_producer_closed, data_producer_event, data_producer_id,
     data_producer_sctp_stream_parameters, data_producer_type,
 };
 
@@ -232,6 +232,7 @@ rustler::init! {
         data_consumer_protocol,
         data_consumer_close,
         data_consumer_closed,
+        data_consumer_event,
 
         // producer
         producer_id,
@@ -254,6 +255,7 @@ rustler::init! {
         data_producer_sctp_stream_parameters,
         data_producer_close,
         data_producer_closed,
+        data_producer_event,
 
 
     ],

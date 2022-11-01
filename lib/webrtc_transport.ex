@@ -108,6 +108,10 @@ defmodule Mediasoup.WebRtcTransport do
 
   @spec consume_data(t, DataConsumer.Options.t() | map()) ::
           {:ok, DataConsumer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to send data messages to the endpoint via SCTP protocol or directly to the Node.js process if the transport is a DirectTransport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consumedata
+  """
   def consume_data(%WebRtcTransport{pid: pid}, %DataConsumer.Options{} = option) do
     GenServer.call(pid, {:consume_data, [option]})
   end
@@ -132,6 +136,10 @@ defmodule Mediasoup.WebRtcTransport do
 
   @spec produce_data(t, DataProducer.Options.t() | map()) ::
           {:ok, DataProducer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to receive data messages. Those messages can be delivered by an endpoint via SCTP protocol or can be directly sent from the Node.js application if the transport is a DirectTransport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-producedata
+  """
   def produce_data(%WebRtcTransport{pid: pid}, %DataProducer.Options{} = option) do
     GenServer.call(pid, {:produce_data, [option]})
   end

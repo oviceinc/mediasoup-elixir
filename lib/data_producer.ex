@@ -50,6 +50,12 @@ defmodule Mediasoup.DataProducer do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
+  @type event_type :: :on_close
+  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  def event(%DataProducer{pid: pid}, listener, event_types \\ [:on_close]) do
+    GenServer.call(pid, {:event, [listener, event_types]})
+  end
+
   @spec struct_from_pid(pid()) :: DataProducer.t()
   def struct_from_pid(pid) when is_pid(pid) do
     GenServer.call(pid, {:struct_from_pid, []})
@@ -64,6 +70,15 @@ defmodule Mediasoup.DataProducer do
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, state}
+  end
+
+  def handle_call({:event, [listener, event_types]}, _from, %{reference: reference} = state) do
+    result =
+      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
+        pid when is_pid(pid) -> Nif.data_producer_event(reference, pid, event_types)
+      end
+
+    {:reply, result, state}
   end
 
   def handle_call({:struct_from_pid, _arg}, _from, %{reference: reference} = state) do
