@@ -43,6 +43,21 @@ pub fn data_producer_closed(data_producer: ResourceArc<DataProducerRef>) -> NifR
     }
 }
 
+#[rustler::nif]
+pub fn data_producer_event(
+    data_producer: ResourceArc<DataProducerRef>,
+    pid: rustler::LocalPid,
+    event_types: Vec<Atom>,
+) -> NifResult<(rustler::Atom,)> {
+    let data_producer = data_producer.get_resource()?;
+
+    if event_types.contains(&atoms::on_close()) {
+        crate::reg_callback!(pid, data_producer, on_close);
+    }
+
+    Ok((atoms::ok(),))
+}
+
 #[derive(NifStruct)]
 #[module = "Mediasoup.DataProducer.Options"]
 pub struct DataProducerOptionsStruct {

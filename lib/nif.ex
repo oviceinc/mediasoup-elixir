@@ -346,6 +346,8 @@ defmodule Mediasoup.Nif do
   def data_consumer_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
   @spec data_consumer_closed(reference) :: boolean
   def data_consumer_closed(_consumer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_consumer_event(reference, pid, [atom()]) :: {:ok} | {:error}
+  def data_consumer_event(_consumer, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
 
   # producer
   @spec producer_id(reference) :: String.t()
@@ -391,6 +393,8 @@ defmodule Mediasoup.Nif do
   def data_producer_close(_producer), do: :erlang.nif_error(:nif_not_loaded)
   @spec data_producer_closed(reference) :: boolean
   def data_producer_closed(_producer), do: :erlang.nif_error(:nif_not_loaded)
+  @spec data_producer_event(reference, pid, [atom()]) :: {:ok} | {:error}
+  def data_producer_event(_producer, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
 
   defp handle_async_nif_result(result) do
     case result do
