@@ -18,7 +18,7 @@ mediasoup-sys = { git = "https://github.com/oviceinc/mediasoup", tag = "rust-0.9
 mediasoup = { git = "https://github.com/oviceinc/mediasoup", tag = "rust-0.9.4", version = "0.9.4" }
 futures-lite = "1.12.0"
 once_cell = "1.15.0"
-num_cpus = "1.13.1"
+num_cpus = "1.14.0"
 async-executor = "1.4.1"
 serde = { version = "1.0.145", features = ["derive"] }
 serde-transcode = "1.1"
