@@ -38,6 +38,12 @@ defmodule Mediasoup.Nif do
   defp pipe_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   defp pipe_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
 
+  defp pipe_transport_consume_data_async(_transport, _option),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  defp pipe_transport_produce_data_async(_transport, _option),
+    do: :erlang.nif_error(:nif_not_loaded)
+
   ## webrtc_transport with async
   defp webrtc_transport_get_stats_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
   defp webrtc_transport_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
@@ -260,11 +266,17 @@ defmodule Mediasoup.Nif do
   def pipe_transport_consume(transport, option),
     do: pipe_transport_consume_async(transport, option) |> handle_async_nif_result()
 
+  def pipe_transport_consume_data(transport, option),
+    do: pipe_transport_consume_data_async(transport, option) |> handle_async_nif_result()
+
   def pipe_transport_connect(transport, option),
     do: pipe_transport_connect_async(transport, option) |> handle_async_nif_result()
 
   def pipe_transport_produce(transport, option),
     do: pipe_transport_produce_async(transport, option) |> handle_async_nif_result()
+
+  def pipe_transport_produce_data(transport, option),
+    do: pipe_transport_produce_data_async(transport, option) |> handle_async_nif_result()
 
   def pipe_transport_get_stats(transport),
     do: pipe_transport_get_stats_async(transport) |> handle_async_nif_result() |> unwrap_ok()

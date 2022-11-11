@@ -1,8 +1,10 @@
-use crate::atoms;
 use crate::consumer::ConsumerOptionsStruct;
+use crate::data_consumer::DataConsumerOptionsStruct;
+use crate::data_producer::DataProducerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
+use crate::{atoms, DataConsumerRef, DataProducerRef};
 use crate::{send_async_nif_result, ConsumerRef, PipeTransportRef, ProducerRef};
 use mediasoup::data_structures::{SctpState, TransportListenIp, TransportTuple};
 use mediasoup::pipe_transport::{PipeTransportOptions, PipeTransportRemoteParameters};
@@ -117,6 +119,24 @@ pub fn pipe_transport_consume(
     })
 }
 
+#[rustler::nif(name = "pipe_transport_consume_data_async")]
+pub fn pipe_transport_consume_data(
+    env: Env,
+    transport: ResourceArc<PipeTransportRef>,
+    option: DataConsumerOptionsStruct,
+) -> NifResult<(Atom, Atom)> {
+    let transport = transport.get_resource()?;
+
+    let option = option.to_option();
+    send_async_nif_result(env, async move {
+        transport
+            .consume_data(option)
+            .await
+            .map(DataConsumerRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
+}
+
 #[rustler::nif(name = "pipe_transport_connect_async")]
 pub fn pipe_transport_connect(
     env: Env,
@@ -149,6 +169,24 @@ pub fn pipe_transport_produce(
             .produce(option)
             .await
             .map(ProducerRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
+}
+
+#[rustler::nif(name = "pipe_transport_produce_data_async")]
+pub fn pipe_transport_produce_data(
+    env: Env,
+    transport: ResourceArc<PipeTransportRef>,
+    option: DataProducerOptionsStruct,
+) -> NifResult<(Atom, Atom)> {
+    let transport = transport.get_resource()?;
+    let option = option.to_option();
+
+    send_async_nif_result(env, async move {
+        transport
+            .produce_data(option)
+            .await
+            .map(DataProducerRef::resource)
             .map_err(|error| format!("{}", error))
     })
 }

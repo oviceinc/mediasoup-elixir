@@ -3,7 +3,18 @@ defmodule IntegrateTest.PipeTransportTest do
   test for Consumer with dializer check
   """
   import ExUnit.Assertions
-  alias Mediasoup.{PipeTransport, WebRtcTransport, Transport, Producer, Worker, Router, Consumer}
+
+  alias Mediasoup.{
+    PipeTransport,
+    WebRtcTransport,
+    Transport,
+    Producer,
+    Worker,
+    Router,
+    Consumer,
+    DataProducer,
+    DataConsumer
+  }
 
   def media_codecs() do
     {
@@ -201,6 +212,15 @@ defmodule IntegrateTest.PipeTransportTest do
     }
   end
 
+  defp data_producer_options() do
+    %DataProducer.Options{
+      sctp_stream_parameters: %{
+        streamId: 0,
+        ordered: true
+      }
+    }
+  end
+
   def init(worker) do
     Worker.event(worker, self())
 
@@ -220,7 +240,8 @@ defmodule IntegrateTest.PipeTransportTest do
           %{
             ip: "127.0.0.1"
           }
-        }
+        },
+        enableSctp: true
       })
 
     {:ok, transport2} =
@@ -229,7 +250,8 @@ defmodule IntegrateTest.PipeTransportTest do
           %{
             ip: "127.0.0.1"
           }
-        }
+        },
+        enableSctp: true
       })
 
     {worker, router1, router2, transport1, transport2}
@@ -425,6 +447,37 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
     assert Producer.paused?(pipe_producer) === true
+  end
+
+  def pipe_to_router_succeeds_with_data(worker) do
+    {_worker, router1, router2, transport1, _transport2} = init(worker)
+
+    {:ok, data_producer} = WebRtcTransport.produce_data(transport1, data_producer_options())
+
+    {:ok, %{pipe_data_consumer: pipe_data_consumer, pipe_data_producer: pipe_data_producer}} =
+      Router.pipe_data_producer_to_router(
+        router1,
+        data_producer.id,
+        %Router.PipeToRouterOptions{
+          router: router2,
+          enable_sctp: true
+        }
+      )
+
+    assert 2 == Mediasoup.Router.dump(router1)["transportIds"] |> length
+    assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
+
+    assert pipe_data_consumer.data_producer_id === data_producer.id
+
+    assert DataProducer.sctp_stream_parameters(pipe_data_producer) === %{
+             "streamId" => 0,
+             "ordered" => true
+           }
+
+    assert DataConsumer.sctp_stream_parameters(pipe_data_consumer) === %{
+             "streamId" => 0,
+             "ordered" => true
+           }
   end
 
   def create_with_fixed_port_succeeds(worker) do
@@ -637,6 +690,36 @@ defmodule IntegrateTest.PipeTransportTest do
     [encoding] = video_consumer.rtp_parameters["encodings"]
     assert nil != encoding["ssrc"]
     assert nil != encoding["rtx"]
+  end
+
+  def consume_data_for_pipe_data_producer_succeeds(worker) do
+    {_worker, router1, router2, transport1, transport2} = init(worker)
+
+    {:ok, data_producer} = WebRtcTransport.produce_data(transport1, data_producer_options())
+
+    {:ok, %{pipe_data_consumer: pipe_data_consumer, pipe_data_producer: pipe_data_producer}} =
+      Router.pipe_data_producer_to_router(
+        router1,
+        data_producer.id,
+        %Router.PipeToRouterOptions{
+          router: router2,
+          enable_sctp: true
+        }
+      )
+
+    {:ok, data_consumer} =
+      Transport.consume_data(transport2, %DataConsumer.Options{
+        data_producer_id: pipe_data_producer.id,
+        ordered: true
+      })
+
+    assert Router.dump(router1)["mapDataProducerIdDataConsumerIds"] === %{
+             data_producer.id => [pipe_data_consumer.id]
+           }
+
+    assert Router.dump(router2)["mapDataProducerIdDataConsumerIds"] === %{
+             pipe_data_producer.id => [data_consumer.id]
+           }
   end
 
   def producer_pause_resume_are_transmitted_to_pipe_consumer(worker) do
@@ -859,6 +942,74 @@ defmodule IntegrateTest.PipeTransportTest do
     assert 3 == Mediasoup.Router.dump(router1)["transportIds"] |> length
     assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
     assert 1 == Mediasoup.Router.dump(router3)["transportIds"] |> length
+  end
+
+  def pipe_data_produce_consume(worker) do
+    {_worker, router1, router2, transport1, transport2} = init(worker)
+
+    {:ok, data_producer} = WebRtcTransport.produce_data(transport1, data_producer_options())
+
+    {:ok, pipe_transport_local} =
+      Router.create_pipe_transport(router1, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"},
+        enable_sctp: true
+      })
+
+    {:ok, pipe_transport_remote} =
+      Router.create_pipe_transport(router2, %PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"},
+        enable_sctp: true
+      })
+
+    %{"localPort" => remote_port, "localIp" => remote_ip} =
+      PipeTransport.tuple(pipe_transport_remote)
+
+    %{"localPort" => local_port, "localIp" => local_ip} =
+      PipeTransport.tuple(pipe_transport_local)
+
+    {:ok} = PipeTransport.connect(pipe_transport_local, %{ip: remote_ip, port: remote_port})
+    {:ok} = PipeTransport.connect(pipe_transport_remote, %{ip: local_ip, port: local_port})
+
+    {:ok, pipe_data_consumer} =
+      Transport.consume_data(pipe_transport_local, %DataConsumer.Options{
+        data_producer_id: data_producer.id,
+        ordered: true
+      })
+
+    {:ok, pipe_data_producer} =
+      Transport.produce_data(pipe_transport_remote, data_producer_options())
+
+    {:ok, data_consumer} =
+      Transport.consume_data(transport2, %DataConsumer.Options{
+        data_producer_id: pipe_data_producer.id,
+        ordered: true
+      })
+
+    assert match?(
+             %{"maxMessageSize" => _max_message_size, "port" => _port},
+             Transport.sctp_parameters(pipe_transport_local)
+           )
+
+    if Transport.sctp_state(pipe_transport_local) == "connecting" do
+      Process.sleep(1000)
+    end
+
+    assert "connected" === Transport.sctp_state(pipe_transport_local)
+    assert Transport.get_stats(pipe_transport_local)
+
+    assert PipeTransport.dump(pipe_transport_local)["dataConsumerIds"] === [pipe_data_consumer.id]
+
+    assert PipeTransport.dump(pipe_transport_remote)["dataProducerIds"] === [
+             pipe_data_producer.id
+           ]
+
+    assert Router.dump(router1)["mapDataProducerIdDataConsumerIds"] === %{
+             data_producer.id => [pipe_data_consumer.id]
+           }
+
+    assert Router.dump(router2)["mapDataProducerIdDataConsumerIds"] === %{
+             pipe_data_producer.id => [data_consumer.id]
+           }
   end
 
   def close_event(worker) do

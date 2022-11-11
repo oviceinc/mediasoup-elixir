@@ -118,6 +118,11 @@ defmodule Mediasoup.DataConsumer do
      }, state}
   end
 
+  @impl true
+  def handle_info({:on_close}, state) do
+    {:stop, :normal, state}
+  end
+
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.data_consumer_closed/1
   })
