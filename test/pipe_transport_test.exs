@@ -23,6 +23,12 @@ defmodule PipeTransportTest do
     IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_video(worker)
   end
 
+  test "pipe_to_router_succeeds_with_data", %{
+    worker: worker
+  } do
+    IntegrateTest.PipeTransportTest.pipe_to_router_succeeds_with_data(worker)
+  end
+
   test "create_with_fixed_port_succeeds", %{
     worker: worker
   } do
@@ -53,6 +59,10 @@ defmodule PipeTransportTest do
     IntegrateTest.PipeTransportTest.consume_for_pipe_producer_succeeds(worker)
   end
 
+  test "consume_data_for_pipe_data_producer_succeeds", %{worker: worker} do
+    IntegrateTest.PipeTransportTest.consume_data_for_pipe_data_producer_succeeds(worker)
+  end
+
   test "producer_pause_resume_are_transmitted_to_pipe_consumer", %{
     worker: worker
   } do
@@ -73,6 +83,10 @@ defmodule PipeTransportTest do
     worker: worker
   } do
     IntegrateTest.PipeTransportTest.pipe_produce_consume_with_map(worker)
+  end
+
+  test "pipe_data_produce_consume", %{worker: worker} do
+    IntegrateTest.PipeTransportTest.pipe_data_produce_consume(worker)
   end
 
   test "multiple_pipe_to_router", %{

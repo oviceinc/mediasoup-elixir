@@ -2,7 +2,7 @@ defmodule Mediasoup.PipeTransport do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#PipeTransport
   """
-  alias Mediasoup.{PipeTransport, Consumer, Producer, NifWrap, Nif}
+  alias Mediasoup.{PipeTransport, Consumer, DataConsumer, Producer, DataProducer, NifWrap, Nif}
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -93,6 +93,20 @@ defmodule Mediasoup.PipeTransport do
     consume(transport, Consumer.Options.from_map(option))
   end
 
+  @spec consume_data(t, DataConsumer.Options.t() | map()) ::
+          {:ok, DataConsumer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to send data messages to the endpoint via SCTP protocol or directly to the Rust process if the transport is a DirectTransport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consumedata
+  """
+  def consume_data(%PipeTransport{pid: pid}, %DataConsumer.Options{} = option) do
+    GenServer.call(pid, {:consume_data, [option]})
+  end
+
+  def consume_data(transport, option) do
+    consume_data(transport, DataConsumer.Options.from_map(option))
+  end
+
   @spec connect(t, option :: connect_option()) :: {:ok} | {:error, String.t() | :terminated}
   @doc """
   Provides the pipe RTP transport with the remote parameters.
@@ -114,6 +128,20 @@ defmodule Mediasoup.PipeTransport do
 
   def produce(transport, %{} = option) do
     produce(transport, Producer.Options.from_map(option))
+  end
+
+  @spec produce_data(t, DataProducer.Options.t() | map()) ::
+          {:ok, DataProducer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to receive data messages. Those messages can be delivered by an endpoint via SCTP protocol or can be directly sent from the Node.js application if the transport is a DirectTransport.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-producedata
+  """
+  def produce_data(%PipeTransport{pid: pid}, %DataProducer.Options{} = option) do
+    GenServer.call(pid, {:produce_data, [option]})
+  end
+
+  def produce_data(transport, %{} = option) do
+    produce_data(transport, DataProducer.Options.from_map(option))
   end
 
   @type transport_stat :: map
@@ -269,6 +297,18 @@ defmodule Mediasoup.PipeTransport do
   end
 
   def handle_call(
+        {:produce_data, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.pipe_transport_produce_data(reference, option)
+      |> NifWrap.handle_create_result(DataProducer, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
         {:consume, [option]},
         _from,
         %{reference: reference, supervisor: supervisor} = state
@@ -276,6 +316,18 @@ defmodule Mediasoup.PipeTransport do
     ret =
       Nif.pipe_transport_consume(reference, option)
       |> NifWrap.handle_create_result(Consumer, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
+        {:consume_data, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.pipe_transport_consume_data(reference, option)
+      |> NifWrap.handle_create_result(DataConsumer, supervisor)
 
     {:reply, ret, state}
   end

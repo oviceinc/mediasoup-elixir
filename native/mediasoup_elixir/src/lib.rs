@@ -23,8 +23,9 @@ use crate::consumer::{
 };
 use crate::pipe_transport::{
     pipe_transport_close, pipe_transport_closed, pipe_transport_connect, pipe_transport_consume,
-    pipe_transport_dump, pipe_transport_event, pipe_transport_get_stats, pipe_transport_id,
-    pipe_transport_produce, pipe_transport_sctp_parameters, pipe_transport_sctp_state,
+    pipe_transport_consume_data, pipe_transport_dump, pipe_transport_event,
+    pipe_transport_get_stats, pipe_transport_id, pipe_transport_produce,
+    pipe_transport_produce_data, pipe_transport_sctp_parameters, pipe_transport_sctp_state,
     pipe_transport_srtp_parameters, pipe_transport_tuple,
 };
 use crate::plain_transport::{
@@ -185,6 +186,8 @@ rustler::init! {
         pipe_transport_srtp_parameters,
         pipe_transport_dump,
         pipe_transport_event,
+        pipe_transport_produce_data,
+        pipe_transport_consume_data,
 
         // plain transport
         plain_transport_id,

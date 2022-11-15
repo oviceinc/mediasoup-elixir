@@ -79,11 +79,16 @@ defmodule Mediasoup.Router do
   end
 
   defmodule PipeToRouterResult do
-    defstruct pipe_consumer: nil, pipe_producer: nil
+    defstruct pipe_consumer: nil,
+              pipe_producer: nil,
+              pipe_data_consumer: nil,
+              pipe_data_producer: nil
 
     @type t :: %PipeToRouterResult{
             pipe_consumer: Mediasoup.Consumer.t() | nil,
-            pipe_producer: Mediasoup.Producer.t() | nil
+            pipe_producer: Mediasoup.Producer.t() | nil,
+            pipe_data_consumer: Mediasoup.DataConsumer.t() | nil,
+            pipe_data_producer: Mediasoup.DataProducer.t() | nil
           }
   end
 
@@ -149,7 +154,7 @@ defmodule Mediasoup.Router do
           {:ok, PipeToRouterResult.t()} | {:error, String.t()}
 
   @doc """
-  Pipes the given media or data producer into another router.
+  Pipes the given media producer into another router.
   https://mediasoup.org/documentation/v3/mediasoup/api/#router-pipeToRouter
   """
   def pipe_producer_to_router(
@@ -191,6 +196,51 @@ defmodule Mediasoup.Router do
       Producer.event(pipe_producer, pipe_consumer.pid, [:on_close])
 
       {:ok, %{pipe_producer: pipe_producer, pipe_consumer: pipe_consumer}}
+    end
+  end
+
+  @spec pipe_data_producer_to_router(t, data_producer_id :: String.t(), PipeToRouterOptions.t()) ::
+          {:ok, PipeToRouterResult.t()} | {:error, String.t()}
+  @doc """
+  Pipes the given data producer into another router.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#router-pipeToRouter
+  """
+  def pipe_data_producer_to_router(
+        %Router{} = router,
+        data_producer_id,
+        %PipeToRouterOptions{} = option
+      ) do
+    try do
+      do_pipe_data_producer_to_router(router, data_producer_id, option)
+    catch
+      reason, msg -> {:error, {reason, msg}}
+    end
+  end
+
+  defp do_pipe_data_producer_to_router(
+         %Router{} = router,
+         data_producer_id,
+         %PipeToRouterOptions{} = option
+       ) do
+    alias Mediasoup.{DataConsumer, DataProducer, Transport}
+
+    with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
+           get_or_create_pipe_transport_pair(router, option),
+         {:ok, pipe_consumer} <-
+           Transport.consume_data(local_pipe_transport, %DataConsumer.Options{
+             data_producer_id: data_producer_id,
+             ordered: true
+           }),
+         {:ok, pipe_producer} <-
+           Transport.produce_data(remote_pipe_transport, %DataProducer.Options{
+             sctp_stream_parameters: DataConsumer.sctp_stream_parameters(pipe_consumer)
+           }) do
+      # Pipe events from the pipe DataConsumer to the pipe Producer.
+      DataConsumer.event(pipe_consumer, pipe_producer.pid, [:on_close])
+      # Pipe events from the pipe DataProducer to the pipe Consumer.
+      DataProducer.event(pipe_producer, pipe_consumer.pid, [:on_close])
+
+      {:ok, %{pipe_data_producer: pipe_producer, pipe_data_consumer: pipe_consumer}}
     end
   end
 
