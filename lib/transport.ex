@@ -14,6 +14,8 @@ defprotocol Mediasoup.Transport do
 
   def get_stats(transport)
   def event(transport, listener)
+
+  def dump(transport)
 end
 
 defimpl Mediasoup.Transport, for: [Mediasoup.WebRtcTransport, Mediasoup.PipeTransport] do
@@ -28,4 +30,5 @@ defimpl Mediasoup.Transport, for: [Mediasoup.WebRtcTransport, Mediasoup.PipeTran
   def sctp_state(transport), do: @for.sctp_state(transport)
   def get_stats(transport), do: @for.get_stats(transport)
   def event(transport, listener), do: @for.event(transport, listener)
+  def dump(transport), do: @for.dump(transport)
 end

@@ -582,7 +582,8 @@ defmodule IntegrateTest.PipeTransportTest do
 
     srtp_parameters = PipeTransport.srtp_parameters(pipe_transport)
     assert match?(%{}, srtp_parameters)
-    assert String.length(srtp_parameters["keyBase64"]) == 40
+    assert srtp_parameters["cryptoSuite"] == "AEAD_AES_256_GCM"
+    assert String.length(srtp_parameters["keyBase64"]) == 60
 
     Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
       log_level: :none,
@@ -599,8 +600,8 @@ defmodule IntegrateTest.PipeTransportTest do
         ip: "127.0.0.2",
         port: 9999,
         srtpParameters: %{
-          cryptoSuite: "AES_CM_128_HMAC_SHA1_80",
-          keyBase64: "ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv"
+          cryptoSuite: "AEAD_AES_256_GCM",
+          keyBase64: "YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo="
         }
       })
   end
