@@ -222,7 +222,9 @@ defmodule IntegrateTest.PipeTransportTest do
   end
 
   def init(worker) do
+    {:ok, worker2} = Mediasoup.Worker.start_link()
     Worker.event(worker, self())
+    Worker.event(worker2, self())
 
     {:ok, router1} =
       Worker.create_router(worker, %{
@@ -230,7 +232,7 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     {:ok, router2} =
-      Worker.create_router(worker, %{
+      Worker.create_router(worker2, %{
         mediaCodecs: media_codecs()
       })
 
@@ -582,7 +584,8 @@ defmodule IntegrateTest.PipeTransportTest do
 
     srtp_parameters = PipeTransport.srtp_parameters(pipe_transport)
     assert match?(%{}, srtp_parameters)
-    assert String.length(srtp_parameters["keyBase64"]) == 40
+    assert srtp_parameters["cryptoSuite"] == "AEAD_AES_256_GCM"
+    assert String.length(srtp_parameters["keyBase64"]) == 60
 
     Mediasoup.Worker.update_settings(worker, %Mediasoup.Worker.UpdateableSettings{
       log_level: :none,
@@ -599,8 +602,8 @@ defmodule IntegrateTest.PipeTransportTest do
         ip: "127.0.0.2",
         port: 9999,
         srtpParameters: %{
-          cryptoSuite: "AES_CM_128_HMAC_SHA1_80",
-          keyBase64: "ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv"
+          cryptoSuite: "AEAD_AES_256_GCM",
+          keyBase64: "YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo="
         }
       })
   end
@@ -913,8 +916,10 @@ defmodule IntegrateTest.PipeTransportTest do
   def multiple_pipe_to_router(worker) do
     {_worker, router1, router2, transport1, _transport2} = init(worker)
 
+    {:ok, worker3} = Mediasoup.Worker.start_link()
+
     {:ok, router3} =
-      Worker.create_router(worker, %{
+      Worker.create_router(worker3, %{
         mediaCodecs: media_codecs()
       })
 
