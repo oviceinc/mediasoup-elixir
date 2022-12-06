@@ -222,7 +222,9 @@ defmodule IntegrateTest.PipeTransportTest do
   end
 
   def init(worker) do
+    {:ok, worker2} = Mediasoup.Worker.start_link()
     Worker.event(worker, self())
+    Worker.event(worker2, self())
 
     {:ok, router1} =
       Worker.create_router(worker, %{
@@ -230,7 +232,7 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     {:ok, router2} =
-      Worker.create_router(worker, %{
+      Worker.create_router(worker2, %{
         mediaCodecs: media_codecs()
       })
 
@@ -914,8 +916,10 @@ defmodule IntegrateTest.PipeTransportTest do
   def multiple_pipe_to_router(worker) do
     {_worker, router1, router2, transport1, _transport2} = init(worker)
 
+    {:ok, worker3} = Mediasoup.Worker.start_link()
+
     {:ok, router3} =
-      Worker.create_router(worker, %{
+      Worker.create_router(worker3, %{
         mediaCodecs: media_codecs()
       })
 
