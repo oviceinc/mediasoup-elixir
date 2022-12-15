@@ -391,8 +391,8 @@ defmodule IntegrateTest.ConsumerTest do
            }
 
     assert Consumer.preferred_layers(video_consumer) === %{
-             "spatialLayer" => 3,
-             "temporalLayer" => 0
+             spatial_layer: 3,
+             temporal_layer: 0
            }
 
     assert Consumer.current_layers(video_consumer) === nil
@@ -686,8 +686,8 @@ defmodule IntegrateTest.ConsumerTest do
       })
 
     Consumer.set_preferred_layers(audio_consumer, %{
-      spatialLayer: 1,
-      temporalLayer: 1
+      spatial_layer: 1,
+      temporal_layer: 1
     })
 
     assert Consumer.preferred_layers(audio_consumer) === nil
@@ -705,13 +705,13 @@ defmodule IntegrateTest.ConsumerTest do
       })
 
     Consumer.set_preferred_layers(video_consumer, %{
-      spatialLayer: 2,
-      temporalLayer: 3
+      spatial_layer: 2,
+      temporal_layer: 3
     })
 
     assert Consumer.preferred_layers(video_consumer) === %{
-             "spatialLayer" => 2,
-             "temporalLayer" => 0
+             spatial_layer: 2,
+             temporal_layer: 0
            }
 
     Mediasoup.WebRtcTransport.close(transport_1)

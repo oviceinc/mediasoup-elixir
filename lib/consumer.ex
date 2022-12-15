@@ -41,7 +41,20 @@ defmodule Mediasoup.Consumer do
   @typedoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#ConsumerLayers
   """
-  @type consumer_layers :: map
+  @type consumer_layers :: %{
+          spatial_layer: non_neg_integer(),
+          temporal_layer: non_neg_integer()
+        }
+  defp to_consumer_layers(%{
+         "spatialLayer" => spatial_layer,
+         "temporalLayer" => temporal_layer
+       }),
+       do: %{
+         spatial_layer: spatial_layer,
+         temporal_layer: temporal_layer
+       }
+
+  defp to_consumer_layers(layer), do: layer
 
   @doc """
   Consumer identifier.
@@ -150,6 +163,7 @@ defmodule Mediasoup.Consumer do
   """
   def preferred_layers(%Consumer{pid: pid}) do
     GenServer.call(pid, {:preferred_layers, []})
+    |> to_consumer_layers
   end
 
   @spec current_layers(t) :: consumer_layers | nil
@@ -160,6 +174,7 @@ defmodule Mediasoup.Consumer do
   """
   def current_layers(%Consumer{pid: pid}) do
     GenServer.call(pid, {:current_layers, []})
+    |> to_consumer_layers
   end
 
   @spec get_stats(t) :: [term()]
@@ -189,11 +204,22 @@ defmodule Mediasoup.Consumer do
     GenServer.call(pid, {:resume, []})
   end
 
-  @spec set_preferred_layers(t, map) :: {:ok} | {:error}
+  @spec set_preferred_layers(t, consumer_layers) :: {:ok} | {:error}
   @doc """
   Sets the preferred (highest) spatial and temporal layers to be sent to the consuming endpoint. Just valid for simulcast and SVC consumers.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-setPreferredLayers
   """
+  def set_preferred_layers(%Consumer{pid: pid}, %{
+        spatial_layer: spatial_layer,
+        temporal_layer: temporal_layer
+      }) do
+    GenServer.call(
+      pid,
+      {:set_preferred_layers,
+       [%{"spatialLayer" => spatial_layer, "temporalLayer" => temporal_layer}]}
+    )
+  end
+
   def set_preferred_layers(%Consumer{pid: pid}, layer) do
     GenServer.call(pid, {:set_preferred_layers, [layer]})
   end
