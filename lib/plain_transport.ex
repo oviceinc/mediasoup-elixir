@@ -209,16 +209,19 @@ defmodule Mediasoup.PlainTransport do
     GenServer.call(pid, {:struct_from_pid, []})
   end
 
+  def struct_from_pid_and_ref(pid, reference) do
+    %PlainTransport{
+      pid: pid,
+      id: Nif.plain_transport_id(reference)
+    }
+  end
+
   def handle_call(
         {:struct_from_pid, _arg},
         _from,
         %{reference: reference} = state
       ) do
-    {:reply,
-     %PlainTransport{
-       pid: self(),
-       id: Nif.plain_transport_id(reference)
-     }, state}
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
   def handle_call(

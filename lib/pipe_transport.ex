@@ -234,6 +234,13 @@ defmodule Mediasoup.PipeTransport do
     GenServer.call(pid, {:struct_from_pid, []})
   end
 
+  def struct_from_pid_and_ref(pid, reference) do
+    %PipeTransport{
+      pid: pid,
+      id: Nif.pipe_transport_id(reference)
+    }
+  end
+
   # GenServer callbacks
 
   def start_link(opt) do
@@ -266,11 +273,7 @@ defmodule Mediasoup.PipeTransport do
         _from,
         %{reference: reference} = state
       ) do
-    {:reply,
-     %PipeTransport{
-       pid: self(),
-       id: Nif.pipe_transport_id(reference)
-     }, state}
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
   NifWrap.def_handle_call_nif(%{

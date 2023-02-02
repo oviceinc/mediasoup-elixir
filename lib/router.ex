@@ -308,6 +308,13 @@ defmodule Mediasoup.Router do
     GenServer.call(pid, {:struct_from_pid, []})
   end
 
+  def struct_from_pid_and_ref(pid, reference) do
+    %Router{
+      pid: pid,
+      id: Nif.router_id(reference)
+    }
+  end
+
   # GenServer callbacks
 
   def start_link(opt) do
@@ -340,11 +347,7 @@ defmodule Mediasoup.Router do
         _from,
         %{reference: reference} = state
       ) do
-    {:reply,
-     %Router{
-       pid: self(),
-       id: Nif.router_id(reference)
-     }, state}
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
   NifWrap.def_handle_call_nif(%{
