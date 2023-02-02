@@ -61,6 +61,15 @@ defmodule Mediasoup.DataProducer do
     GenServer.call(pid, {:struct_from_pid, []})
   end
 
+  def struct_from_pid_and_ref(pid, reference) do
+    %DataProducer{
+      pid: pid,
+      id: Nif.data_producer_id(reference),
+      type: Nif.data_producer_type(reference),
+      sctp_stream_parameters: Nif.data_producer_sctp_stream_parameters(reference)
+    }
+  end
+
   # GenServer callbacks
   def start_link(opt) do
     reference = Keyword.fetch!(opt, :reference)
@@ -82,13 +91,7 @@ defmodule Mediasoup.DataProducer do
   end
 
   def handle_call({:struct_from_pid, _arg}, _from, %{reference: reference} = state) do
-    {:reply,
-     %DataProducer{
-       pid: self(),
-       id: Nif.data_producer_id(reference),
-       type: Nif.data_producer_type(reference),
-       sctp_stream_parameters: Nif.data_producer_sctp_stream_parameters(reference)
-     }, state}
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
   def handle_info({:on_close}, state) do

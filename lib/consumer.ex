@@ -263,6 +263,17 @@ defmodule Mediasoup.Consumer do
     GenServer.call(pid, {:struct_from_pid, []})
   end
 
+  def struct_from_pid_and_ref(pid, reference) do
+    %Consumer{
+      pid: pid,
+      id: Nif.consumer_id(reference),
+      producer_id: Nif.consumer_producer_id(reference),
+      kind: Nif.consumer_kind(reference),
+      type: Nif.consumer_type(reference),
+      rtp_parameters: Nif.consumer_rtp_parameters(reference)
+    }
+  end
+
   # GenServer callbacks
 
   def start_link(opt) do
@@ -296,15 +307,7 @@ defmodule Mediasoup.Consumer do
         _from,
         %{reference: reference} = state
       ) do
-    {:reply,
-     %Consumer{
-       pid: self(),
-       id: Nif.consumer_id(reference),
-       producer_id: Nif.consumer_producer_id(reference),
-       kind: Nif.consumer_kind(reference),
-       type: Nif.consumer_type(reference),
-       rtp_parameters: Nif.consumer_rtp_parameters(reference)
-     }, state}
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
   NifWrap.def_handle_call_nif(%{

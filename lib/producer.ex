@@ -165,6 +165,16 @@ defmodule Mediasoup.Producer do
     GenServer.call(pid, {:struct_from_pid, []})
   end
 
+  def struct_from_pid_and_ref(pid, reference) do
+    %Producer{
+      pid: pid,
+      id: Nif.producer_id(reference),
+      kind: Nif.producer_kind(reference),
+      type: Nif.producer_type(reference),
+      rtp_parameters: Nif.producer_rtp_parameters(reference)
+    }
+  end
+
   # GenServer callbacks
 
   def start_link(opt) do
@@ -195,14 +205,7 @@ defmodule Mediasoup.Producer do
         _from,
         %{reference: reference} = state
       ) do
-    {:reply,
-     %Producer{
-       pid: self(),
-       id: Nif.producer_id(reference),
-       kind: Nif.producer_kind(reference),
-       type: Nif.producer_type(reference),
-       rtp_parameters: Nif.producer_rtp_parameters(reference)
-     }, state}
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
   NifWrap.def_handle_call_nif(%{

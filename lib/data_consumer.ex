@@ -81,6 +81,18 @@ defmodule Mediasoup.DataConsumer do
     GenServer.call(pid, {:struct_from_pid, []})
   end
 
+  def struct_from_pid_and_ref(pid, reference) do
+    %DataConsumer{
+      pid: pid,
+      id: Nif.data_consumer_id(reference),
+      data_producer_id: Nif.data_consumer_producer_id(reference),
+      type: Nif.data_consumer_type(reference),
+      sctp_stream_parameters: Nif.data_consumer_sctp_stream_parameters(reference),
+      label: Nif.data_consumer_label(reference),
+      protocol: Nif.data_consumer_protocol(reference)
+    }
+  end
+
   # GenServer callbacks
 
   def start_link(opt) do
@@ -106,16 +118,7 @@ defmodule Mediasoup.DataConsumer do
 
   @impl true
   def handle_call({:struct_from_pid, _arg}, _from, %{reference: reference} = state) do
-    {:reply,
-     %DataConsumer{
-       pid: self(),
-       id: Nif.data_consumer_id(reference),
-       data_producer_id: Nif.data_consumer_producer_id(reference),
-       type: Nif.data_consumer_type(reference),
-       sctp_stream_parameters: Nif.data_consumer_sctp_stream_parameters(reference),
-       label: Nif.data_consumer_label(reference),
-       protocol: Nif.data_consumer_protocol(reference)
-     }, state}
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
   @impl true

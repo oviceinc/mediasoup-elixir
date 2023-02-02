@@ -77,7 +77,7 @@ defmodule Mediasoup.NifWrap do
              supervisor,
              {module, [reference: ref]}
            ) do
-      {:ok, module.struct_from_pid(pid)}
+      {:ok, module.struct_from_pid_and_ref(pid, ref)}
     else
       error -> error
     end
