@@ -1040,6 +1040,7 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     Mediasoup.Transport.event(pipe_transport, self())
+    assert false == Mediasoup.Transport.closed?(pipe_transport)
     Mediasoup.Router.close(router1)
     assert Mediasoup.Transport.closed?(pipe_transport)
     assert_receive {:on_close}
