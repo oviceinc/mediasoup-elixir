@@ -278,6 +278,7 @@ defmodule Mediasoup.PipeTransport do
 
   NifWrap.def_handle_call_nif(%{
     close: &Nif.pipe_transport_close/1,
+    closed?: &Nif.pipe_transport_closed/1,
     dump: &Nif.pipe_transport_dump/1,
     get_stats: &Nif.pipe_transport_get_stats/1,
     sctp_state: &Nif.pipe_transport_sctp_state/1,
