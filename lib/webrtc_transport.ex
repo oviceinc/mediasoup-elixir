@@ -355,6 +355,7 @@ defmodule Mediasoup.WebRtcTransport do
 
   NifWrap.def_handle_call_nif(%{
     close: &Nif.webrtc_transport_close/1,
+    closed?: &Nif.webrtc_transport_closed/1,
     dump: &Nif.webrtc_transport_dump/1,
     get_stats: &Nif.webrtc_transport_get_stats/1,
     sctp_state: &Nif.webrtc_transport_sctp_state/1,

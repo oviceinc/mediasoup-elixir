@@ -396,6 +396,7 @@ defmodule IntegrateTest.WebRtcTransportTest do
       })
 
     Mediasoup.Transport.event(transport, self())
+    assert false == Mediasoup.Transport.closed?(transport)
     Mediasoup.Router.close(router)
     assert Mediasoup.Transport.closed?(transport)
     assert_receive {:on_close}
