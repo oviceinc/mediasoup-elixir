@@ -1,12 +1,14 @@
 use crate::consumer::ConsumerOptionsStruct;
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
+use crate::producer::ProducerOptionsStruct;
 use crate::PlainTransportRef;
-use crate::{atoms, send_async_nif_result, ConsumerRef};
+use crate::{atoms, send_async_nif_result, ConsumerRef, ProducerRef};
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{ListenIp, SctpState, TransportTuple};
 use mediasoup::plain_transport::{PlainTransportOptions, PlainTransportRemoteParameters};
 use mediasoup::prelude::Transport;
+use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
 use mediasoup::transport::{TransportGeneric, TransportId};
@@ -126,6 +128,25 @@ pub fn plain_transport_get_stats(
             .get_stats()
             .await
             .map(JsonSerdeWrap::new)
+            .map_err(|error| format!("{}", error))
+    })
+}
+
+#[rustler::nif(name = "plain_transport_produce_async")]
+pub fn plain_transport_produce(
+    env: Env,
+    transport: ResourceArc<PlainTransportRef>,
+    option: ProducerOptionsStruct,
+) -> NifResult<(Atom, Atom)> {
+    let transport = transport.get_resource()?;
+
+    let option: ProducerOptions = option.to_option();
+
+    send_async_nif_result(env, async move {
+        transport
+            .produce(option)
+            .await
+            .map(ProducerRef::resource)
             .map_err(|error| format!("{}", error))
     })
 }

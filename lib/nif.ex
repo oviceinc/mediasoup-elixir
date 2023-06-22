@@ -78,6 +78,7 @@ defmodule Mediasoup.Nif do
   defp plain_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   defp plain_transport_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
   defp plain_transport_get_stats_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
+  defp plain_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   defp plain_transport_consume_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
 
   ### plain tranasport call
@@ -94,6 +95,10 @@ defmodule Mediasoup.Nif do
   @spec plain_transport_get_stats(reference) :: {:ok} | {:error, String.t()}
   def plain_transport_get_stats(transport),
     do: plain_transport_get_stats_async(transport) |> handle_async_nif_result() |> unwrap_ok()
+
+  @spec plain_transport_produce(reference, any) :: {:ok, reference()} | {:error, String.t()}
+  def plain_transport_produce(transport, option),
+    do: plain_transport_produce_async(transport, option) |> handle_async_nif_result()
 
   @spec plain_transport_consume(reference, any) :: {:ok, reference()} | {:error, String.t()}
   def plain_transport_consume(transport, option),
