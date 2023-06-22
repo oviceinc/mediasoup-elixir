@@ -1,6 +1,6 @@
 FROM elixir:1.13.4-otp-25
 
-ENV RUST_VERSION=1.59.0
+ENV RUST_VERSION=stable
 
 WORKDIR /tmp
 
