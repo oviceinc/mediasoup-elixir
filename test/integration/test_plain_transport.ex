@@ -429,6 +429,24 @@ defmodule IntegrateTest.PlainTransportTest do
     end)
   end
 
+  def produce_success(worker) do
+    {_worker, router} = init(worker)
+
+    {:ok, plain_transport} =
+      Router.create_plain_transport(router, %{
+        listenIp: %{
+          ip: "127.0.0.1"
+        }
+      })
+
+    assert {:ok} == PlainTransport.connect(plain_transport, %{ip: "127.0.0.1", port: 4000})
+
+    assert match?(
+             {:ok, _},
+             PlainTransport.produce(plain_transport, video_producer_options())
+           )
+  end
+
   def consume_success(worker) do
     {_worker, router, webrtc_transport} = webrtc_init(worker)
 

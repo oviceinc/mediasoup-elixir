@@ -3,7 +3,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransport
   """
 
-  alias Mediasoup.{PlainTransport, Consumer, NifWrap, Nif}
+  alias Mediasoup.{PlainTransport, Consumer, Producer, NifWrap, Nif}
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -147,6 +147,40 @@ defmodule Mediasoup.PlainTransport do
     !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
   end
 
+  @spec produce(t, Producer.Options.t() | map()) ::
+          {:ok, Producer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to receive audio or video RTP (or SRTP depending on the transport class). This is the way to inject media into mediasoup.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-produce
+  """
+  def produce(%PlainTransport{pid: pid}, %Producer.Options{} = option) do
+    GenServer.call(pid, {:produce, [option]})
+  end
+
+  def produce(transport, %{} = option) do
+    produce(transport, Producer.Options.from_map(option))
+  end
+
+  @spec consume(t, Consumer.Options.t() | map()) ::
+          {:ok, Consumer.t()} | {:error, String.t() | :terminated}
+  @doc """
+  Instructs the router to send audio or video RTP (or SRTP depending on the transport class). This is the way to extract media from mediasoup.
+  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consume
+  """
+  def consume(%PlainTransport{pid: pid}, %Consumer.Options{} = option) do
+    GenServer.call(pid, {:consume, [option]})
+  end
+
+  def consume(transport, option) do
+    consume(transport, Consumer.Options.from_map(option))
+  end
+
+  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
+    DynamicSupervisor.stop(supervisor, reason)
+    Nif.plain_transport_close(reference)
+    :ok
+  end
+
   NifWrap.def_handle_call_nif(%{
     # properties
     id: &Nif.plain_transport_id/1,
@@ -225,6 +259,18 @@ defmodule Mediasoup.PlainTransport do
   end
 
   def handle_call(
+        {:produce, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.plain_transport_produce(reference, option)
+      |> NifWrap.handle_create_result(Producer, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
         {:consume, [option]},
         _from,
         %{reference: reference, supervisor: supervisor} = state
@@ -234,25 +280,5 @@ defmodule Mediasoup.PlainTransport do
       |> NifWrap.handle_create_result(Consumer, supervisor)
 
     {:reply, ret, state}
-  end
-
-  @spec consume(t, Consumer.Options.t() | map()) ::
-          {:ok, Consumer.t()} | {:error, String.t() | :terminated}
-  @doc """
-  Instructs the router to send audio or video RTP (or SRTP depending on the transport class). This is the way to extract media from mediasoup.
-  https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consume
-  """
-  def consume(%PlainTransport{pid: pid}, %Consumer.Options{} = option) do
-    GenServer.call(pid, {:consume, [option]})
-  end
-
-  def consume(transport, option) do
-    consume(transport, Consumer.Options.from_map(option))
-  end
-
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    DynamicSupervisor.stop(supervisor, reason)
-    Nif.plain_transport_close(reference)
-    :ok
   end
 end

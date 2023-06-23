@@ -42,6 +42,10 @@ defmodule MediasoupElixirPlainTransportTest do
     IntegrateTest.PlainTransportTest.create_many_plain_transport()
   end
 
+  test "produce_success", %{worker: worker} do
+    IntegrateTest.PlainTransportTest.produce_success(worker)
+  end
+
   test "consume_success", %{worker: worker} do
     IntegrateTest.PlainTransportTest.consume_success(worker)
   end

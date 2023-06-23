@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         rust:
-          - 1.59.0
+          - 1.70.0
           - stable
     steps:
     - uses: actions/checkout@v3

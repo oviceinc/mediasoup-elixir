@@ -31,8 +31,8 @@ use crate::pipe_transport::{
 use crate::plain_transport::{
     plain_transport_close, plain_transport_closed, plain_transport_connect,
     plain_transport_consume, plain_transport_event, plain_transport_get_stats, plain_transport_id,
-    plain_transport_sctp_parameters, plain_transport_sctp_state, plain_transport_srtp_parameters,
-    plain_transport_tuple,
+    plain_transport_produce, plain_transport_sctp_parameters, plain_transport_sctp_state,
+    plain_transport_srtp_parameters, plain_transport_tuple,
 };
 use crate::producer::{
     producer_close, producer_closed, producer_dump, producer_event, producer_get_stats,
@@ -197,6 +197,7 @@ rustler::init! {
         plain_transport_srtp_parameters,
         plain_transport_connect,
         plain_transport_get_stats,
+        plain_transport_produce,
         plain_transport_consume,
         plain_transport_close,
         plain_transport_closed,
