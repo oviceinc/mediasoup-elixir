@@ -45,7 +45,8 @@ defmodule SerdeRustlerTests.Mixfile do
   end
 
   defp deps() do
-    [ {:rustler,        "~> 0.23.0"},
+    [ {:rustler,        "~> 0.29.0"},
+    {:jason,            "~> 1.1"},
     ]
   end
 
@@ -60,7 +61,6 @@ defmodule SerdeRustlerTests.Mixfile do
       {:mix_test_watch,   "~> 0.8",   only: [:dev],         runtime: false},
       # JSON serialization libs for benchmarks
       {:exjsx,            "~> 4.0",   only: [:dev, :bench]},
-      {:jason,            "~> 1.1",   only: [:dev, :test, :bench]},
       {:jiffy,            "~> 1.0",   only: [:dev, :bench]},
       {:json,             "~> 1.3",   only: [:dev, :bench]},
       {:jsone,            "~> 1.4",   only: [:dev, :bench]},
