@@ -16,22 +16,22 @@ defmodule Mediasoup.WebRtcTransport do
     https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransportOptions
     """
 
-    @enforce_keys [:listen_ips]
-    defstruct [
-      :listen_ips,
-      enable_udp: nil,
-      enable_tcp: nil,
-      prefer_udp: nil,
-      prefer_tcp: nil,
-      initial_available_outgoing_bitrate: nil,
-      enable_sctp: nil,
-      num_sctp_streams: nil,
-      max_sctp_message_size: nil,
-      sctp_send_buffer_size: nil
-    ]
+    @enforce_keys []
+    defstruct listen_ips: nil,
+              enable_udp: nil,
+              enable_tcp: nil,
+              prefer_udp: nil,
+              prefer_tcp: nil,
+              initial_available_outgoing_bitrate: nil,
+              enable_sctp: nil,
+              num_sctp_streams: nil,
+              max_sctp_message_size: nil,
+              sctp_send_buffer_size: nil,
+              webrtc_server: nil
 
     @type t :: %Options{
-            listen_ips: [Mediasoup.transport_listen_ip()],
+            listen_ips: [Mediasoup.transport_listen_ip()] | nil,
+            webrtc_server: Mediasoup.WebRtcServer.t() | nil,
             enable_udp: boolean | nil,
             enable_tcp: boolean | nil,
             prefer_udp: boolean | nil,
@@ -56,7 +56,8 @@ defmodule Mediasoup.WebRtcTransport do
         enable_sctp: map["enableSctp"],
         num_sctp_streams: map["numSctpStreams"],
         max_sctp_message_size: map["maxSctpMessageSize"],
-        sctp_send_buffer_size: map["sctpSendBufferSize"]
+        sctp_send_buffer_size: map["sctpSendBufferSize"],
+        webrtc_server: map["webrtcServer"]
       }
     end
   end

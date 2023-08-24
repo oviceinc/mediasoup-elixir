@@ -2,7 +2,7 @@ defmodule Mediasoup.Worker do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Worker
   """
-  alias Mediasoup.{Worker, Router, NifWrap, Nif}
+  alias Mediasoup.{Worker, Router, NifWrap, Nif, WebRtcServer}
   require Mediasoup.NifWrap
   use GenServer
 
@@ -126,6 +126,14 @@ defmodule Mediasoup.Worker do
     create_router(worker, Router.Options.from_map(option))
   end
 
+  @doc """
+    Creates a new WebRTC server.
+    https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createWebRtcServer
+  """
+  def create_webrtc_server(pid, %WebRtcServer.Options{} = option) do
+    GenServer.call(pid, {:create_webrtc_server, [option]})
+  end
+
   @spec update_settings(t, update_option) :: {:ok} | {:error}
   @doc """
     Updates the worker settings in runtime. Just a subset of the worker settings can be updated.
@@ -213,6 +221,18 @@ defmodule Mediasoup.Worker do
     ret =
       Nif.worker_create_router(reference, option)
       |> NifWrap.handle_create_result(Router, supervisor)
+
+    {:reply, ret, state}
+  end
+
+  def handle_call(
+        {:create_webrtc_server, [option]},
+        _from,
+        %{reference: reference, supervisor: supervisor} = state
+      ) do
+    ret =
+      Nif.worker_create_webrtc_server(reference, option)
+      |> NifWrap.handle_create_result(WebRtcServer, supervisor)
 
     {:reply, ret, state}
   end

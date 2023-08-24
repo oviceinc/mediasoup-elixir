@@ -34,9 +34,7 @@ pub fn router_create_webrtc_transport(
     option: WebRtcTransportOptionsStruct,
 ) -> NifResult<(rustler::Atom, rustler::Atom)> {
     let router = router.get_resource()?;
-    let option = option
-        .try_to_option()
-        .map_err(|error| Error::Term(Box::new(error.to_string())))?;
+    let option = option.try_to_option()?;
 
     send_async_nif_result(env, async move {
         router
