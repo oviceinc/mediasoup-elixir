@@ -21,7 +21,7 @@ pub struct WebRtcServerListenInfoDeserializable {
 }
 
 impl WebRtcServerListenInfoDeserializable {
-    pub fn into_info(&self) -> WebRtcServerListenInfo {
+    pub fn into_info(self) -> WebRtcServerListenInfo {
         WebRtcServerListenInfo {
             protocol: self.protocol,
             listen_ip: self.listen_ip,
