@@ -1,4 +1,3 @@
-use crate::atoms;
 use crate::consumer::ConsumerOptionsStruct;
 use crate::data_consumer::DataConsumerOptionsStruct;
 use crate::data_producer::DataProducerOptionsStruct;
@@ -6,8 +5,8 @@ use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
 use crate::{
-    send_async_nif_result, send_msg_from_other_thread, ConsumerRef, DataConsumerRef,
-    DataProducerRef, ProducerRef, WebRtcTransportRef,
+    atoms, send_async_nif_result, send_msg_from_other_thread, ConsumerRef, DataConsumerRef,
+    DataProducerRef, ProducerRef, WebRtcServerRef, WebRtcTransportRef,
 };
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_consumer::DataConsumerOptions;
@@ -329,7 +328,8 @@ pub fn webrtc_transport_event(
 #[derive(NifStruct)]
 #[module = "Mediasoup.WebRtcTransport.Options"]
 pub struct WebRtcTransportOptionsStruct {
-    listen_ips: JsonSerdeWrap<Vec<ListenIp>>,
+    listen_ips: Option<JsonSerdeWrap<Vec<ListenIp>>>,
+    webrtc_server: Option<ResourceArc<WebRtcServerRef>>,
     enable_udp: Option<bool>,
     enable_tcp: Option<bool>,
     prefer_udp: Option<bool>,
@@ -341,17 +341,25 @@ pub struct WebRtcTransportOptionsStruct {
     sctp_send_buffer_size: Option<u32>,
 }
 impl WebRtcTransportOptionsStruct {
-    pub fn try_to_option(&self) -> Result<WebRtcTransportOptions, &'static str> {
-        let ips = match self.listen_ips.first() {
-            None => Err("Rquired least one ip"),
-            Some(ip) => Ok(TransportListenIps::new(*ip)),
+    pub fn try_to_option(&self) -> NifResult<WebRtcTransportOptions> {
+        let mut option = if let Some(webrtc_server) = &self.webrtc_server {
+            let webrtc_server = webrtc_server.get_resource()?;
+            Ok(WebRtcTransportOptions::new_with_server(webrtc_server))
+        } else if let Some(listen_ips) = &self.listen_ips {
+            let ips = match listen_ips.first() {
+                None => Err(rustler::Error::Term(Box::new("Rquired least one ip"))),
+                Some(ip) => Ok(TransportListenIps::new(*ip)),
+            }?;
+
+            let ips = listen_ips[1..].iter().fold(ips, |ips, ip| ips.insert(*ip));
+
+            Ok(WebRtcTransportOptions::new(ips))
+        } else {
+            Err(rustler::Error::Term(Box::new(
+                "Rquired least one ip or webrtc_server",
+            )))
         }?;
 
-        let ips = self.listen_ips[1..]
-            .iter()
-            .fold(ips, |ips, ip| ips.insert(*ip));
-
-        let mut option = WebRtcTransportOptions::new(ips);
         if let Some(enable_udp) = self.enable_udp {
             option.enable_udp = enable_udp;
         }

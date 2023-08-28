@@ -374,6 +374,15 @@ defmodule Mediasoup.Router do
         _from,
         %{reference: reference, supervisor: supervisor} = state
       ) do
+    option =
+      Map.update(option, :webrtc_server, nil, fn webrtc_server ->
+        if webrtc_server != nil do
+          Mediasoup.WebRtcServer.to_ref(option.webrtc_server)
+        else
+          nil
+        end
+      end)
+
     ret =
       Nif.router_create_webrtc_transport(reference, option)
       |> NifWrap.handle_create_result(WebRtcTransport, supervisor)

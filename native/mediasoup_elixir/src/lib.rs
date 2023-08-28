@@ -11,6 +11,7 @@ mod producer;
 mod resource;
 mod router;
 mod task;
+mod webrtc_server;
 mod webrtc_transport;
 mod worker;
 
@@ -55,9 +56,15 @@ use crate::webrtc_transport::{
     webrtc_transport_restart_ice, webrtc_transport_sctp_parameters, webrtc_transport_sctp_state,
     webrtc_transport_set_max_incoming_bitrate, webrtc_transport_set_max_outgoing_bitrate,
 };
+
+use crate::webrtc_server::{
+    webrtc_server_close, webrtc_server_closed, webrtc_server_dump, webrtc_server_id,
+};
+
 use crate::worker::{
     create_worker, create_worker_no_arg, worker_close, worker_closed, worker_create_router,
-    worker_dump, worker_event, worker_global_count, worker_id, worker_update_settings,
+    worker_create_webrtc_server, worker_dump, worker_event, worker_global_count, worker_id,
+    worker_update_settings,
 };
 
 use data_consumer::{
@@ -74,7 +81,7 @@ use futures_lite::future;
 use mediasoup::consumer::Consumer;
 use mediasoup::pipe_transport::PipeTransport;
 use mediasoup::plain_transport::PlainTransport;
-use mediasoup::prelude::{DataConsumer, DataProducer};
+use mediasoup::prelude::{DataConsumer, DataProducer, WebRtcServer};
 use mediasoup::producer::Producer;
 use mediasoup::router::Router;
 use mediasoup::webrtc_transport::WebRtcTransport;
@@ -132,6 +139,7 @@ rustler::init! {
         worker_event,
         worker_closed,
         worker_update_settings,
+        worker_create_webrtc_server,
         worker_dump,
 
         // router
@@ -145,6 +153,14 @@ rustler::init! {
         router_create_pipe_transport,
         router_event,
         router_dump,
+
+
+        // webrtc_server
+        webrtc_server_id,
+        webrtc_server_close,
+        webrtc_server_closed,
+        webrtc_server_dump,
+
 
         // webrtc_transport
         webrtc_transport_id,
@@ -273,6 +289,7 @@ fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
     // object type.
     rustler::resource!(WorkerRef, env);
     rustler::resource!(RouterRef, env);
+    rustler::resource!(WebRtcServerRef, env);
     rustler::resource!(WebRtcTransportRef, env);
     rustler::resource!(PipeTransportRef, env);
     rustler::resource!(PlainTransportRef, env);
@@ -285,6 +302,7 @@ fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
 
 pub type WorkerRef = DisposableResourceWrapper<Worker>;
 pub type RouterRef = DisposableResourceWrapper<Router>;
+pub type WebRtcServerRef = DisposableResourceWrapper<WebRtcServer>;
 pub type WebRtcTransportRef = DisposableResourceWrapper<WebRtcTransport>;
 pub type PipeTransportRef = DisposableResourceWrapper<PipeTransport>;
 pub type PlainTransportRef = DisposableResourceWrapper<PlainTransport>;

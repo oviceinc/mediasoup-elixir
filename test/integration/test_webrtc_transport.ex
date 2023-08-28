@@ -3,7 +3,7 @@ defmodule IntegrateTest.WebRtcTransportTest do
   test for WebRtcTransport with dializer check
   """
   import ExUnit.Assertions
-  alias Mediasoup.{WebRtcTransport, Router}
+  alias Mediasoup.{WebRtcTransport, Router, WebRtcServer, Worker}
 
   defp media_codecs() do
     {
@@ -445,5 +445,94 @@ defmodule IntegrateTest.WebRtcTransportTest do
     |> Enum.map(fn transport ->
       WebRtcTransport.close(transport)
     end)
+  end
+
+  def create_with_webrtc_server_succeeds(worker) do
+    {_worker, router} = init(worker)
+
+    {:ok, webrtc_server} =
+      Worker.create_webrtc_server(worker, %WebRtcServer.Options{
+        listen_infos: [
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1",
+            port: 10111,
+            protocol: :tcp
+          },
+          %{
+            ip: "0.0.0.0",
+            announcedIp: "9.9.9.2",
+            port: 10112,
+            protocol: :tcp
+          },
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1",
+            port: 10111,
+            protocol: :udp
+          },
+          %{
+            ip: "0.0.0.0",
+            announcedIp: "9.9.9.2",
+            port: 10112,
+            protocol: :udp
+          }
+        ]
+      })
+
+    {:ok, _transport} =
+      Router.create_webrtc_transport(router, %WebRtcTransport.Options{
+        webrtc_server: webrtc_server
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router, %WebRtcTransport.Options{
+        webrtc_server: webrtc_server,
+        enable_sctp: true,
+        enable_tcp: true,
+        enable_udp: true,
+        num_sctp_streams: %{
+          OS: 2048,
+          MIS: 2048
+        },
+        max_sctp_message_size: 1_000_000
+      })
+
+    assert WebRtcTransport.ice_role(transport1) === "controlled"
+    assert WebRtcTransport.ice_parameters(transport1)["iceLite"] === true
+
+    ice_candidates = Mediasoup.WebRtcTransport.ice_candidates(transport1)
+
+    assert match?(
+             [
+               %{
+                 "foundation" => "tcpcandidate",
+                 "ip" => "9.9.9.1",
+                 "protocol" => "tcp",
+                 "tcpType" => "passive",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "tcpcandidate",
+                 "ip" => "9.9.9.2",
+                 "protocol" => "tcp",
+                 "tcpType" => "passive",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "9.9.9.1",
+                 "protocol" => "udp",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "9.9.9.2",
+                 "protocol" => "udp",
+                 "type" => "host"
+               }
+             ],
+             ice_candidates
+           )
   end
 end

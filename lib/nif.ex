@@ -16,6 +16,9 @@ defmodule Mediasoup.Nif do
   defp worker_dump_async(_worker), do: :erlang.nif_error(:nif_not_loaded)
   defp worker_update_settings_async(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
 
+  defp worker_create_webrtc_server_async(_worker, _option),
+    do: :erlang.nif_error(:nif_not_loaded)
+
   ## router with async
   defp router_create_pipe_transport_async(
          _reference,
@@ -30,6 +33,9 @@ defmodule Mediasoup.Nif do
     do: :erlang.nif_error(:nif_not_loaded)
 
   defp router_dump_async(_router), do: :erlang.nif_error(:nif_not_loaded)
+
+  ## webrtc_server with async
+  defp webrtc_server_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
   ## pipe_transport with async
   defp pipe_transport_get_stats_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
@@ -158,6 +164,9 @@ defmodule Mediasoup.Nif do
   def worker_update_settings(worker, option),
     do: worker_update_settings_async(worker, option) |> handle_async_nif_result()
 
+  def worker_create_webrtc_server(worker, option),
+    do: worker_create_webrtc_server_async(worker, option) |> handle_async_nif_result()
+
   @spec worker_dump(reference) :: map | {:error}
   def worker_dump(worker),
     do: worker_dump_async(worker) |> handle_async_nif_result() |> unwrap_ok()
@@ -198,6 +207,17 @@ defmodule Mediasoup.Nif do
   @spec router_dump(reference) :: any
   def router_dump(router),
     do: router_dump_async(router) |> handle_async_nif_result() |> unwrap_ok()
+
+  # webrtc_server
+  @spec webrtc_server_id(reference) :: String.t()
+  def webrtc_server_id(_server), do: :erlang.nif_error(:nif_not_loaded)
+  @spec webrtc_server_close(reference) :: {:ok} | {:error}
+  def webrtc_server_close(_server), do: :erlang.nif_error(:nif_not_loaded)
+  @spec webrtc_server_closed(reference) :: boolean
+  def webrtc_server_closed(_server), do: :erlang.nif_error(:nif_not_loaded)
+  @spec webrtc_server_dump(reference) :: boolean
+  def webrtc_server_dump(server),
+    do: webrtc_server_dump_async(server) |> handle_async_nif_result() |> unwrap_ok()
 
   # webrtc_transport
   @spec webrtc_transport_id(reference) :: String.t()

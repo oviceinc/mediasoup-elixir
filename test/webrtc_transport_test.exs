@@ -57,4 +57,8 @@ defmodule MediasoupElixirWebRtcTransportTest do
   test "create_many_webrtc_transport" do
     IntegrateTest.WebRtcTransportTest.create_many_webrtc_transport()
   end
+
+  test "create_with_webrtc_server_succeeds", %{worker: worker} do
+    IntegrateTest.WebRtcTransportTest.create_with_webrtc_server_succeeds(worker)
+  end
 end

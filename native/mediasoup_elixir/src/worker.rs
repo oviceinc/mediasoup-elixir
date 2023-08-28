@@ -2,7 +2,10 @@ use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
 use crate::router::RouterOptionsStruct;
 use crate::task;
-use crate::{send_async_nif_result, send_msg_from_other_thread, RouterRef, WorkerRef};
+use crate::webrtc_server::WebRtcServerOptionsStruct;
+use crate::{
+    send_async_nif_result, send_msg_from_other_thread, RouterRef, WebRtcServerRef, WorkerRef,
+};
 use mediasoup::worker::{
     WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings, WorkerUpdateSettings,
 };
@@ -43,6 +46,25 @@ pub fn worker_create_router(
             .create_router(option)
             .await
             .map(RouterRef::resource)
+            .map_err(|error| format!("{}", error))
+    })
+}
+
+#[rustler::nif(name = "worker_create_webrtc_server_async")]
+pub fn worker_create_webrtc_server(
+    env: Env,
+    worker: ResourceArc<WorkerRef>,
+    option: WebRtcServerOptionsStruct,
+) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    let worker = worker.get_resource()?;
+    let option = option
+        .try_to_option()
+        .map_err(|error| Error::Term(Box::new(error.to_string())))?;
+    send_async_nif_result(env, async move {
+        worker
+            .create_webrtc_server(option)
+            .await
+            .map(WebRtcServerRef::resource)
             .map_err(|error| format!("{}", error))
     })
 }
