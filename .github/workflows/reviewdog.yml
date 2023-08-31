@@ -1,5 +1,6 @@
 name: reviewdog
 on: [pull_request]
+
 jobs:
   reviewdog:
     timeout-minutes: 40

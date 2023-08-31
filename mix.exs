@@ -1,7 +1,7 @@
 defmodule MediasoupElixir.MixProject do
   use Mix.Project
 
-  @version "0.6.0"
+  @version "0.6.0-dev"
   @repo "https://github.com/oviceinc/mediasoup-elixir"
   @description """
   Elixir wrapper for mediasoup
@@ -18,13 +18,13 @@ defmodule MediasoupElixir.MixProject do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
-        dialyzer: :dialyzer,
+        dialyzer: :test,
         "coveralls.detail": :test,
         "coveralls.lcov": :test,
         "coveralls.github": :test
       ],
       dialyzer: [
-        plt_add_apps: [:mix, :ex_unit],
+        plt_add_apps: [:mix, :ex_unit, :rustler],
         check_plt: true
       ],
       name: "mediasoup_elixir",
@@ -45,8 +45,9 @@ defmodule MediasoupElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:rustler, "~> 0.30.0"},
-      {:dialyxir, "~> 1.0", only: :dialyzer, runtime: false},
+      {:rustler, ">= 0.0.0", optional: true},
+      {:rustler_precompiled, "~> 0.6"},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18.0", only: :test},
       {:local_cluster, "~> 1.2", only: :test},
       # global_flags used in local_cluster
@@ -67,7 +68,7 @@ defmodule MediasoupElixir.MixProject do
         "native",
         "Cargo*",
         "README.md",
-        #        "checksum-*.exs",
+        "checksum-*.exs",
         "mix.exs"
       ]
     ]

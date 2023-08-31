@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  MIX_ENV: test
+  RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD: "true"
+
 jobs:
   test:
     timeout-minutes: 40
@@ -51,15 +55,15 @@ jobs:
       run: mix deps.get
     - name: Run check formatted on elixir
       run: mix format --check-formatted
-    - name: Run check formatted on rust
-      run: cargo fmt --all -- --check
     - name: start epmd daemon for cluster tests
       run: epmd -daemon
     - name: Run tests
       run: mix test
+    - name: Run tests with coverage
+      run: mix coveralls.github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Leak check test
       run: mix test --include leakcheck
-    - name: Run cargo test
-      run: cargo test
     - name: Run dialyzer
       run: mix dialyzer
