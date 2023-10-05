@@ -1,10 +1,16 @@
 defmodule MediasoupElixir.MixProject do
   use Mix.Project
 
+  @version "0.6.0"
+  @repo "https://github.com/oviceinc/mediasoup-elixir"
+  @description """
+  Elixir wrapper for mediasoup
+  """
+
   def project do
     [
       app: :mediasoup_elixir,
-      version: "0.6.0",
+      version: @version,
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -21,15 +27,11 @@ defmodule MediasoupElixir.MixProject do
         plt_add_apps: [:mix, :ex_unit],
         check_plt: true
       ],
-      # Docs
       name: "mediasoup_elixir",
-      source_url: "https://github.com/oviceinc/mediasoup-elixir",
-      homepage_url: "https://github.com/oviceinc/mediasoup-elixir",
-      docs: [
-        # The main page in the docs
-        main: "mediasoup_elixir",
-        extras: ["README.md"]
-      ]
+      description: @description,
+      package: package(),
+      source_url: @repo,
+      homepage_url: @repo
     ]
   end
 
@@ -51,6 +53,23 @@ defmodule MediasoupElixir.MixProject do
       {:global_flags, "~> 1.0", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.29", only: :dev, runtime: false}
+    ]
+  end
+
+  defp package do
+    [
+      name: "mediasoup_elixir",
+      maintainers: ["ovice"],
+      licenses: ["ISC"],
+      links: %{"Github" => @repo},
+      files: [
+        "lib",
+        "native",
+        "Cargo*",
+        "README.md",
+        #        "checksum-*.exs",
+        "mix.exs"
+      ]
     ]
   end
 
