@@ -112,10 +112,12 @@ where
         let result = future.await;
         match result {
             Ok(worker) => {
-                my_env.send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env))
+                let _ = my_env
+                    .send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env));
             }
             Err(err) => {
-                my_env.send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env))
+                let _ = my_env
+                    .send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env));
             }
         }
     })
