@@ -94,7 +94,7 @@ where
 {
     let mut my_env = OwnedEnv::new();
     task::spawn(async move {
-        my_env.send_and_clear(&pid, |env| value.encode(env));
+        let _ = my_env.send_and_clear(&pid, |env| value.encode(env));
     })
     .detach();
 }
