@@ -60,7 +60,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
                 }
             }
             // i8, i16, i32, i64, u8, u16, u32, u64, f32, f64 (i128, u128)
-            TermType::Number => {
+            TermType::Integer | TermType::Float => {
                 try_parse_number!(self.term, u64, visitor, visit_u64);
                 try_parse_number!(self.term, i64, visitor, visit_i64);
                 try_parse_number!(self.term, f64, visitor, visit_f64);
@@ -72,7 +72,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             // byte array
             TermType::Binary => self.deserialize_str(visitor),
             // seq
-            TermType::EmptyList | TermType::List => self.deserialize_seq(visitor),
+            TermType::List => self.deserialize_seq(visitor),
             // map
             // struct
             // struct variant
@@ -386,7 +386,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
             // unit variant
             TermType::Atom => Some((EnumType::Unit, self.term)),
             TermType::Binary => Some((EnumType::Unit, self.term)),
-            TermType::Number => Some((EnumType::Unit, self.term)),
+            TermType::Integer | TermType::Float => Some((EnumType::Unit, self.term)),
             // newtype or tuple variant
             TermType::Tuple => {
                 let tuple = util::validate_tuple(self.term, None)?;
@@ -420,7 +420,7 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for Deserializer<'a> {
         match self.term.get_type() {
             TermType::Atom => self.deserialize_str(visitor),
             TermType::Binary => self.deserialize_str(visitor),
-            TermType::Number => self.deserialize_i64(visitor),
+            TermType::Integer | TermType::Float => self.deserialize_i64(visitor),
             _ => Err(Error::ExpectedAtom),
         }
     }
@@ -697,7 +697,9 @@ impl<'de, 'a: 'de> de::Deserializer<'de> for VariantNameDeserializer<'a> {
                 visitor.visit_string(string)
             }
             TermType::Binary => visitor.visit_string(util::term_to_str(&self.variant)?),
-            TermType::Number => visitor.visit_string(util::term_to_str(&self.variant)?),
+            TermType::Integer | TermType::Float => {
+                visitor.visit_string(util::term_to_str(&self.variant)?)
+            }
             _ => Err(Error::ExpectedStringable),
         }
     }
