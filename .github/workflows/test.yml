@@ -25,7 +25,7 @@ jobs:
         elixir-version: '1.13.4' # Define the elixir version [required]
         otp-version: '25.3' # Define the OTP version [required]
     - name: Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '16'
     - name: Rust toolchain
