@@ -3,7 +3,16 @@ defmodule Mediasoup.Nif do
   # Nif interface for mediasoup
   # Do not use directly
 
-  use Rustler, otp_app: :mediasoup_elixir, crate: :mediasoup_elixir
+  version = Mix.Project.config()[:version]
+
+  use RustlerPrecompiled,
+    otp_app: :mediasoup_elixir,
+    crate: "mediasoup_elixir",
+    base_url: "https://github.com/oviceinc/mediasoup-elixir/releases/download/v#{version}",
+    force_build: System.get_env("RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD") in ["1", "true"],
+    version: version
+
+  #  use Rustler, otp_app: :mediasoup_elixir, crate: :mediasoup_elixir
 
   alias Mediasoup.{Worker, Router}
 

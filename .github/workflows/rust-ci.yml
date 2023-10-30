@@ -1,0 +1,48 @@
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'native/**'
+  pull_request:
+    paths:
+      - 'native/**'
+  workflow_dispatch:
+
+jobs:
+  lint-rust:
+    name: Lint Rust
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        manifest:
+          - native/mediasoup_elixir/Cargo.toml
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            native/mediasoup_elixir/target/
+            priv/native/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: run rustfmt
+        run: cargo fmt --manifest-path=${{ matrix.manifest }} --all -- --check
+
+      - name: run test
+        run: cargo test --manifest-path=${{ matrix.manifest }}
+#      - name: run clippy
+#        run: cargo clippy --manifest-path=${{ matrix.manifest }}

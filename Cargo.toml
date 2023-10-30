@@ -1,6 +1,0 @@
-[workspace]
-
-members = [
-    "native/mediasoup_elixir",
-    "native/mediasoup_elixir/local_deps/serde_rustler/serde_rustler/",
-]

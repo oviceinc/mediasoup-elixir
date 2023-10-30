@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = "0.30.0"
+rustler = { version = "0.30.0", default-features = false, features = ["derive"] }
 mediasoup = "0.11.4"
 mediasoup-sys = ">=0.5.4"
 futures-lite = "1.13.0"
@@ -22,3 +22,9 @@ serde-transcode = "1.1"
 serde_json = "1.0"
 serde_rustler = { path = "local_deps/serde_rustler/serde_rustler" }
 env_logger = "0.9.3"
+
+[features]
+default = ["nif_version_2_15"]
+nif_version_2_15 = ["rustler/nif_version_2_15"]
+nif_version_2_16 = ["rustler/nif_version_2_16"]
+nif_version_2_17 = ["rustler/nif_version_2_17"]
