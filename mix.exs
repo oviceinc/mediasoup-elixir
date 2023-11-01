@@ -66,7 +66,6 @@ defmodule MediasoupElixir.MixProject do
       files: [
         "lib",
         "native",
-        "Cargo*",
         "README.md",
         "checksum-*.exs",
         "mix.exs"
