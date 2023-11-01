@@ -24,7 +24,7 @@ defmodule Mediasoup.Nif do
 
     defp is_prebuild_target?() do
       case RustlerPrecompiled.target() do
-        {:ok, target} -> target in prebuild_targets()
+        {:ok, target} -> prebuild_targets() |> Enum.any?(&String.contains?(target, &1))
         _ -> false
       end
     end
