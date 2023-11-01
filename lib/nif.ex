@@ -5,11 +5,42 @@ defmodule Mediasoup.Nif do
 
   version = Mix.Project.config()[:version]
 
+  defmodule Build do
+    def prebuild_targets() do
+      # Anything that is difficult to prebuilt in cross compile is excluded for now.
+      [
+        #  "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "aarch64-unknown-linux-musl",
+        "arm-unknown-linux-gnueabihf",
+        "riscv64gc-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        #    "x86_64-pc-windows-gnu",
+        #    "x86_64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-linux-musl"
+      ]
+    end
+
+    defp is_prebuild_target?() do
+      case RustlerPrecompiled.target() do
+        {:ok, target} -> target in prebuild_targets()
+        _ -> false
+      end
+    end
+
+    def force_build?(),
+      do:
+        System.get_env("RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD") in ["1", "true"] or
+          not is_prebuild_target?()
+  end
+
   use RustlerPrecompiled,
     otp_app: :mediasoup_elixir,
     crate: "mediasoup_elixir",
     base_url: "https://github.com/oviceinc/mediasoup-elixir/releases/download/v#{version}",
-    force_build: System.get_env("RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD") in ["1", "true"],
+    force_build: Build.force_build?(),
+    targets: Build.prebuild_targets(),
     version: version
 
   #  use Rustler, otp_app: :mediasoup_elixir, crate: :mediasoup_elixir
