@@ -111,7 +111,10 @@ jobs:
           elixir-version: '1.13.4' # Define the elixir version [required]
           otp-version: '25.3' # Define the OTP version [required]
       - name: Install dependencies
-        run: mix deps.get
+        run: |
+          mix deps.get
+          # workaround error for metadata about current target for the module Mediasoup.Nif is not available.
+          mix compile --force  || true
 
       - name: download checksum files
         run: mix rustler_precompiled.download Mediasoup.Nif --all
