@@ -1,5 +1,7 @@
 # MediasoupElixir
- [Mediasoup](https://mediasoup.org/) port for Elixir
+[![Hex.pm version](https://img.shields.io/hexpm/v/mediasoup_elixir.svg)](https://hex.pm/packages/mediasoup_elixir)
+
+[Mediasoup](https://mediasoup.org/) port for Elixir
 
 ## Installation
 ### Requirement
