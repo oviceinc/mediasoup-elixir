@@ -9,7 +9,7 @@ defmodule Mediasoup.Nif do
     def prebuild_targets() do
       # Anything that is difficult to prebuilt in cross compile is excluded for now.
       [
-        #  "aarch64-apple-darwin",
+        "aarch64-apple-darwin",
         "aarch64-unknown-linux-gnu",
         "aarch64-unknown-linux-musl",
         "arm-unknown-linux-gnueabihf",

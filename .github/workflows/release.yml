@@ -34,8 +34,7 @@ jobs:
               use-cross: true,
               cross-version: "from-source",
             }
-            # we can't cross build for aarch64 on intel mac for now
-          #- { target: aarch64-apple-darwin, os: macos-11 }
+          - { target: aarch64-apple-darwin, os: macos-14 }
           - {
               target: riscv64gc-unknown-linux-gnu,
               os: ubuntu-20.04,
