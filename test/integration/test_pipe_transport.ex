@@ -238,21 +238,21 @@ defmodule IntegrateTest.PipeTransportTest do
 
     {:ok, transport1} =
       Router.create_webrtc_transport(router1, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        },
+        ],
         enableSctp: true
       })
 
     {:ok, transport2} =
       Router.create_webrtc_transport(router2, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        },
+        ],
         enableSctp: true
       })
 
@@ -779,22 +779,22 @@ defmodule IntegrateTest.PipeTransportTest do
 
     {:ok, transport1} =
       Router.create_webrtc_transport(router_a, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        },
+        ],
         enable_sctp: true,
         enable_srtp: true
       })
 
     {:ok, transport2} =
       Router.create_webrtc_transport(router_a, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        },
+        ],
         enable_sctp: true
       })
 

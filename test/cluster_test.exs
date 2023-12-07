@@ -160,20 +160,20 @@ defmodule ClusterTest do
 
     {:ok, transport1} =
       Router.create_webrtc_transport(router1, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        }
+        ]
       })
 
     {:ok, transport2} =
       Router.create_webrtc_transport(router2, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        }
+        ]
       })
 
     {worker, worker2, router1, router2, transport1, transport2}
