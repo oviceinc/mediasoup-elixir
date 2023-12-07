@@ -162,25 +162,26 @@ defmodule IntegrateTest.ProducerTest do
 
     {:ok, transport_1} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        }
+        ]
       })
 
     {:ok, transport_2} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        }
+        ]
       })
 
     {worker, router, transport_1, transport_2}
   end
 
+  @spec produce_succeeds(pid()) :: true
   def produce_succeeds(worker) do
     {_worker, router, transport_1, transport_2} = init(worker)
 

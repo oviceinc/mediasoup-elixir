@@ -21,11 +21,11 @@ defmodule IntegrateTest.SmokeTest do
 
     {:ok, transport} =
       Mediasoup.Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        },
+        ],
         enableSctp: true
       })
 

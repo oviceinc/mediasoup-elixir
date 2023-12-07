@@ -55,17 +55,17 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, _transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     {:ok, transport1} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
@@ -77,7 +77,7 @@ defmodule IntegrateTest.WebRtcTransportTest do
           %{
             ip: "127.0.0.1"
           }
-        },
+        ],
         enableTcp: true,
         preferUdp: true,
         enableSctp: true,
@@ -184,12 +184,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     assert is_binary(Mediasoup.Transport.id(transport))
@@ -207,11 +207,11 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:error, _message} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "8.8.8.8"
           }
-        }
+        ]
       })
   end
 
@@ -220,12 +220,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     stats = WebRtcTransport.get_stats(transport)
@@ -262,12 +262,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     #  dtlsParameters format example
@@ -315,12 +315,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     {:ok} = Mediasoup.WebRtcTransport.set_max_incoming_bitrate(transport, 100_000)
@@ -331,12 +331,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     {:ok} = Mediasoup.WebRtcTransport.set_max_outgoing_bitrate(transport, 100_000)
@@ -347,12 +347,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     previouse_ice_parameters = WebRtcTransport.ice_parameters(transport)
@@ -368,12 +368,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     Mediasoup.Transport.event(transport, self())
@@ -387,12 +387,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     Mediasoup.Transport.event(transport, self())
@@ -419,12 +419,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
       |> Enum.map(fn _ ->
         {:ok, transport} =
           Router.create_webrtc_transport(router, %{
-            listenIps: {
+            listenIps: [
               %{
                 ip: "127.0.0.1",
                 announcedIp: "9.9.9.1"
               }
-            }
+            ]
           })
 
         transport
@@ -433,12 +433,12 @@ defmodule IntegrateTest.WebRtcTransportTest do
     # no more available ports
     {:error, _} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1"
           }
-        }
+        ]
       })
 
     transports

@@ -22,11 +22,11 @@ defmodule IntegrateTest.DataProducerTest do
 
     {:ok, transport} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        },
+        ],
         enableSctp: true
       })
 

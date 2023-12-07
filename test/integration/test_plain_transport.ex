@@ -30,11 +30,11 @@ defmodule IntegrateTest.PlainTransportTest do
 
     {:ok, transport_1} =
       Router.create_webrtc_transport(router, %{
-        listenIps: {
+        listenIps: [
           %{
             ip: "127.0.0.1"
           }
-        }
+        ]
       })
 
     {worker, router, transport_1}
