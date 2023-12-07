@@ -29,7 +29,7 @@ defmodule MediasoupElixirWebRtcTransportTest do
     assert %Options{
              listen_infos: [
                %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp},
-               %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :tcp}
              ]
            } =
              Options.normalize(%Options{
@@ -46,14 +46,32 @@ defmodule MediasoupElixirWebRtcTransportTest do
     assert %Options{
              listen_infos: [
                %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp},
-               %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :tcp}
              ]
            } =
              Options.normalize(%Options{
                listen: [
                  %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp},
-                 %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+                 %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :tcp}
                ]
+             })
+
+    assert %Options{
+             listen_infos: [
+               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :tcp},
+               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp}
+             ]
+           } =
+             Options.normalize(%Options{
+               listen_ips: [
+                 %{
+                   ip: "127.0.0.1"
+                 }
+               ],
+               prefer_udp: false,
+               prefer_tcp: true,
+               enable_udp: true,
+               enable_tcp: true
              })
 
     assert %Options{
@@ -61,6 +79,47 @@ defmodule MediasoupElixirWebRtcTransportTest do
            } =
              Options.normalize(%Options{
                listen: %Mediasoup.WebRtcServer{id: "test"}
+             })
+
+    assert %Options{
+             listen_infos: []
+           } =
+             Options.normalize(%Options{
+               listen_ips: [
+                 %{
+                   ip: "127.0.0.1"
+                 }
+               ],
+               prefer_udp: true,
+               prefer_tcp: false,
+               enable_tcp: false,
+               enable_udp: false
+             })
+
+    assert %Options{
+             listen_infos: [
+               %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+             ]
+           } =
+             Options.normalize(%Options{
+               listen_ips: [
+                 %{
+                   ip: "127.0.0.1"
+                 }
+               ],
+               enable_tcp: true,
+               enable_udp: false
+             })
+
+    assert %Options{
+             listen_infos: [
+               %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+             ]
+           } =
+             Options.normalize(%Options{
+               listen_ips: ["127.0.0.1"],
+               enable_tcp: true,
+               enable_udp: false
              })
   end
 
