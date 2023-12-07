@@ -30,7 +30,9 @@ defmodule Mediasoup.PlainTransport do
 
     @type t :: %Options{
             listen_info: Mediasoup.transport_listen_info() | nil,
+            # deprecated use listen_info instead
             listen_ip: Mediasoup.transport_listen_ip() | nil,
+            # deprecated use listen_info instead
             port: integer() | nil,
             rtcp_mux: boolean | nil,
             comedia: boolean | nil,
@@ -45,6 +47,7 @@ defmodule Mediasoup.PlainTransport do
       map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
 
       %Options{
+        listen_info: map["listenInfo"],
         listen_ip: map["listenIp"],
         port: map["port"],
         rtcp_mux: map["rtcpMux"],

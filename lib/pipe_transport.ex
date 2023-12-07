@@ -28,7 +28,9 @@ defmodule Mediasoup.PipeTransport do
 
     @type t :: %Options{
             listen_info: Mediasoup.transport_listen_info() | nil,
+            # deprecated use listen_info instead
             listen_ip: Mediasoup.transport_listen_ip() | nil,
+            # deprecated use listen_info instead
             port: integer() | nil,
             enable_sctp: boolean | nil,
             num_sctp_streams: Mediasoup.num_sctp_streams() | nil,

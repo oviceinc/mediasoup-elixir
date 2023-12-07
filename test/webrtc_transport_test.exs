@@ -42,6 +42,26 @@ defmodule MediasoupElixirWebRtcTransportTest do
                prefer_tcp: false,
                enable_tcp: true
              })
+
+    assert %Options{
+             listen_infos: [
+               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp},
+               %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+             ]
+           } =
+             Options.normalize(%Options{
+               listen: [
+                 %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp},
+                 %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+               ]
+             })
+
+    assert %Options{
+             webrtc_server: %Mediasoup.WebRtcServer{id: "test"}
+           } =
+             Options.normalize(%Options{
+               listen: %Mediasoup.WebRtcServer{id: "test"}
+             })
   end
 
   test "create_succeeds", %{worker: worker} do

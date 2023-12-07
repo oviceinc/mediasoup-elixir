@@ -33,8 +33,11 @@ defmodule Mediasoup.WebRtcTransport do
               sctp_send_buffer_size: nil
 
     @type t :: %Options{
+            # deprecated use listen instead
             listen_ips: [Mediasoup.transport_listen_ip()] | nil,
+            # deprecated use listen instead
             listen_infos: [Mediasoup.transport_listen_info()] | nil,
+            # deprecated use listen instead
             webrtc_server: Mediasoup.WebRtcServer.t() | nil,
             listen:
               [Mediasoup.transport_listen_info()]
