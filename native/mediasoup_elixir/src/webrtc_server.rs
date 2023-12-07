@@ -1,10 +1,9 @@
 use crate::{atoms, json_serde::JsonSerdeWrap, send_async_nif_result, WebRtcServerRef};
 use mediasoup::{
-    prelude::{ListenInfo,  WebRtcServerListenInfos, WebRtcServerOptions},
+    prelude::{ListenInfo, WebRtcServerListenInfos, WebRtcServerOptions},
     webrtc_server::WebRtcServerId,
 };
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
-
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.WebRtcServer.Options"]

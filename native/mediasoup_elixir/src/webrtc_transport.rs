@@ -351,7 +351,9 @@ impl WebRtcTransportOptionsStruct {
                 Some(ip) => Ok(WebRtcTransportListenInfos::new(*ip)),
             }?;
 
-            let infos = listen_infos[1..].iter().fold(infos, |infos, ip| infos.insert(*ip));
+            let infos = listen_infos[1..]
+                .iter()
+                .fold(infos, |infos, ip| infos.insert(*ip));
 
             Ok(WebRtcTransportOptions::new(infos))
         } else {
