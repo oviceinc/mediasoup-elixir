@@ -125,8 +125,8 @@ defmodule Mediasoup.WebRtcTransport do
       protocols = protocols(option)
 
       listen_infos =
-        Enum.flat_map(protocols, fn protocol ->
-          Enum.map(listen_ips, fn listen_ip ->
+        Enum.flat_map(listen_ips, fn listen_ip ->
+          Enum.map(protocols, fn protocol ->
             %{
               protocol: protocol,
               ip: listen_ip.ip,

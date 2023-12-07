@@ -109,18 +109,6 @@ defmodule IntegrateTest.WebRtcTransportTest do
                  "type" => "host"
                },
                %{
-                 "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.2",
-                 "protocol" => "udp",
-                 "type" => "host"
-               },
-               %{
-                 "foundation" => "udpcandidate",
-                 "ip" => "127.0.0.1",
-                 "protocol" => "udp",
-                 "type" => "host"
-               },
-               %{
                  "foundation" => "tcpcandidate",
                  "ip" => "9.9.9.1",
                  "protocol" => "tcp",
@@ -128,10 +116,22 @@ defmodule IntegrateTest.WebRtcTransportTest do
                  "type" => "host"
                },
                %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "9.9.9.2",
+                 "protocol" => "udp",
+                 "type" => "host"
+               },
+               %{
                  "foundation" => "tcpcandidate",
                  "ip" => "9.9.9.2",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "127.0.0.1",
+                 "protocol" => "udp",
                  "type" => "host"
                },
                %{
