@@ -6,7 +6,7 @@ use crate::json_serde::JsonSerdeWrap;
 use crate::producer::ProducerOptionsStruct;
 use crate::{atoms, DataConsumerRef, DataProducerRef};
 use crate::{send_async_nif_result, ConsumerRef, PipeTransportRef, ProducerRef};
-use mediasoup::data_structures::{ListenIp, SctpState, TransportTuple};
+use mediasoup::data_structures::{ListenInfo, SctpState, TransportTuple};
 use mediasoup::pipe_transport::{PipeTransportOptions, PipeTransportRemoteParameters};
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
@@ -18,9 +18,7 @@ use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 #[module = "Mediasoup.PipeTransport.Options"]
 pub struct PipeTransportOptionsStruct {
     /// Listening IP address.
-    pub listen_ip: JsonSerdeWrap<ListenIp>,
-    /// Fixed port to listen on instead of selecting automatically from Worker's port range.
-    pub port: Option<u16>,
+    pub listen_info: JsonSerdeWrap<ListenInfo>,
     /// Create a SCTP association.
     /// Default false.
     pub enable_sctp: Option<bool>,
@@ -45,9 +43,7 @@ pub struct PipeTransportOptionsStruct {
 
 impl PipeTransportOptionsStruct {
     pub fn try_to_option(self) -> rustler::NifResult<PipeTransportOptions> {
-        let mut option = PipeTransportOptions::new(*self.listen_ip);
-
-        option.port = self.port;
+        let mut option = PipeTransportOptions::new(*self.listen_info);
 
         if let Some(enable_sctp) = self.enable_sctp {
             option.enable_sctp = enable_sctp;

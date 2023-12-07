@@ -16,21 +16,21 @@ defmodule Mediasoup.PlainTransport do
     https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransportOptions
     """
 
-    @enforce_keys [:listen_ip]
-    defstruct [
-      :listen_ip,
-      port: nil,
-      rtcp_mux: nil,
-      comedia: nil,
-      enable_sctp: nil,
-      num_sctp_streams: nil,
-      max_sctp_message_size: nil,
-      sctp_send_buffer_size: nil,
-      enable_srtp: nil
-    ]
+    @enforce_keys []
+    defstruct listen_ip: nil,
+              listen_info: nil,
+              port: nil,
+              rtcp_mux: nil,
+              comedia: nil,
+              enable_sctp: nil,
+              num_sctp_streams: nil,
+              max_sctp_message_size: nil,
+              sctp_send_buffer_size: nil,
+              enable_srtp: nil
 
     @type t :: %Options{
-            listen_ip: Mediasoup.transport_listen_ip(),
+            listen_info: Mediasoup.transport_listen_info() | nil,
+            listen_ip: Mediasoup.transport_listen_ip() | nil,
             port: integer() | nil,
             rtcp_mux: boolean | nil,
             comedia: boolean | nil,
@@ -56,6 +56,23 @@ defmodule Mediasoup.PlainTransport do
         enable_srtp: map["enableSrtp"]
       }
     end
+
+    def normalize(%Options{listen_ip: listen_ip, port: port} = option)
+        when not is_nil(listen_ip) do
+      normalize(%Options{
+        option
+        | listen_ip: nil,
+          port: nil,
+          listen_info: %{
+            protocol: "udp",
+            ip: listen_ip.ip,
+            announcedIp: listen_ip[:announcedIp],
+            port: port
+          }
+      })
+    end
+
+    def normalize(%Options{} = option), do: option
   end
 
   @type transport_stat :: map()

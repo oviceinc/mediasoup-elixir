@@ -109,6 +109,18 @@ defmodule IntegrateTest.WebRtcTransportTest do
                  "type" => "host"
                },
                %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "9.9.9.2",
+                 "protocol" => "udp",
+                 "type" => "host"
+               },
+               %{
+                 "foundation" => "udpcandidate",
+                 "ip" => "127.0.0.1",
+                 "protocol" => "udp",
+                 "type" => "host"
+               },
+               %{
                  "foundation" => "tcpcandidate",
                  "ip" => "9.9.9.1",
                  "protocol" => "tcp",
@@ -116,22 +128,10 @@ defmodule IntegrateTest.WebRtcTransportTest do
                  "type" => "host"
                },
                %{
-                 "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.2",
-                 "protocol" => "udp",
-                 "type" => "host"
-               },
-               %{
                  "foundation" => "tcpcandidate",
                  "ip" => "9.9.9.2",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
-                 "type" => "host"
-               },
-               %{
-                 "foundation" => "udpcandidate",
-                 "ip" => "127.0.0.1",
-                 "protocol" => "udp",
                  "type" => "host"
                },
                %{
@@ -167,9 +167,9 @@ defmodule IntegrateTest.WebRtcTransportTest do
     ] = ice_candidates
 
     assert priority1 > priority2
-    assert priority3 > priority2
+    assert priority2 > priority3
     assert priority3 > priority4
-    assert priority5 > priority4
+    assert priority4 > priority5
     assert priority5 > priority6
 
     assert "new" == WebRtcTransport.ice_state(transport1)

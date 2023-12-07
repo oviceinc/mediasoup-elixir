@@ -12,14 +12,14 @@ use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_consumer::DataConsumerOptions;
 use mediasoup::data_producer::DataProducerOptions;
 use mediasoup::data_structures::{
-    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, ListenIp, SctpState,
+    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, ListenInfo, SctpState,
     TransportTuple,
 };
 use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use mediasoup::webrtc_transport::{
-    TransportListenIps, WebRtcTransportOptions, WebRtcTransportRemoteParameters,
+    WebRtcTransportListenInfos, WebRtcTransportOptions, WebRtcTransportRemoteParameters,
 };
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 
@@ -328,7 +328,7 @@ pub fn webrtc_transport_event(
 #[derive(NifStruct)]
 #[module = "Mediasoup.WebRtcTransport.Options"]
 pub struct WebRtcTransportOptionsStruct {
-    listen_ips: Option<JsonSerdeWrap<Vec<ListenIp>>>,
+    listen_infos: Option<JsonSerdeWrap<Vec<ListenInfo>>>,
     webrtc_server: Option<ResourceArc<WebRtcServerRef>>,
     enable_udp: Option<bool>,
     enable_tcp: Option<bool>,
@@ -345,15 +345,15 @@ impl WebRtcTransportOptionsStruct {
         let mut option = if let Some(webrtc_server) = &self.webrtc_server {
             let webrtc_server = webrtc_server.get_resource()?;
             Ok(WebRtcTransportOptions::new_with_server(webrtc_server))
-        } else if let Some(listen_ips) = &self.listen_ips {
-            let ips = match listen_ips.first() {
+        } else if let Some(listen_infos) = &self.listen_infos {
+            let infos = match listen_infos.first() {
                 None => Err(rustler::Error::Term(Box::new("Rquired least one ip"))),
-                Some(ip) => Ok(TransportListenIps::new(*ip)),
+                Some(ip) => Ok(WebRtcTransportListenInfos::new(*ip)),
             }?;
 
-            let ips = listen_ips[1..].iter().fold(ips, |ips, ip| ips.insert(*ip));
+            let infos = listen_infos[1..].iter().fold(infos, |infos, ip| infos.insert(*ip));
 
-            Ok(WebRtcTransportOptions::new(ips))
+            Ok(WebRtcTransportOptions::new(infos))
         } else {
             Err(rustler::Error::Term(Box::new(
                 "Rquired least one ip or webrtc_server",
