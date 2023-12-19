@@ -5,7 +5,7 @@ use crate::producer::ProducerOptionsStruct;
 use crate::PlainTransportRef;
 use crate::{atoms, send_async_nif_result, ConsumerRef, ProducerRef};
 use mediasoup::consumer::ConsumerOptions;
-use mediasoup::data_structures::{ListenIp, SctpState, TransportTuple};
+use mediasoup::data_structures::{ListenInfo, SctpState, TransportTuple};
 use mediasoup::plain_transport::{PlainTransportOptions, PlainTransportRemoteParameters};
 use mediasoup::prelude::Transport;
 use mediasoup::producer::ProducerOptions;
@@ -17,8 +17,7 @@ use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 #[derive(NifStruct)]
 #[module = "Mediasoup.PlainTransport.Options"]
 pub struct PlainTransportOptionsStruct {
-    pub listen_ip: JsonSerdeWrap<ListenIp>,
-    pub port: Option<u16>,
+    pub listen_info: JsonSerdeWrap<ListenInfo>,
     pub rtcp_mux: Option<bool>,
     pub comedia: Option<bool>,
     pub enable_sctp: Option<bool>,
@@ -29,9 +28,7 @@ pub struct PlainTransportOptionsStruct {
 }
 impl PlainTransportOptionsStruct {
     pub fn try_to_option(&self) -> Result<PlainTransportOptions, &'static str> {
-        let mut option = PlainTransportOptions::new(*self.listen_ip);
-
-        option.port = self.port;
+        let mut option = PlainTransportOptions::new(*self.listen_info);
 
         if let Some(rtcp_mux) = self.rtcp_mux {
             option.rtcp_mux = rtcp_mux;

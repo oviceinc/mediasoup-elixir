@@ -167,9 +167,9 @@ defmodule IntegrateTest.WebRtcTransportTest do
     ] = ice_candidates
 
     assert priority1 > priority2
-    assert priority3 > priority2
+    assert priority2 > priority3
     assert priority3 > priority4
-    assert priority5 > priority4
+    assert priority4 > priority5
     assert priority5 > priority6
 
     assert "new" == WebRtcTransport.ice_state(transport1)

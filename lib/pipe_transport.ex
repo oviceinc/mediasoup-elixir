@@ -15,20 +15,22 @@ defmodule Mediasoup.PipeTransport do
     https://mediasoup.org/documentation/v3/mediasoup/api/#PipeTransportOptions
     """
 
-    @enforce_keys [:listen_ip]
-    defstruct [
-      :listen_ip,
-      port: nil,
-      enable_sctp: nil,
-      num_sctp_streams: nil,
-      max_sctp_message_size: nil,
-      sctp_send_buffer_size: nil,
-      enable_rtx: nil,
-      enable_srtp: nil
-    ]
+    @enforce_keys []
+    defstruct listen_ip: nil,
+              listen_info: nil,
+              port: nil,
+              enable_sctp: nil,
+              num_sctp_streams: nil,
+              max_sctp_message_size: nil,
+              sctp_send_buffer_size: nil,
+              enable_rtx: nil,
+              enable_srtp: nil
 
     @type t :: %Options{
-            listen_ip: Mediasoup.transport_listen_ip(),
+            listen_info: Mediasoup.transport_listen_info() | nil,
+            # deprecated use listen_info instead
+            listen_ip: Mediasoup.transport_listen_ip() | nil,
+            # deprecated use listen_info instead
             port: integer() | nil,
             enable_sctp: boolean | nil,
             num_sctp_streams: Mediasoup.num_sctp_streams() | nil,
@@ -37,6 +39,22 @@ defmodule Mediasoup.PipeTransport do
             enable_rtx: boolean | nil,
             enable_srtp: boolean | nil
           }
+    def normalize(%Options{listen_ip: listen_ip, port: port} = option)
+        when not is_nil(listen_ip) do
+      normalize(%Options{
+        option
+        | listen_ip: nil,
+          port: nil,
+          listen_info: %{
+            protocol: "udp",
+            ip: listen_ip.ip,
+            announcedIp: listen_ip[:announcedIp],
+            port: port
+          }
+      })
+    end
+
+    def normalize(%Options{} = option), do: option
   end
 
   @typedoc """
