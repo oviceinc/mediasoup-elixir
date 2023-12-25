@@ -8,21 +8,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         wget
 
 
-RUN printf '%s\n' "[binaries]"\
- "c = '${CROSS_TOOLCHAIN_PREFIX}gcc${CROSS_TOOLCHAIN_SUFFIX}'" \
- "cpp = '${CROSS_TOOLCHAIN_PREFIX}g++'" \
- "ar = '${CROSS_TOOLCHAIN_PREFIX}ar'" \
- "strip = '${CROSS_TOOLCHAIN_PREFIX}strip'" \
- "pkg-config = '${PKG_CONFIG_PATH}'" \
- "[properties]" \
-  "sys_root = '${CROSS_SYSROOT}'" \
-  "cmake_toolchain_file = '/opt/toolchain.cmake'" \
- "[host_machine]" \
- "system = 'linux'" \
- "cpu_family = '${CROSS_CMAKE_SYSTEM_PROCESSOR}'" \
- "cpu = '${CROSS_CMAKE_SYSTEM_PROCESSOR}'" \
- "endian = 'little'" \
- > /opt/meson_toolchain.txt
+RUN echo "[constants]\n\
+target_runner = `(python3 -c "print('${CROSS_TARGET_RUNNER}'.split())")`\n\
+[binaries]\n\
+ c = '${CROSS_TOOLCHAIN_PREFIX}gcc${CROSS_TOOLCHAIN_SUFFIX}'\n\
+ cpp = '${CROSS_TOOLCHAIN_PREFIX}g++'\n\
+ ar = '${CROSS_TOOLCHAIN_PREFIX}ar'\n\
+ strip = '${CROSS_TOOLCHAIN_PREFIX}strip'\n\
+ pkg-config = '${PKG_CONFIG_PATH}'\n\
+ exe_wrapper = target_runner\n\
+ [properties]\n\
+ sys_root = '${CROSS_SYSROOT}'\n\
+  cmake_toolchain_file = '/opt/toolchain.cmake'\n\
+ [host_machine]\n\
+ system = 'linux'\n\
+ cpu_family = '${CROSS_CMAKE_SYSTEM_PROCESSOR}'\n\
+ cpu = '${CROSS_CMAKE_SYSTEM_PROCESSOR}'\n\
+ endian = 'little'" > /opt/meson_toolchain.txt
+
 
 ENV MESON_ARGS="--cross-file /opt/meson_toolchain.txt"
 # mediasoup-rust needs CXX environment variables to link C++ standard libraries.
