@@ -126,7 +126,6 @@ defmodule Mediasoup.Router do
         %Router{pid: pid},
         %WebRtcTransport.Options{} = option
       ) do
-    option = WebRtcTransport.Options.normalize(option)
     GenServer.call(pid, {:create_webrtc_transport, [option]})
   end
 
@@ -144,7 +143,6 @@ defmodule Mediasoup.Router do
         %Router{pid: pid},
         %Mediasoup.PlainTransport.Options{} = option
       ) do
-    option = Mediasoup.PlainTransport.Options.normalize(option)
     GenServer.call(pid, {:create_plain_transport, [option]})
   end
 
@@ -255,7 +253,7 @@ defmodule Mediasoup.Router do
   https://mediasoup.org/documentation/v3/mediasoup/api/#router-createPipeTransport
   """
   def create_pipe_transport(%Router{pid: pid}, %PipeTransport.Options{} = option) do
-    GenServer.call(pid, {:create_pipe_transport, [PipeTransport.Options.normalize(option)]})
+    GenServer.call(pid, {:create_pipe_transport, [option]})
   end
 
   @spec can_consume?(t, String.t(), rtpCapabilities) :: boolean

@@ -18,36 +18,24 @@ defmodule Mediasoup.WebRtcTransport do
 
     @enforce_keys []
     defstruct listen_ips: nil,
-              listen_infos: nil,
-              webrtc_server: nil,
-              listen: nil,
-              port: nil,
-              enable_udp: true,
+              enable_udp: nil,
               enable_tcp: nil,
-              prefer_udp: false,
-              prefer_tcp: false,
+              prefer_udp: nil,
+              prefer_tcp: nil,
               initial_available_outgoing_bitrate: nil,
               enable_sctp: nil,
               num_sctp_streams: nil,
               max_sctp_message_size: nil,
-              sctp_send_buffer_size: nil
+              sctp_send_buffer_size: nil,
+              webrtc_server: nil
 
     @type t :: %Options{
-            # deprecated use listen instead
             listen_ips: [Mediasoup.transport_listen_ip()] | nil,
-            # deprecated use listen instead
-            listen_infos: [Mediasoup.transport_listen_info()] | nil,
-            # deprecated use listen instead
             webrtc_server: Mediasoup.WebRtcServer.t() | nil,
-            listen:
-              [Mediasoup.transport_listen_info()]
-              | Mediasoup.WebRtcServer.t()
-              | nil,
-            port: integer() | nil,
-            enable_udp: boolean,
+            enable_udp: boolean | nil,
             enable_tcp: boolean | nil,
-            prefer_udp: boolean,
-            prefer_tcp: boolean,
+            prefer_udp: boolean | nil,
+            prefer_tcp: boolean | nil,
             initial_available_outgoing_bitrate: integer() | nil,
             enable_sctp: boolean | nil,
             num_sctp_streams: Mediasoup.num_sctp_streams() | nil,
@@ -60,116 +48,17 @@ defmodule Mediasoup.WebRtcTransport do
 
       %Options{
         listen_ips: map["listenIps"],
-        listen_infos: map["listenInfos"],
-        webrtc_server: map["webrtcServer"],
-        listen: map["listen"],
-        enable_udp: Map.get(map, "enableUdp", true),
-        enable_tcp: Map.get(map, "enableTcp", nil),
-        prefer_udp: Map.get(map, "preferUdp", false),
-        prefer_tcp: Map.get(map, "preferTcp", false),
+        enable_udp: map["enableUdp"],
+        enable_tcp: map["enableTcp"],
+        prefer_udp: map["preferUdp"],
+        prefer_tcp: map["preferTcp"],
         initial_available_outgoing_bitrate: map["initialAvailableOutgoingBitrate"],
         enable_sctp: map["enableSctp"],
         num_sctp_streams: map["numSctpStreams"],
         max_sctp_message_size: map["maxSctpMessageSize"],
-        sctp_send_buffer_size: map["sctpSendBufferSize"]
+        sctp_send_buffer_size: map["sctpSendBufferSize"],
+        webrtc_server: map["webrtcServer"]
       }
-    end
-
-    defp protocols(%{
-           enable_udp: true,
-           enable_tcp: true,
-           prefer_udp: true
-         }) do
-      [:udp, :tcp]
-    end
-
-    defp protocols(%{
-           enable_udp: true,
-           enable_tcp: true,
-           prefer_tcp: true
-         }) do
-      [:tcp, :udp]
-    end
-
-    defp protocols(%{
-           enable_tcp: true
-         }) do
-      [:tcp]
-    end
-
-    defp protocols(%{
-           enable_udp: true
-         }) do
-      [:udp]
-    end
-
-    defp protocols(_), do: []
-
-    def normalize(
-          %Options{
-            listen_ips: listen_ips,
-            port: port
-          } = option
-        )
-        when not is_nil(listen_ips) do
-      listen_ips =
-        Enum.map(listen_ips, fn listen_ip ->
-          if is_binary(listen_ip) do
-            %{ip: listen_ip}
-          else
-            listen_ip
-          end
-        end)
-
-      # Convert deprecated TransportListenIps to TransportListenInfos.
-      protocols = protocols(option)
-
-      listen_infos =
-        Enum.flat_map(listen_ips, fn listen_ip ->
-          Enum.map(protocols, fn protocol ->
-            %{
-              protocol: protocol,
-              ip: listen_ip.ip,
-              announcedIp: listen_ip[:announcedIp],
-              port: port
-            }
-          end)
-        end)
-
-      normalize(%Options{
-        option
-        | listen_ips: nil,
-          listen_infos: listen_infos
-      })
-    end
-
-    def normalize(
-          %Options{
-            listen: %Mediasoup.WebRtcServer{} = listen
-          } = option
-        ) do
-      normalize(%Options{
-        option
-        | listen: nil,
-          webrtc_server: listen
-      })
-    end
-
-    def normalize(
-          %Options{
-            listen: listen
-          } = option
-        )
-        when not is_nil(listen) do
-      normalize(%Options{
-        option
-        | listen: nil,
-          listen_infos: listen
-      })
-    end
-
-    def normalize(option) do
-      option
     end
   end
 
