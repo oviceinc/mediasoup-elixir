@@ -51,9 +51,9 @@ jobs:
               use-cross: true,
               cross-version: "from-source",
             }
-    # Disabled for now because of build errors on windows
-    #      - { target: x86_64-pc-windows-gnu, os: windows-2022 }
-    #      - { target: x86_64-pc-windows-msvc, os: windows-2022 }
+          # Disabled for now because of build errors on windows
+          - { target: x86_64-pc-windows-gnu, os: windows-2022 }
+          - { target: x86_64-pc-windows-msvc, os: windows-2022 }
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
