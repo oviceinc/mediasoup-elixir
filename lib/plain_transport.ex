@@ -3,7 +3,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransport
   """
 
-  alias Mediasoup.{PlainTransport, Consumer, Producer, NifWrap, Nif}
+  alias Mediasoup.{TransportListenInfo, PlainTransport, Consumer, Producer, NifWrap, Nif}
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -29,7 +29,7 @@ defmodule Mediasoup.PlainTransport do
               enable_srtp: nil
 
     @type t :: %Options{
-            listen_info: Mediasoup.transport_listen_info() | nil,
+            listen_info: TransportListenInfo.t() | nil,
             # deprecated use listen_info instead
             listen_ip: Mediasoup.transport_listen_ip() | nil,
             # deprecated use listen_info instead
@@ -62,16 +62,13 @@ defmodule Mediasoup.PlainTransport do
 
     def normalize(%Options{listen_ip: listen_ip, port: port} = option)
         when not is_nil(listen_ip) do
+      listen_info = TransportListenInfo.create(listen_ip, "udp", port)
+
       normalize(%Options{
         option
         | listen_ip: nil,
           port: nil,
-          listen_info: %{
-            protocol: "udp",
-            ip: listen_ip.ip,
-            announcedIp: listen_ip[:announcedIp],
-            port: port
-          }
+          listen_info: listen_info
       })
     end
 

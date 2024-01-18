@@ -1,0 +1,16 @@
+defmodule Mediasoup.TransportListenInfoTest do
+  use ExUnit.Case
+
+  alias Mediasoup.TransportListenInfo
+
+  test "create" do
+    assert %Mediasoup.TransportListenInfo{announcedIp: "1.1.1.1", ip: "127.0.0.1", protocol: :udp} ==
+             TransportListenInfo.create(
+               %{ip: "127.0.0.1", announcedIp: "1.1.1.1"},
+               :udp
+             )
+
+    assert %Mediasoup.TransportListenInfo{ip: "127.0.0.1", protocol: :tcp} ==
+             TransportListenInfo.create("127.0.0.1", :tcp)
+  end
+end

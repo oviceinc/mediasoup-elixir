@@ -3,7 +3,17 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#WebRtcTransport
   """
 
-  alias Mediasoup.{WebRtcTransport, Consumer, Producer, NifWrap, Nif, DataConsumer, DataProducer}
+  alias Mediasoup.{
+    TransportListenInfo,
+    WebRtcTransport,
+    Consumer,
+    Producer,
+    NifWrap,
+    Nif,
+    DataConsumer,
+    DataProducer
+  }
+
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -112,14 +122,7 @@ defmodule Mediasoup.WebRtcTransport do
           } = option
         )
         when not is_nil(listen_ips) do
-      listen_ips =
-        Enum.map(listen_ips, fn listen_ip ->
-          if is_binary(listen_ip) do
-            %{ip: listen_ip}
-          else
-            listen_ip
-          end
-        end)
+      listen_ips = Enum.map(listen_ips, &TransportListenInfo.normalize_listen_ip/1)
 
       # Convert deprecated TransportListenIps to TransportListenInfos.
       protocols = protocols(option)
