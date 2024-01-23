@@ -2,7 +2,17 @@ defmodule Mediasoup.PipeTransport do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#PipeTransport
   """
-  alias Mediasoup.{PipeTransport, Consumer, DataConsumer, Producer, DataProducer, NifWrap, Nif}
+  alias Mediasoup.{
+    TransportListenInfo,
+    PipeTransport,
+    Consumer,
+    DataConsumer,
+    Producer,
+    DataProducer,
+    NifWrap,
+    Nif
+  }
+
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -41,16 +51,13 @@ defmodule Mediasoup.PipeTransport do
           }
     def normalize(%Options{listen_ip: listen_ip, port: port} = option)
         when not is_nil(listen_ip) do
+      listen_info = TransportListenInfo.create(listen_ip, "udp", port)
+
       normalize(%Options{
         option
         | listen_ip: nil,
           port: nil,
-          listen_info: %{
-            protocol: "udp",
-            ip: listen_ip.ip,
-            announcedIp: listen_ip[:announcedIp],
-            port: port
-          }
+          listen_info: listen_info
       })
     end
 
