@@ -43,7 +43,7 @@ pub struct PipeTransportOptionsStruct {
 
 impl PipeTransportOptionsStruct {
     pub fn try_to_option(self) -> rustler::NifResult<PipeTransportOptions> {
-        let mut option = PipeTransportOptions::new(*self.listen_info);
+        let mut option = PipeTransportOptions::new(self.listen_info.clone());
 
         if let Some(enable_sctp) = self.enable_sctp {
             option.enable_sctp = enable_sctp;

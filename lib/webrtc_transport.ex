@@ -133,7 +133,7 @@ defmodule Mediasoup.WebRtcTransport do
             %{
               protocol: protocol,
               ip: listen_ip.ip,
-              announcedIp: listen_ip[:announcedIp],
+              announcedAddress: listen_ip[:announcedAddress],
               port: port
             }
           end)
@@ -169,6 +169,18 @@ defmodule Mediasoup.WebRtcTransport do
         | listen: nil,
           listen_infos: listen
       })
+    end
+
+    def normalize(
+          %Options{
+            listen_infos: listen_infos
+          } = option
+        )
+        when not is_nil(listen_infos) do
+      %Options{
+        option
+        | listen_infos: Enum.map(listen_infos, &TransportListenInfo.normalize/1)
+      }
     end
 
     def normalize(option) do

@@ -14,7 +14,7 @@ defmodule Mediasoup.WebRtcServer do
   @type webrtc_server_listen_info :: %{
           :protocol => :udp | :tcp,
           :ip => String.t(),
-          optional(:announcedIp) => String.t() | nil,
+          optional(:announcedAddress) => String.t() | nil,
           port: integer() | nil
         }
 
@@ -31,6 +31,31 @@ defmodule Mediasoup.WebRtcServer do
     @type t :: %Options{
             listen_infos: [WebRtcServer.webrtc_server_listen_info()]
           }
+
+    defp normalize_listen_info(
+           %{
+             announcedIp: announcedIp
+           } = info
+         ) do
+      info |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announcedIp)
+    end
+
+    defp normalize_listen_info(info) do
+      info
+    end
+
+    def normalize(
+          %Options{
+            listen_infos: listen_infos
+          } = option
+        ) do
+      listen_infos = for info <- listen_infos, into: [], do: normalize_listen_info(info)
+
+      %{
+        option
+        | listen_infos: listen_infos
+      }
+    end
   end
 
   @type create_option :: map | Options.t()

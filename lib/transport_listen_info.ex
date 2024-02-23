@@ -10,7 +10,7 @@ defmodule Mediasoup.TransportListenInfo do
   @type t :: %{
           :ip => String.t(),
           :protocol => :tcp | :udp,
-          optional(:announcedIp) => String.t() | nil,
+          optional(:announcedAddress) => String.t() | nil,
           optional(:port) => integer(),
           optional(:sendBufferSize) => integer(),
           optional(:recvBufferSize) => integer()
@@ -18,16 +18,29 @@ defmodule Mediasoup.TransportListenInfo do
 
   @enforce_keys [:ip, :protocol]
 
-  defstruct [:ip, :protocol, :announcedIp, :port, :sendBufferSize, :recvBufferSize]
+  defstruct [:ip, :protocol, :announcedAddress, :port, :sendBufferSize, :recvBufferSize]
 
   def normalize_listen_ip(ip) when is_binary(ip) do
     %{:ip => ip}
   end
 
-  def normalize_listen_ip(%{ip: _} = ip) do
-    ip
+  def normalize_listen_ip(%{ip: _, announcedIp: announcedIp} = ip) do
+    ip |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announcedIp)
   end
 
+  def normalize_listen_ip(%{ip: _} = info) do
+    info
+  end
+
+  def normalize(%{announcedIp: announcedIp} = listen_infos) do
+    listen_infos |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announcedIp)
+  end
+
+  def normalize(info) do
+    info
+  end
+
+  @spec create(binary() | %{:ip => any(), optional(any()) => any()}, any()) :: struct()
   def create(ip, protocol) do
     listen_ip = normalize_listen_ip(ip)
     struct(__MODULE__, Map.merge(listen_ip, %{:protocol => protocol}))

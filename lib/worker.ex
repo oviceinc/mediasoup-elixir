@@ -131,7 +131,7 @@ defmodule Mediasoup.Worker do
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createWebRtcServer
   """
   def create_webrtc_server(pid, %WebRtcServer.Options{} = option) do
-    GenServer.call(pid, {:create_webrtc_server, [option]})
+    GenServer.call(pid, {:create_webrtc_server, [WebRtcServer.Options.normalize(option)]})
   end
 
   @spec update_settings(t, update_option) :: {:ok} | {:error}

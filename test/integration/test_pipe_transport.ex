@@ -491,7 +491,7 @@ defmodule IntegrateTest.PipeTransportTest do
         port: 60_000
       })
 
-    assert match?(%{"localPort" => 60000}, PipeTransport.tuple(pipe_transport))
+    assert match?(%{local_port: 60000}, PipeTransport.tuple(pipe_transport))
 
     assert is_binary(Transport.id(pipe_transport))
     Transport.close(pipe_transport)

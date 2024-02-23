@@ -14,7 +14,7 @@ defmodule MediasoupElixirWebRtcTransportTest do
     alias Mediasoup.WebRtcTransport.Options
 
     assert %Options{
-             listen_infos: [%{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp}]
+             listen_infos: [%{ip: "127.0.0.1", announcedAddress: nil, port: nil, protocol: :udp}]
            } =
              Options.normalize(
                Options.from_map(%{
@@ -28,8 +28,8 @@ defmodule MediasoupElixirWebRtcTransportTest do
 
     assert %Options{
              listen_infos: [
-               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp},
-               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :tcp}
+               %{ip: "127.0.0.1", announcedAddress: nil, port: nil, protocol: :udp},
+               %{ip: "127.0.0.1", announcedAddress: nil, port: nil, protocol: :tcp}
              ]
            } =
              Options.normalize(%Options{
@@ -45,8 +45,8 @@ defmodule MediasoupElixirWebRtcTransportTest do
 
     assert %Options{
              listen_infos: [
-               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp},
-               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :tcp}
+               %{ip: "127.0.0.1", announcedAddress: nil, port: nil, protocol: :udp},
+               %{ip: "127.0.0.1", announcedAddress: nil, port: nil, protocol: :tcp}
              ]
            } =
              Options.normalize(%Options{
@@ -58,8 +58,8 @@ defmodule MediasoupElixirWebRtcTransportTest do
 
     assert %Options{
              listen_infos: [
-               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :tcp},
-               %{ip: "127.0.0.1", announcedIp: nil, port: nil, protocol: :udp}
+               %{ip: "127.0.0.1", announcedAddress: nil, port: nil, protocol: :tcp},
+               %{ip: "127.0.0.1", announcedAddress: nil, port: nil, protocol: :udp}
              ]
            } =
              Options.normalize(%Options{
@@ -98,7 +98,7 @@ defmodule MediasoupElixirWebRtcTransportTest do
 
     assert %Options{
              listen_infos: [
-               %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+               %{announcedAddress: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
              ]
            } =
              Options.normalize(%Options{
@@ -113,7 +113,7 @@ defmodule MediasoupElixirWebRtcTransportTest do
 
     assert %Options{
              listen_infos: [
-               %{announcedIp: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
+               %{announcedAddress: nil, ip: "127.0.0.1", port: nil, protocol: :tcp}
              ]
            } =
              Options.normalize(%Options{

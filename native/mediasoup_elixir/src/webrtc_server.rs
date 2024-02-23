@@ -15,12 +15,12 @@ impl WebRtcServerOptionsStruct {
     pub fn try_to_option(&self) -> Result<WebRtcServerOptions, &'static str> {
         let infos = match self.listen_infos.first() {
             None => Err("Rquired least one listen info"),
-            Some(info) => Ok(WebRtcServerListenInfos::new(*info)),
+            Some(info) => Ok(WebRtcServerListenInfos::new(info.clone())),
         }?;
 
         let infos = self.listen_infos[1..]
             .iter()
-            .fold(infos, |infos, info| infos.insert(*info));
+            .fold(infos, |infos, info| infos.insert(info.clone()));
 
         Ok(WebRtcServerOptions::new(infos))
     }
