@@ -4,9 +4,13 @@ defmodule Mediasoup.TransportListenInfoTest do
   alias Mediasoup.TransportListenInfo
 
   test "create" do
-    assert %Mediasoup.TransportListenInfo{announcedIp: "1.1.1.1", ip: "127.0.0.1", protocol: :udp} ==
+    assert %Mediasoup.TransportListenInfo{
+             announcedAddress: "1.1.1.1",
+             ip: "127.0.0.1",
+             protocol: :udp
+           } ==
              TransportListenInfo.create(
-               %{ip: "127.0.0.1", announcedIp: "1.1.1.1"},
+               %{ip: "127.0.0.1", announcedAddress: "1.1.1.1"},
                :udp
              )
 

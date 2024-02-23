@@ -32,3 +32,19 @@ defimpl Mediasoup.Transport, for: [Mediasoup.WebRtcTransport, Mediasoup.PipeTran
   def event(transport, listener), do: @for.event(transport, listener)
   def dump(transport), do: @for.dump(transport)
 end
+
+defmodule TransportTuple do
+  @enforce_keys [:local_port, :protocol, :local_address]
+  defstruct [:local_port, :protocol, :local_address, remote_ip: nil, remote_port: nil]
+
+  @type t :: %TransportTuple{
+          :local_address => String.t(),
+          :local_port => integer(),
+          :remote_ip => String.t(),
+          :remote_port => integer(),
+          :protocol => :udp | :tcp
+        }
+
+  def protocol_to_atom("udp"), do: :udp
+  def protocol_to_atom("tcp"), do: :tcp
+end
