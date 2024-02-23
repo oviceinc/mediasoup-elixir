@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustler = { version = "0.30.0", default-features = false, features = ["derive"] }
+rustler = { version = "0.31.0", default-features = false, features = ["derive"] }
 mediasoup = "0.12.0"
 mediasoup-sys = ">=0.6.0"
 futures-lite = "2.0.0"
