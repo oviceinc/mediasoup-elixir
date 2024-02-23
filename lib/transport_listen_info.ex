@@ -24,16 +24,16 @@ defmodule Mediasoup.TransportListenInfo do
     %{:ip => ip}
   end
 
-  def normalize_listen_ip(%{ip: _, announcedIp: announcedIp} = ip) do
-    ip |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announcedIp)
+  def normalize_listen_ip(%{ip: _, announcedIp: announced_ip} = ip) do
+    ip |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announced_ip)
   end
 
   def normalize_listen_ip(%{ip: _} = info) do
     info
   end
 
-  def normalize(%{announcedIp: announcedIp} = listen_infos) do
-    listen_infos |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announcedIp)
+  def normalize(%{announcedIp: announced_ip} = listen_infos) do
+    listen_infos |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announced_ip)
   end
 
   def normalize(info) do

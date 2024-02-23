@@ -34,10 +34,10 @@ defmodule Mediasoup.WebRtcServer do
 
     defp normalize_listen_info(
            %{
-             announcedIp: announcedIp
+             announcedIp: announced_ip
            } = info
          ) do
-      info |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announcedIp)
+      info |> Map.delete(:announcedIp) |> Map.put(:announcedAddress, announced_ip)
     end
 
     defp normalize_listen_info(info) do

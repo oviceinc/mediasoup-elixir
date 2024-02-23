@@ -34,6 +34,9 @@ defimpl Mediasoup.Transport, for: [Mediasoup.WebRtcTransport, Mediasoup.PipeTran
 end
 
 defmodule TransportTuple do
+  @moduledoc """
+  https://mediasoup.org/documentation/v3/mediasoup/api/#TransportTuple
+  """
   @enforce_keys [:local_port, :protocol, :local_address]
   defstruct [:local_port, :protocol, :local_address, remote_ip: nil, remote_port: nil]
 
