@@ -652,8 +652,8 @@ defmodule IntegrateTest.ConsumerTest do
         enable_rtx: false
       })
 
-    assert Consumer.dump(video_consumer)["rtpStream"]["params"]["useNack"] == true
-    assert Consumer.dump(video_consumer2)["rtpStream"]["params"]["useNack"] == false
+    assert List.first(Consumer.dump(video_consumer)["rtpStreams"])["params"]["useNack"] == true
+    assert List.first(Consumer.dump(video_consumer2)["rtpStreams"])["params"]["useNack"] == false
 
     Mediasoup.WebRtcTransport.close(transport_1)
     Mediasoup.WebRtcTransport.close(transport_2)
