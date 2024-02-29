@@ -264,8 +264,11 @@ pub struct ConsumerOptionsStruct {
     producer_id: JsonSerdeWrap<ProducerId>,
     rtp_capabilities: JsonSerdeWrap<RtpCapabilities>,
     paused: Option<bool>,
+    enable_rtx: Option<bool>,
+    ignore_dtx: Option<bool>,
     preferred_layers: JsonSerdeWrap<Option<ConsumerLayers>>,
     pipe: Option<bool>,
+    mid: Option<String>,
 }
 
 impl ConsumerOptionsStruct {
@@ -274,10 +277,15 @@ impl ConsumerOptionsStruct {
         if let Some(paused) = self.paused {
             option.paused = paused;
         }
+        option.enable_rtx = self.enable_rtx;
+        if let Some(ignore_dtx) = self.ignore_dtx {
+            option.ignore_dtx = ignore_dtx;
+        }
         option.preferred_layers = *self.preferred_layers;
         if let Some(pipe) = self.pipe {
             option.pipe = pipe;
         }
+        option.mid = self.mid.clone();
         option
     }
 }

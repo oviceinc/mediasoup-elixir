@@ -344,14 +344,26 @@ defmodule Mediasoup.Consumer do
     https://mediasoup.org/documentation/v3/mediasoup/api/#ConsumerOptions
     """
     @enforce_keys [:producer_id, :rtp_capabilities]
-    defstruct [:producer_id, rtp_capabilities: nil, paused: nil, preferred_layers: nil, pipe: nil]
+    defstruct [
+      :producer_id,
+      rtp_capabilities: nil,
+      paused: nil,
+      preferred_layers: nil,
+      enable_rtx: nil,
+      ignore_dtx: nil,
+      pipe: nil,
+      mid: nil
+    ]
 
     @type t :: %Options{
             producer_id: String.t(),
             rtp_capabilities: map(),
             paused: boolean | nil,
             preferred_layers: term | nil,
-            pipe: boolean | nil
+            enable_rtx: boolean | nil,
+            ignore_dtx: boolean | nil,
+            pipe: boolean | nil,
+            mid: String.t() | nil
           }
 
     def from_map(%{} = map) do
@@ -362,7 +374,10 @@ defmodule Mediasoup.Consumer do
         rtp_capabilities: map["rtpCapabilities"],
         paused: map["paused"],
         preferred_layers: map["preferredLayers"],
-        pipe: map["pipe"]
+        enable_rtx: map["enableRtx"],
+        ignore_dtx: map["ignoreDtx"],
+        pipe: map["pipe"],
+        mid: map["mid"]
       }
     end
   end
