@@ -33,6 +33,10 @@ defmodule ConsumerTest do
     IntegrateTest.ConsumerTest.get_stats_succeeds(worker)
   end
 
+  test "enable_rtx_option", %{worker: worker} do
+    IntegrateTest.ConsumerTest.enable_rtx_option(worker)
+  end
+
   test "pause_resume_succeeds", %{worker: worker} do
     IntegrateTest.ConsumerTest.pause_resume_succeeds(worker)
   end

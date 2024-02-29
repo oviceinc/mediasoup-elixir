@@ -633,6 +633,34 @@ defmodule IntegrateTest.ConsumerTest do
     Mediasoup.Worker.close(worker)
   end
 
+  def enable_rtx_option(worker) do
+    {worker, router, transport_1, transport_2} = init(worker)
+    {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
+    assert true === Router.can_consume?(router, video_producer.id, consumer_device_capabilities())
+
+    {:ok, video_consumer} =
+      WebRtcTransport.consume(transport_1, %Consumer.Options{
+        producer_id: video_producer.id,
+        rtp_capabilities: consumer_device_capabilities(),
+        enable_rtx: true
+      })
+
+    {:ok, video_consumer2} =
+      WebRtcTransport.consume(transport_2, %Consumer.Options{
+        producer_id: video_producer.id,
+        rtp_capabilities: consumer_device_capabilities(),
+        enable_rtx: false
+      })
+
+    assert Consumer.dump(video_consumer)["rtpStream"]["params"]["useNack"] == true
+    assert Consumer.dump(video_consumer2)["rtpStream"]["params"]["useNack"] == false
+
+    Mediasoup.WebRtcTransport.close(transport_1)
+    Mediasoup.WebRtcTransport.close(transport_2)
+    Mediasoup.Router.close(router)
+    Mediasoup.Worker.close(worker)
+  end
+
   def close(worker) do
     {_worker, _router, transport_1, transport_2} = init(worker)
     {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
