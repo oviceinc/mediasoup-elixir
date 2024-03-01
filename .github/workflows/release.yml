@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - patch_v0.7.5
     tags:
       - "*"
 
