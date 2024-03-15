@@ -750,7 +750,7 @@ dependencies = [
  "hash_hasher",
  "log",
  "lru",
- "mediasoup-sys 0.7.2",
+ "mediasoup-sys",
  "nohash-hasher",
  "once_cell",
  "parking_lot 0.12.1",
@@ -776,18 +776,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mediasoup-sys"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f715152787364e26c2a558c33df06ae9c5548043d4ef0cffe36fdb96e984a7c9"
-dependencies = [
- "planus",
- "planus-codegen",
- "planus-translation",
- "serde",
-]
-
-[[package]]
 name = "mediasoup_elixir"
 version = "0.9.0"
 dependencies = [
@@ -795,7 +783,6 @@ dependencies = [
  "env_logger",
  "futures-lite 2.2.0",
  "mediasoup",
- "mediasoup-sys 0.8.0",
  "num_cpus",
  "once_cell",
  "rustler",
