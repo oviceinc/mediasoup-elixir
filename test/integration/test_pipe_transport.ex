@@ -491,7 +491,7 @@ defmodule IntegrateTest.PipeTransportTest do
         port: 60_000
       })
 
-    assert match?(%{"localPort" => 60000}, PipeTransport.tuple(pipe_transport))
+    assert match?(%{local_port: 60000}, PipeTransport.tuple(pipe_transport))
 
     assert is_binary(Transport.id(pipe_transport))
     Transport.close(pipe_transport)
@@ -830,11 +830,10 @@ defmodule IntegrateTest.PipeTransportTest do
         listen_ip: %{ip: "127.0.0.1"}
       })
 
-    %{"localPort" => remote_port, "localIp" => remote_ip} =
+    %{local_port: remote_port, local_address: remote_ip} =
       PipeTransport.tuple(pipe_transport_remote)
 
-    %{"localPort" => local_port, "localIp" => local_ip} =
-      PipeTransport.tuple(pipe_transport_local)
+    %{local_port: local_port, local_address: local_ip} = PipeTransport.tuple(pipe_transport_local)
 
     {:ok} = PipeTransport.connect(pipe_transport_local, %{ip: remote_ip, port: remote_port})
     {:ok} = PipeTransport.connect(pipe_transport_remote, %{ip: local_ip, port: local_port})
@@ -966,14 +965,14 @@ defmodule IntegrateTest.PipeTransportTest do
         enable_sctp: true
       })
 
-    %{"localPort" => remote_port, "localIp" => remote_ip} =
+    %{local_address: remote_address, local_port: remote_port} =
       PipeTransport.tuple(pipe_transport_remote)
 
-    %{"localPort" => local_port, "localIp" => local_ip} =
+    %{local_address: local_address, local_port: local_port} =
       PipeTransport.tuple(pipe_transport_local)
 
-    {:ok} = PipeTransport.connect(pipe_transport_local, %{ip: remote_ip, port: remote_port})
-    {:ok} = PipeTransport.connect(pipe_transport_remote, %{ip: local_ip, port: local_port})
+    {:ok} = PipeTransport.connect(pipe_transport_local, %{ip: remote_address, port: remote_port})
+    {:ok} = PipeTransport.connect(pipe_transport_remote, %{ip: local_address, port: local_port})
 
     {:ok, pipe_data_consumer} =
       Transport.consume_data(pipe_transport_local, %DataConsumer.Options{

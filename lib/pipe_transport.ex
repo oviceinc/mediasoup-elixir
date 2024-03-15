@@ -182,15 +182,25 @@ defmodule Mediasoup.PipeTransport do
   @typedoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#TransportTuple
   """
-  @type transport_tuple :: map
-
-  @spec tuple(t) :: transport_tuple() | {:error, :terminated}
+  @spec tuple(t) :: TransportTuple.t() | {:error, :terminated}
   @doc """
   The transport tuple. It refers to both RTP and RTCP since pipe transports use RTCP-mux by design.
   https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-tuple
   """
   def tuple(%PipeTransport{pid: pid}) do
-    GenServer.call(pid, {:tuple, []})
+    case GenServer.call(pid, {:tuple, []}) do
+      {:error, reason} ->
+        {:error, reason}
+
+      tuple ->
+        %TransportTuple{
+          local_port: tuple["localPort"],
+          protocol: TransportTuple.protocol_to_atom(tuple["protocol"]),
+          local_address: tuple["localAddress"],
+          remote_ip: tuple["remoteIp"],
+          remote_port: tuple["remotePort"]
+        }
+    end
   end
 
   @spec sctp_parameters(Mediasoup.PipeTransport.t()) ::

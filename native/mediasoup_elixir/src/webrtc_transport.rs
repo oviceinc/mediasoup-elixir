@@ -315,7 +315,7 @@ pub fn webrtc_transport_event(
                     pid.clone(),
                     (
                         atoms::on_ice_selected_tuple_change(),
-                        JsonSerdeWrap::new(*arg),
+                        JsonSerdeWrap::new(arg.clone()),
                     ),
                 );
             })
@@ -348,12 +348,12 @@ impl WebRtcTransportOptionsStruct {
         } else if let Some(listen_infos) = &self.listen_infos {
             let infos = match listen_infos.first() {
                 None => Err(rustler::Error::Term(Box::new("Rquired least one ip"))),
-                Some(ip) => Ok(WebRtcTransportListenInfos::new(*ip)),
+                Some(ip) => Ok(WebRtcTransportListenInfos::new(ip.clone())),
             }?;
 
             let infos = listen_infos[1..]
                 .iter()
-                .fold(infos, |infos, ip| infos.insert(*ip));
+                .fold(infos, |infos, ip| infos.insert(ip.clone()));
 
             Ok(WebRtcTransportOptions::new(infos))
         } else {

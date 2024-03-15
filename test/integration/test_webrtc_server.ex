@@ -110,27 +110,27 @@ defmodule IntegrateTest.WebRtcServerTest do
              [
                %{
                  "foundation" => "tcpcandidate",
-                 "ip" => "9.9.9.1",
+                 "address" => "9.9.9.1",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
                  "type" => "host"
                },
                %{
                  "foundation" => "tcpcandidate",
-                 "ip" => "9.9.9.2",
+                 "address" => "9.9.9.2",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
                  "type" => "host"
                },
                %{
                  "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.1",
+                 "address" => "9.9.9.1",
                  "protocol" => "udp",
                  "type" => "host"
                },
                %{
                  "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.2",
+                 "address" => "9.9.9.2",
                  "protocol" => "udp",
                  "type" => "host"
                }

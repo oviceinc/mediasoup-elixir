@@ -104,39 +104,39 @@ defmodule IntegrateTest.WebRtcTransportTest do
              [
                %{
                  "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.1",
+                 "address" => "9.9.9.1",
                  "protocol" => "udp",
                  "type" => "host"
                },
                %{
                  "foundation" => "tcpcandidate",
-                 "ip" => "9.9.9.1",
+                 "address" => "9.9.9.1",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
                  "type" => "host"
                },
                %{
                  "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.2",
+                 "address" => "9.9.9.2",
                  "protocol" => "udp",
                  "type" => "host"
                },
                %{
                  "foundation" => "tcpcandidate",
-                 "ip" => "9.9.9.2",
+                 "address" => "9.9.9.2",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
                  "type" => "host"
                },
                %{
                  "foundation" => "udpcandidate",
-                 "ip" => "127.0.0.1",
+                 "address" => "127.0.0.1",
                  "protocol" => "udp",
                  "type" => "host"
                },
                %{
                  "foundation" => "tcpcandidate",
-                 "ip" => "127.0.0.1",
+                 "address" => "127.0.0.1",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
                  "type" => "host"
@@ -507,27 +507,27 @@ defmodule IntegrateTest.WebRtcTransportTest do
              [
                %{
                  "foundation" => "tcpcandidate",
-                 "ip" => "9.9.9.1",
+                 "address" => "9.9.9.1",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
                  "type" => "host"
                },
                %{
                  "foundation" => "tcpcandidate",
-                 "ip" => "9.9.9.2",
+                 "address" => "9.9.9.2",
                  "protocol" => "tcp",
                  "tcpType" => "passive",
                  "type" => "host"
                },
                %{
                  "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.1",
+                 "address" => "9.9.9.1",
                  "protocol" => "udp",
                  "type" => "host"
                },
                %{
                  "foundation" => "udpcandidate",
-                 "ip" => "9.9.9.2",
+                 "address" => "9.9.9.2",
                  "protocol" => "udp",
                  "type" => "host"
                }

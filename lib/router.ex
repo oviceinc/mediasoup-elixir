@@ -508,8 +508,8 @@ defmodule Mediasoup.Router do
              enable_rtx: enable_rtx,
              enable_srtp: enable_srtp
            }) do
-      %{"localPort" => local_port} = PipeTransport.tuple(local_pipe_transport)
-      %{"localPort" => remote_port} = PipeTransport.tuple(remote_pipe_transport)
+      %{local_port: local_port} = PipeTransport.tuple(local_pipe_transport)
+      %{local_port: remote_port} = PipeTransport.tuple(remote_pipe_transport)
 
       with {:ok} <-
              PipeTransport.connect(local_pipe_transport, %{ip: remote_ip, port: remote_port}),

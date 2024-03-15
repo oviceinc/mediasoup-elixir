@@ -220,7 +220,7 @@ defmodule IntegrateTest.PlainTransportTest do
     assert transport.id == PlainTransport.id(transport)
 
     assert match?(
-             %{"localIp" => "127.0.0.1", "localPort" => _, "protocol" => "udp"},
+             %{local_address: "127.0.0.1", local_port: _, protocol: :udp},
              PlainTransport.tuple(transport)
            )
   end
@@ -234,7 +234,7 @@ defmodule IntegrateTest.PlainTransportTest do
     assert transport.id == PlainTransport.id(transport)
 
     assert match?(
-             %{"localIp" => "127.0.0.1", "localPort" => _, "protocol" => "udp"},
+             %{local_address: "127.0.0.1", local_port: _, protocol: :udp},
              PlainTransport.tuple(transport)
            )
 
@@ -253,7 +253,7 @@ defmodule IntegrateTest.PlainTransportTest do
     assert transport.id == PlainTransport.id(transport)
 
     assert match?(
-             %{"localIp" => "127.0.0.1", "localPort" => _, "protocol" => "udp"},
+             %{local_address: "127.0.0.1", local_port: _, protocol: :udp},
              PlainTransport.tuple(transport)
            )
 
@@ -335,7 +335,7 @@ defmodule IntegrateTest.PlainTransportTest do
                  "timestamp" => _,
                  "transportId" => ^transport_id,
                  "tuple" => %{
-                   "localIp" => "127.0.0.1",
+                   "localAddress" => "127.0.0.1",
                    "localPort" => _,
                    "protocol" => "udp"
                  }

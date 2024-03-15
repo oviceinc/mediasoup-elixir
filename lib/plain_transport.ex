@@ -96,7 +96,19 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-tuple
   """
   def tuple(%PlainTransport{pid: pid}) do
-    GenServer.call(pid, {:tuple, []})
+    case GenServer.call(pid, {:tuple, []}) do
+      {:error, reason} ->
+        {:error, reason}
+
+      tuple ->
+        %TransportTuple{
+          local_port: tuple["localPort"],
+          protocol: TransportTuple.protocol_to_atom(tuple["protocol"]),
+          local_address: tuple["localAddress"],
+          remote_ip: tuple["remoteIp"],
+          remote_port: tuple["remotePort"]
+        }
+    end
   end
 
   @spec sctp_parameters(t) :: map() | {:error, :terminated}
