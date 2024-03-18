@@ -162,7 +162,7 @@ defmodule Mediasoup.Consumer do
     GenServer.call(pid, {:current_layers, []})
   end
 
-  @spec get_stats(t) :: [term()]
+  @spec get_stats(t) :: list(transport_stat) | {:error, reason :: term()}
   @doc """
   Returns current RTC statistics of the consumer.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-getStats
