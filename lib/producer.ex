@@ -108,7 +108,7 @@ defmodule Mediasoup.Producer do
     GenServer.call(pid, {:score, []})
   end
 
-  @spec get_stats(t) :: list() | {:error}
+  @spec get_stats(t) :: list() | {:error, reason :: term()}
   @doc """
   Returns current RTC statistics of the producer.
   Check the [RTC Statistics](https://mediasoup.org/documentation/v3/mediasoup/rtc-statistics/)

@@ -377,7 +377,7 @@ defmodule Mediasoup.WebRtcTransport do
   end
 
   @type transport_stat :: map
-  @spec get_stats(t) :: list(transport_stat) | {:error, :terminated}
+  @spec get_stats(t) :: list(transport_stat) | {:error, reason :: term()}
   @doc """
   Returns current RTC statistics of the WebRTC transport.
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-getStats
