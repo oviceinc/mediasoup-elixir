@@ -2,7 +2,7 @@ use crate::atoms;
 use rustler::{Env, NifResult, Term};
 
 fn to_json(term: Term) -> Result<std::vec::Vec<u8>, serde_json::Error> {
-    let de = serde_rustler::Deserializer::from(term);
+    let de = rustler::serde::Deserializer::from(term);
     let mut writer = Vec::with_capacity(128);
     let mut se = serde_json::Serializer::new(&mut writer);
     serde_transcode::transcode(de, &mut se)?;
@@ -11,7 +11,7 @@ fn to_json(term: Term) -> Result<std::vec::Vec<u8>, serde_json::Error> {
 }
 fn from_json(env: Env, vec: Vec<u8>) -> NifResult<Term> {
     let mut de = serde_json::Deserializer::from_slice(&vec);
-    let se = serde_rustler::Serializer::from(env);
+    let se = rustler::serde::Serializer::from(env);
     serde_transcode::transcode(&mut de, se).map_err(|err| err.into())
 }
 
@@ -107,40 +107,3 @@ mod tests {
         assert_eq!("value", p);
     }
 }
-
-/*
-use serde_rustler::{from_term, to_term};
-pub struct SerdeWrap<T>(T);
-
-impl<T> SerdeWrap<T> {
-    pub fn new(value: T) -> Self {
-        Self(value)
-    }
-}
-
-impl<'de, 'a: 'de, T> rustler::Encoder for SerdeWrap<T>
-where
-    T: serde::Serialize,
-{
-    fn encode<'b>(&self, env: Env<'b>) -> Term<'b> {
-        return match to_term(env, &self.0) {
-            Ok(term) => term,
-            Err(error) => rustler::Encoder::encode(&(atoms::error(),format!("{}", error)), env), // TODO:
-        };
-    }
-}
-impl<'a, T> rustler::Decoder<'a> for SerdeWrap<T>
-where
-    T: serde::de::DeserializeOwned + serde::Serialize + 'a,
-{
-    fn decode(term: Term<'a>) -> rustler::NifResult<Self> {
-        let v: T = from_term(term)?;
-        Ok(Self(v))
-    }
-}
-impl<T> From<T> for SerdeWrap<T> {
-    fn from(v: T) -> Self {
-        Self(v)
-    }
-}
-*/
