@@ -45,7 +45,7 @@ defmodule SerdeRustlerTests.Mixfile do
   end
 
   defp deps() do
-    [ {:rustler,        "~> 0.31.0"},
+    [ {:rustler,        "~> 0.32.0"},
     {:jason,            "~> 1.1"},
     ]
   end
