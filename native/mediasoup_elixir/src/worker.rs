@@ -221,10 +221,10 @@ impl WorkerSettingsStruct {
         if let Some(log_tags) = &self.log_tags {
             value.log_tags = log_tags_from_strings(log_tags)?
         }
-        let default_range = value.rtc_ports_range;
+        let default_range = value.rtc_port_range;
         let minport = self.rtc_min_port.unwrap_or(*default_range.start());
         let maxport = self.rtc_max_port.unwrap_or(*default_range.end());
-        value.rtc_ports_range = minport..=maxport;
+        value.rtc_port_range = minport..=maxport;
 
         if let (Some(cert), Some(private)) =
             (&self.dtls_certificate_file, &self.dtls_private_key_file)
