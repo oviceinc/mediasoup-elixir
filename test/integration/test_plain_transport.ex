@@ -358,6 +358,25 @@ defmodule IntegrateTest.PlainTransportTest do
     assert {:ok} == PlainTransport.connect(transport, %{ip: "127.0.0.1", port: 4000})
   end
 
+  def create_with_port(worker) do
+    {_worker, router} = init(worker)
+
+    {:ok, transport} =
+      Router.create_plain_transport(router, %{
+        listenIp: %{
+          ip: "127.0.0.1"
+        },
+        port: 9999,
+        rtcpMux: false,
+        comedia: true
+      })
+
+    assert match?(
+             %{local_port: 9999, protocol: :udp, local_address: "127.0.0.1"},
+             PlainTransport.tuple(transport)
+           )
+  end
+
   def close_event(worker) do
     {_worker, router} = init(worker)
 
