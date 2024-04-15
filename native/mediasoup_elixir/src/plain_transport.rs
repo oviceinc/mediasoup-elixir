@@ -18,6 +18,7 @@ use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
 #[module = "Mediasoup.PlainTransport.Options"]
 pub struct PlainTransportOptionsStruct {
     pub listen_info: JsonSerdeWrap<ListenInfo>,
+    pub rtcp_listen_info: JsonSerdeWrap<Option<ListenInfo>>,
     pub rtcp_mux: Option<bool>,
     pub comedia: Option<bool>,
     pub enable_sctp: Option<bool>,
@@ -30,6 +31,7 @@ impl PlainTransportOptionsStruct {
     pub fn try_to_option(&self) -> Result<PlainTransportOptions, &'static str> {
         let mut option = PlainTransportOptions::new(self.listen_info.clone());
 
+        option.rtcp_listen_info = self.rtcp_listen_info.clone();
         if let Some(rtcp_mux) = self.rtcp_mux {
             option.rtcp_mux = rtcp_mux;
         }

@@ -19,6 +19,7 @@ defmodule Mediasoup.PlainTransport do
     @enforce_keys []
     defstruct listen_ip: nil,
               listen_info: nil,
+              rtcp_listen_info: nil,
               port: nil,
               rtcp_mux: nil,
               comedia: nil,
@@ -30,6 +31,7 @@ defmodule Mediasoup.PlainTransport do
 
     @type t :: %Options{
             listen_info: TransportListenInfo.t() | nil,
+            rtcp_listen_info: TransportListenInfo.t() | nil,
             # deprecated use listen_info instead
             listen_ip: Mediasoup.transport_listen_ip() | nil,
             # deprecated use listen_info instead
@@ -48,6 +50,7 @@ defmodule Mediasoup.PlainTransport do
 
       %Options{
         listen_info: map["listenInfo"],
+        rtcp_listen_info: map["rtcpListenInfo"],
         listen_ip: map["listenIp"],
         port: map["port"],
         rtcp_mux: map["rtcpMux"],
@@ -62,13 +65,15 @@ defmodule Mediasoup.PlainTransport do
 
     def normalize(%Options{listen_ip: listen_ip, port: port} = option)
         when not is_nil(listen_ip) do
-      listen_info = TransportListenInfo.create(listen_ip, "udp", port)
-
       normalize(%Options{
         option
         | listen_ip: nil,
           port: nil,
-          listen_info: listen_info
+          listen_info:
+            Map.get(option, :listen_info) || TransportListenInfo.create(listen_ip, "udp", port),
+          rtcp_listen_info:
+            Map.get(option, :rtcp_listen_info) ||
+              TransportListenInfo.create(listen_ip, "udp", nil)
       })
     end
 
@@ -90,7 +95,7 @@ defmodule Mediasoup.PlainTransport do
     id
   end
 
-  @spec tuple(t) :: map() | {:error, :terminated}
+  @spec tuple(t) :: TransportTuple.t() | {:error, :terminated}
   @doc """
   The transport tuple. If RTCP-mux is enabled (rtcpMux is set), this tuple refers to both RTP and RTCP.
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-tuple

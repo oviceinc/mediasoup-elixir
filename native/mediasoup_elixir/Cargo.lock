@@ -845,7 +845,7 @@ dependencies = [
 
 [[package]]
 name = "mediasoup_elixir"
-version = "0.9.0"
+version = "3.14.1"
 dependencies = [
  "async-executor",
  "env_logger",

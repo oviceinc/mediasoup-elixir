@@ -26,6 +26,10 @@ defmodule MediasoupElixirPlainTransportTest do
     IntegrateTest.PlainTransportTest.get_stats_succeeds(worker)
   end
 
+  test "create_with_port", %{worker: worker} do
+    IntegrateTest.PlainTransportTest.create_with_port(worker)
+  end
+
   test "connect_succeeds", %{worker: worker} do
     IntegrateTest.PlainTransportTest.connect_succeeds(worker)
   end
