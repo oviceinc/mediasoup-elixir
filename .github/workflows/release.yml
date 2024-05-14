@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - prebuild_tests
     tags:
       - "*"
 
@@ -42,7 +43,12 @@ jobs:
               cross-version: "from-source",
             }
           - { target: x86_64-apple-darwin, os: macos-11 }
-          - { target: x86_64-unknown-linux-gnu, os: ubuntu-20.04 }
+          - {
+              target: x86_64-unknown-linux-gnu,
+              os: ubuntu-20.04,
+              use-cross: true,
+              cross-version: "from-source",
+            }
           - {
               target: x86_64-unknown-linux-musl,
               os: ubuntu-20.04,
