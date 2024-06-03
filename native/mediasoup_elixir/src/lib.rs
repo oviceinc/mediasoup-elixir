@@ -4,6 +4,7 @@ mod data_consumer;
 mod data_producer;
 mod data_structure;
 mod json_serde;
+mod logger;
 mod macros;
 mod pipe_transport;
 mod plain_transport;
@@ -76,6 +77,7 @@ use data_producer::{
     data_producer_close, data_producer_closed, data_producer_event, data_producer_id,
     data_producer_sctp_stream_parameters, data_producer_type,
 };
+use logger::{debug_logger, init_env_logger, set_logger_proxy_process};
 
 use futures_lite::future;
 use mediasoup::consumer::Consumer;
@@ -279,14 +281,17 @@ rustler::init! {
         data_producer_closed,
         data_producer_event,
 
+        // logger proxy,
+
+        init_env_logger,
+        set_logger_proxy_process,
+        debug_logger,
 
     ],
     load = on_load
 }
 
 fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
-    env_logger::init();
-
     // This macro will take care of defining and initializing a new resource
     // object type.
     rustler::resource!(WorkerRef, env);

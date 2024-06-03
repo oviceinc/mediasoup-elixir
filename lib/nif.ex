@@ -473,6 +473,14 @@ defmodule Mediasoup.Nif do
   @spec data_producer_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def data_producer_event(_producer, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
 
+  # logger proxy
+  def set_logger_proxy_process(_pid, _max_level), do: :erlang.nif_error(:nif_not_loaded)
+
+  # for test
+  def debug_logger(_level, _msg), do: :erlang.nif_error(:nif_not_loaded)
+
+  def init_env_logger(), do: :erlang.nif_error(:nif_not_loaded)
+
   defp handle_async_nif_result(result) do
     case result do
       {:ok, result_key} ->

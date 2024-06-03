@@ -3,6 +3,7 @@ defmodule IntegrateTest.SmokeTest do
   Smoke test with dializer check
   """
   def smoke() do
+    Mediasoup.LoggerProxy.start_link(max_level: :info)
     {:ok, worker} = Mediasoup.Worker.start_link()
 
     {:ok, router} =

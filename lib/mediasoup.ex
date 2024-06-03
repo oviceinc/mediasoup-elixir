@@ -17,4 +17,12 @@ defmodule Mediasoup do
 
   @typedoc "https://mediasoup.org/documentation/v3/mediasoup/api/#TransportListenInfo"
   @type transport_listen_info :: Mediasoup.TransportListenInfo.t()
+
+  @doc """
+  Since the format of env_logger is different from that of elixir, it is recommended to use Mediasoup.LoggerProxy instead.
+  Initialize the logger with env logger. Same as the env_logger::init() call.
+  For more information on the env logger, please refer to the Rust crate documentation.
+  https://docs.rs/env_logger/latest/env_logger/
+  """
+  def init_env_logger(), do: Mediasoup.Nif.init_env_logger()
 end

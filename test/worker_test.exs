@@ -4,6 +4,11 @@ defmodule WorkerTest do
   setup_all :worker_leak_setup_all
   setup :verify_worker_leak_on_exit!
 
+  setup do
+    Mediasoup.LoggerProxy.start_link(max_level: :info)
+    :ok
+  end
+
   test "create_worker_with_default_settings" do
     IntegrateTest.WorkerTest.create_worker_with_default_settings()
   end
