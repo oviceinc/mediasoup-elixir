@@ -1,6 +1,6 @@
 [package]
 name = "mediasoup_elixir"
-version = "3.14.1"
+version = "3.14.2"
 authors = []
 edition = "2021"
 
