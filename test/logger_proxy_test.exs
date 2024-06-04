@@ -5,7 +5,7 @@ defmodule Mediasoup.LoggerProxyTest do
   alias Mediasoup.LoggerProxy
 
   test "max_level off " do
-    Mediasoup.LoggerProxy.start_link(max_level: :off)
+    LoggerProxy.start_link(max_level: :off)
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:error, "test")
@@ -24,7 +24,7 @@ defmodule Mediasoup.LoggerProxyTest do
   end
 
   test "max_level error " do
-    Mediasoup.LoggerProxy.start_link(max_level: :error)
+    LoggerProxy.start_link(max_level: :error)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:error, "test")
@@ -43,7 +43,7 @@ defmodule Mediasoup.LoggerProxyTest do
   end
 
   test " max_level warn" do
-    Mediasoup.LoggerProxy.start_link(max_level: :warn)
+    LoggerProxy.start_link(max_level: :warn)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:warn, "test")
@@ -57,7 +57,7 @@ defmodule Mediasoup.LoggerProxyTest do
   end
 
   test " max_level info" do
-    Mediasoup.LoggerProxy.start_link(max_level: :info)
+    LoggerProxy.start_link(max_level: :info)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:info, "test")
@@ -71,7 +71,7 @@ defmodule Mediasoup.LoggerProxyTest do
   end
 
   test " max_level debug" do
-    Mediasoup.LoggerProxy.start_link(max_level: :debug)
+    LoggerProxy.start_link(max_level: :debug)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:info, "test")

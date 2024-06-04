@@ -1,5 +1,6 @@
 defmodule MediasoupElixirWebRtcServerTest do
   use ExUnit.Case
+  import ExUnit.CaptureLog
 
   import Mediasoup.TestUtil
   setup_all :worker_leak_setup_all
@@ -20,6 +21,8 @@ defmodule MediasoupElixirWebRtcServerTest do
   end
 
   test "unavailable_infos_fails", %{worker: worker} do
-    IntegrateTest.WebRtcServerTest.unavailable_infos_fails(worker)
+    assert capture_log(fn ->
+             IntegrateTest.WebRtcServerTest.unavailable_infos_fails(worker)
+           end) =~ "address already in use"
   end
 end
