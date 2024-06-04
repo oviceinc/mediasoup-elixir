@@ -74,7 +74,7 @@ jobs:
 
       - name: Build the project
         id: build-crate
-        uses: philss/rustler-precompiled-action@v1.1.3
+        uses: philss/rustler-precompiled-action@v1.1.4
         with:
           project-name: mediasoup_elixir
           project-version: ${{ env.PROJECT_VERSION }}
