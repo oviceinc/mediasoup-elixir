@@ -1,11 +1,13 @@
 defmodule MediasoupElixirWebRtcServerTest do
   use ExUnit.Case
+  import ExUnit.CaptureLog
 
   import Mediasoup.TestUtil
   setup_all :worker_leak_setup_all
   setup :verify_worker_leak_on_exit!
 
   setup do
+    Mediasoup.LoggerProxy.start_link(max_level: :info)
     {:ok, worker} = Mediasoup.Worker.start_link()
     %{worker: worker}
   end
@@ -19,6 +21,8 @@ defmodule MediasoupElixirWebRtcServerTest do
   end
 
   test "unavailable_infos_fails", %{worker: worker} do
-    IntegrateTest.WebRtcServerTest.unavailable_infos_fails(worker)
+    assert capture_log(fn ->
+             IntegrateTest.WebRtcServerTest.unavailable_infos_fails(worker)
+           end) =~ "address already in use"
   end
 end

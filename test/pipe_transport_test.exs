@@ -1,7 +1,9 @@
 defmodule PipeTransportTest do
   use ExUnit.Case
+  import ExUnit.CaptureLog
 
   setup do
+    Mediasoup.LoggerProxy.start_link(max_level: :info)
     {:ok, worker} = Mediasoup.Worker.start_link()
 
     %{worker: worker}

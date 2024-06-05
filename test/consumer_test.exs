@@ -2,6 +2,11 @@ defmodule ConsumerTest do
   use ExUnit.Case
 
   setup do
+    children = [
+      {Mediasoup.LoggerProxy, max_level: :info}
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one, name: ConsumerTest.Supervisor)
     {:ok, worker} = Mediasoup.Worker.start_link()
 
     %{worker: worker}

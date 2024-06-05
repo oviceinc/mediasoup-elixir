@@ -813,6 +813,7 @@ dependencies = [
  "async-executor",
  "env_logger",
  "futures-lite 2.3.0",
+ "log",
  "mediasoup",
  "num_cpus",
  "once_cell",

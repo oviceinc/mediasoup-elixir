@@ -6,6 +6,7 @@ defmodule MediasoupElixirPlainTransportTest do
   setup :verify_worker_leak_on_exit!
 
   setup do
+    Mediasoup.LoggerProxy.start_link(max_level: :info)
     {:ok, worker} = Mediasoup.Worker.start_link()
     %{worker: worker}
   end

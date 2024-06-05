@@ -3,6 +3,7 @@ defmodule IntegrateTest.PipeTransportTest do
   test for Consumer with dializer check
   """
   import ExUnit.Assertions
+  import ExUnit.CaptureLog
 
   alias Mediasoup.{
     PipeTransport,
@@ -256,7 +257,7 @@ defmodule IntegrateTest.PipeTransportTest do
         enableSctp: true
       })
 
-    {worker, router1, router2, transport1, transport2}
+    {worker2, router1, router2, transport1, transport2}
   end
 
   def pipe_to_router_succeeds_with_audio(worker) do
@@ -749,31 +750,34 @@ defmodule IntegrateTest.PipeTransportTest do
 
     Consumer.event(video_consumer, self())
 
-    Producer.resume(video_producer)
+    # ignore log RTC::Producer::RequestKeyFrame() | given mappedSsrc not found, ignoring
+    capture_log(fn ->
+      Producer.resume(video_producer)
 
-    assert_receive {:on_producer_resume}
+      assert_receive {:on_producer_resume}
 
-    assert false == video_consumer |> Consumer.producer_paused?()
-    assert false == video_consumer |> Consumer.paused?()
+      assert false == video_consumer |> Consumer.producer_paused?()
+      assert false == video_consumer |> Consumer.paused?()
 
-    Producer.pause(video_producer)
+      Producer.pause(video_producer)
 
-    assert_receive {:on_producer_pause}
+      assert_receive {:on_producer_pause}
+    end)
 
     assert true == video_consumer |> Consumer.producer_paused?()
     assert false == video_consumer |> Consumer.paused?()
   end
 
-  def pipe_to_router_called_twice_generates_single_pair(worker) do
-    {worker, _router1, _router2, _transport1, _transport2} = init(worker)
+  def pipe_to_router_called_twice_generates_single_pair(worker1) do
+    {worker2, _router1, _router2, _transport1, _transport2} = init(worker1)
 
     {:ok, router_a} =
-      Worker.create_router(worker, %{
+      Worker.create_router(worker1, %{
         mediaCodecs: media_codecs()
       })
 
     {:ok, router_b} =
-      Worker.create_router(worker, %{
+      Worker.create_router(worker2, %{
         mediaCodecs: media_codecs()
       })
 
