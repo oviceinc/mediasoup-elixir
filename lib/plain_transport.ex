@@ -191,7 +191,7 @@ defmodule Mediasoup.PlainTransport do
     GenServer.call(pid, {:produce, [option]})
   end
 
-  def produce(transport, %{} = option) do
+  def produce(%PlainTransport{} = transport, %{} = option) do
     produce(transport, Producer.Options.from_map(option))
   end
 
@@ -205,7 +205,7 @@ defmodule Mediasoup.PlainTransport do
     GenServer.call(pid, {:consume, [option]})
   end
 
-  def consume(transport, option) do
+  def consume(%PlainTransport{} = transport, option) do
     consume(transport, Consumer.Options.from_map(option))
   end
 
