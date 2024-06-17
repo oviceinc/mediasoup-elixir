@@ -229,7 +229,7 @@ defmodule Mediasoup.WebRtcTransport do
     GenServer.call(pid, {:consume, [option]})
   end
 
-  def consume(transport, option) do
+  def consume(%WebRtcTransport{} = transport, option) do
     consume(transport, Consumer.Options.from_map(option))
   end
 
@@ -243,7 +243,7 @@ defmodule Mediasoup.WebRtcTransport do
     GenServer.call(pid, {:consume_data, [option]})
   end
 
-  def consume_data(transport, option) do
+  def consume_data(%WebRtcTransport{} = transport, option) do
     consume_data(transport, DataConsumer.Options.from_map(option))
   end
 
@@ -257,7 +257,7 @@ defmodule Mediasoup.WebRtcTransport do
     GenServer.call(pid, {:produce, [option]})
   end
 
-  def produce(transport, %{} = option) do
+  def produce(%WebRtcTransport{} = transport, %{} = option) do
     produce(transport, Producer.Options.from_map(option))
   end
 
@@ -271,7 +271,7 @@ defmodule Mediasoup.WebRtcTransport do
     GenServer.call(pid, {:produce_data, [option]})
   end
 
-  def produce_data(transport, %{} = option) do
+  def produce_data(%WebRtcTransport{} = transport, %{} = option) do
     produce_data(transport, DataProducer.Options.from_map(option))
   end
 

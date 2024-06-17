@@ -130,7 +130,7 @@ defmodule Mediasoup.Router do
     GenServer.call(pid, {:create_webrtc_transport, [option]})
   end
 
-  def create_webrtc_transport(router, %{} = option) do
+  def create_webrtc_transport(%Router{} = router, %{} = option) do
     create_webrtc_transport(router, WebRtcTransport.Options.from_map(option))
   end
 
@@ -148,7 +148,7 @@ defmodule Mediasoup.Router do
     GenServer.call(pid, {:create_plain_transport, [option]})
   end
 
-  def create_plain_transport(router, %{} = option) do
+  def create_plain_transport(%Router{} = router, %{} = option) do
     create_plain_transport(router, Mediasoup.PlainTransport.Options.from_map(option))
   end
 
