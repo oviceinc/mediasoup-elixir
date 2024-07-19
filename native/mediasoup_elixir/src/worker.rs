@@ -247,7 +247,7 @@ impl WorkerSettingsStruct {
 }
 
 fn log_level_from_string(s: &str) -> NifResult<WorkerLogLevel> {
-    return match s {
+    match s {
         "debug" => Ok(WorkerLogLevel::Debug),
         "error" => Ok(WorkerLogLevel::Error),
         "Err" => Ok(WorkerLogLevel::Error), // workaround for :error to "Err" by serde
@@ -257,11 +257,11 @@ fn log_level_from_string(s: &str) -> NifResult<WorkerLogLevel> {
             "invalid type {} for WorkerLogLevel",
             s
         )))),
-    };
+    }
 }
 
 fn log_tag_from_string(s: &str) -> NifResult<WorkerLogTag> {
-    return match s {
+    match s {
         "info" => Ok(WorkerLogTag::Info),
         "ice" => Ok(WorkerLogTag::Ice),
         "dtls" => Ok(WorkerLogTag::Dtls),
@@ -279,7 +279,7 @@ fn log_tag_from_string(s: &str) -> NifResult<WorkerLogTag> {
             "invalid type {} for WorkerLogTag",
             s
         )))),
-    };
+    }
 }
 
 fn log_tags_from_strings(v: &[String]) -> NifResult<Vec<WorkerLogTag>> {

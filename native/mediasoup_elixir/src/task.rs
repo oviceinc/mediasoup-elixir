@@ -43,7 +43,7 @@ where
 fn create_thread_for_executor(executor: Arc<Executor<'static>>, name: String) {
     let builder = std::thread::Builder::new().name(name);
     let _ = builder.spawn(move || {
-        let _ = future::block_on(executor.run(async {
+        future::block_on(executor.run(async {
             let future = future::pending();
             let () = future.await;
         }));

@@ -13,7 +13,7 @@ struct LoggerProxy {
 impl LoggerProxy {
     fn logger_proxy_process(&self) -> Option<rustler::LocalPid> {
         let guard = self.pid.lock().unwrap();
-        guard.clone()
+        *guard
     }
     fn set_proxy_process(&self, pid: rustler::LocalPid) {
         if let Ok(ref mut mutex) = self.pid.lock() {

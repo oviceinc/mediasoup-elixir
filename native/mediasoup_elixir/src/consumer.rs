@@ -236,11 +236,10 @@ pub fn consumer_event(
     }
 
     if event_types.contains(&atoms::on_layers_change()) {
-        let pid = pid.clone();
         consumer
             .on_layers_change(move |layer| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (atoms::on_layers_change(), JsonSerdeWrap::new(*layer)),
                 );
             })
@@ -251,7 +250,7 @@ pub fn consumer_event(
         consumer
             .on_score(move |score| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (atoms::on_score(), JsonSerdeWrap::new(score.clone())),
                 );
             })
@@ -288,7 +287,7 @@ impl ConsumerOptionsStruct {
         if let Some(pipe) = self.pipe {
             option.pipe = pipe;
         }
-        option.mid = self.mid.clone();
+        option.mid.clone_from(&self.mid);
         option
     }
 }

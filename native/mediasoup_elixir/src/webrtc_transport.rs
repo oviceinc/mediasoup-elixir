@@ -320,7 +320,7 @@ pub fn webrtc_transport_event(
         transport
             .on_ice_selected_tuple_change(move |arg| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (
                         atoms::on_ice_selected_tuple_change(),
                         JsonSerdeWrap::new(arg.clone()),

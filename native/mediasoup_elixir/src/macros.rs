@@ -6,7 +6,7 @@ macro_rules! reg_callback {
         $value
             .$event_name(move || {
                 let pid = pid.clone();
-                crate::send_msg_from_other_thread(pid, (atoms::$event_name(),))
+                $crate::send_msg_from_other_thread(pid, (atoms::$event_name(),))
             })
             .detach();
     }};
@@ -18,7 +18,7 @@ macro_rules! reg_callback_once {
         let pid = $pid.clone();
         $value
             .$event_name(Box::new(move || {
-                crate::send_msg_from_other_thread(pid, (atoms::$event_name(),))
+                $crate::send_msg_from_other_thread(pid, (atoms::$event_name(),))
             }))
             .detach();
     }};
@@ -32,11 +32,11 @@ macro_rules! reg_callback_json_param {
         $value
             .$event_name(move |arg| {
                 let pid = pid.clone();
-                crate::send_msg_from_other_thread(
+                $crate::send_msg_from_other_thread(
                     pid,
                     (
                         atoms::$event_name(),
-                        crate::json_serde::JsonSerdeWrap::new(arg),
+                        $crate::json_serde::JsonSerdeWrap::new(arg),
                     ),
                 )
             })
@@ -52,11 +52,11 @@ macro_rules! reg_callback_json_clone_param {
         $value
             .$event_name(move |arg| {
                 let pid = pid.clone();
-                crate::send_msg_from_other_thread(
+                $crate::send_msg_from_other_thread(
                     pid,
                     (
                         atoms::$event_name(),
-                        crate::json_serde::JsonSerdeWrap::new(arg.clone()),
+                        $crate::json_serde::JsonSerdeWrap::new(arg.clone()),
                     ),
                 )
             })

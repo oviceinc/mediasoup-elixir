@@ -127,11 +127,10 @@ pub fn producer_event(
     }
 
     if event_types.contains(&atoms::on_video_orientation_change()) {
-        let pid = pid.clone();
         producer
             .on_video_orientation_change(move |orientation| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (
                         atoms::on_video_orientation_change(),
                         JsonSerdeWrap::new(orientation),
@@ -145,7 +144,7 @@ pub fn producer_event(
         producer
             .on_score(move |score| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (atoms::on_score(), JsonSerdeWrap::new(score.to_vec())),
                 );
             })

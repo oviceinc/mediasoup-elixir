@@ -36,7 +36,7 @@ impl PlainTransportOptionsStruct {
     pub fn try_to_option(&self) -> Result<PlainTransportOptions, &'static str> {
         let mut option = PlainTransportOptions::new(self.listen_info.clone());
 
-        option.rtcp_listen_info = self.rtcp_listen_info.clone();
+        option.rtcp_listen_info.clone_from(&self.rtcp_listen_info);
         if let Some(rtcp_mux) = self.rtcp_mux {
             option.rtcp_mux = rtcp_mux;
         }
