@@ -1,15 +1,17 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::pipe_transport::PipeTransportOptionsStruct;
-use crate::plain_transport::PlainTransportOptionsStruct;
-use crate::webrtc_transport::WebRtcTransportOptionsStruct;
-use crate::{
-    send_async_nif_result, PipeTransportRef, PlainTransportRef, RouterRef, WebRtcTransportRef,
-};
+use crate::pipe_transport::{PipeTransportOptionsStruct, PipeTransportRef};
+use crate::plain_transport::{PlainTransportOptionsStruct, PlainTransportRef};
+use crate::webrtc_transport::{WebRtcTransportOptionsStruct, WebRtcTransportRef};
+use crate::{send_async_nif_result, DisposableResourceWrapper};
 use mediasoup::producer::ProducerId;
-use mediasoup::router::{RouterId, RouterOptions};
+use mediasoup::router::{Router, RouterId, RouterOptions};
 use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized, RtpCodecCapability};
 use rustler::{Env, Error, NifResult, NifStruct, ResourceArc};
+
+pub type RouterRef = DisposableResourceWrapper<Router>;
+#[rustler::resource_impl]
+impl rustler::Resource for RouterRef {}
 
 #[rustler::nif]
 pub fn router_id(router: ResourceArc<RouterRef>) -> NifResult<JsonSerdeWrap<RouterId>> {

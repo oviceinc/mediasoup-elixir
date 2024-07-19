@@ -1,13 +1,16 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::ConsumerRef;
-use crate::{send_async_nif_result, send_msg_from_other_thread};
+use crate::{send_async_nif_result, send_msg_from_other_thread, DisposableResourceWrapper};
 use mediasoup::consumer::{
-    ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerType,
+    Consumer, ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerType,
 };
 use mediasoup::producer::ProducerId;
 use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+
+pub type ConsumerRef = DisposableResourceWrapper<Consumer>;
+#[rustler::resource_impl]
+impl rustler::Resource for ConsumerRef {}
 
 #[rustler::nif]
 pub fn consumer_id(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerId>> {

@@ -1,18 +1,25 @@
-use crate::consumer::ConsumerOptionsStruct;
-use crate::data_consumer::DataConsumerOptionsStruct;
-use crate::data_producer::DataProducerOptionsStruct;
+use crate::atoms;
+use crate::consumer::{ConsumerOptionsStruct, ConsumerRef};
+use crate::data_consumer::{DataConsumerOptionsStruct, DataConsumerRef};
+use crate::data_producer::{DataProducerOptionsStruct, DataProducerRef};
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
-use crate::producer::ProducerOptionsStruct;
-use crate::{atoms, DataConsumerRef, DataProducerRef};
-use crate::{send_async_nif_result, ConsumerRef, PipeTransportRef, ProducerRef};
+use crate::producer::{ProducerOptionsStruct, ProducerRef};
+use crate::{send_async_nif_result, DisposableResourceWrapper};
 use mediasoup::data_structures::{ListenInfo, SctpState, TransportTuple};
-use mediasoup::pipe_transport::{PipeTransportOptions, PipeTransportRemoteParameters};
+use mediasoup::prelude::{
+    PipeTransport, PipeTransportOptions, PipeTransportRemoteParameters, Transport,
+    TransportGeneric, TransportId,
+};
+
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
-
-use mediasoup::transport::{Transport, TransportGeneric, TransportId};
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+
+pub type PipeTransportRef = DisposableResourceWrapper<PipeTransport>;
+
+#[rustler::resource_impl]
+impl rustler::Resource for PipeTransportRef {}
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.PipeTransport.Options"]

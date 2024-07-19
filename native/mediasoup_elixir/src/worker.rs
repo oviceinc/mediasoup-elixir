@@ -1,19 +1,24 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::router::RouterOptionsStruct;
+use crate::router::{RouterOptionsStruct, RouterRef};
 use crate::task;
-use crate::webrtc_server::WebRtcServerOptionsStruct;
-use crate::{
-    send_async_nif_result, send_msg_from_other_thread, RouterRef, WebRtcServerRef, WorkerRef,
-};
+use crate::webrtc_server::{WebRtcServerOptionsStruct, WebRtcServerRef};
+use crate::DisposableResourceWrapper;
+use crate::{send_async_nif_result, send_msg_from_other_thread};
 use mediasoup::worker::{
-    WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings, WorkerUpdateSettings,
+    Worker, WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
+    WorkerUpdateSettings,
 };
 use rustler::{Env, Error, NifResult, NifStruct, ResourceArc};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static GLOBAL_WORKER_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+pub type WorkerRef = DisposableResourceWrapper<Worker>;
+
+#[rustler::resource_impl]
+impl rustler::Resource for WorkerRef {}
 
 #[rustler::nif]
 pub fn worker_global_count() -> Result<usize, Error> {
