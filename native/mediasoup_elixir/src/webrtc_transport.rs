@@ -59,7 +59,8 @@ pub fn webrtc_transport_consume(
         transport
             .consume(option)
             .await
-            .map(ConsumerRef::resource)
+            .map(ConsumerRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -78,7 +79,8 @@ pub fn webrtc_transport_consume_data(
         transport
             .consume_data(option)
             .await
-            .map(DataConsumerRef::resource)
+            .map(DataConsumerRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -113,7 +115,8 @@ pub fn webrtc_transport_produce(
         transport
             .produce(option)
             .await
-            .map(ProducerRef::resource)
+            .map(ProducerRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -131,7 +134,8 @@ pub fn webrtc_transport_produce_data(
         transport
             .produce_data(option)
             .await
-            .map(DataProducerRef::resource)
+            .map(DataProducerRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }

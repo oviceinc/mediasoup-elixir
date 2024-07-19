@@ -45,7 +45,8 @@ pub fn worker_create_router(
         worker
             .create_router(option)
             .await
-            .map(RouterRef::resource)
+            .map(RouterRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -64,7 +65,8 @@ pub fn worker_create_webrtc_server(
         worker
             .create_webrtc_server(option)
             .await
-            .map(WebRtcServerRef::resource)
+            .map(WebRtcServerRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -160,7 +162,7 @@ fn create_worker_impl(
                         GLOBAL_WORKER_COUNT.fetch_sub(1, Ordering::Relaxed);
                     })
                     .detach();
-                WorkerRef::resource(worker)
+                ResourceArc::new(WorkerRef::new(worker))
             })
             .map_err(|error| format!("{}", error))
     })

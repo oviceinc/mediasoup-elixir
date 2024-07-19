@@ -145,7 +145,8 @@ pub fn plain_transport_produce(
         transport
             .produce(option)
             .await
-            .map(ProducerRef::resource)
+            .map(ProducerRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -164,7 +165,8 @@ pub fn plain_transport_consume(
         transport
             .consume(option)
             .await
-            .map(ConsumerRef::resource)
+            .map(ConsumerRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }

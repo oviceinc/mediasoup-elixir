@@ -40,7 +40,8 @@ pub fn router_create_webrtc_transport(
         router
             .create_webrtc_transport(option)
             .await
-            .map(WebRtcTransportRef::resource)
+            .map(WebRtcTransportRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -60,7 +61,8 @@ pub fn router_create_plain_transport(
         router
             .create_plain_transport(option)
             .await
-            .map(PlainTransportRef::resource)
+            .map(PlainTransportRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
@@ -87,7 +89,8 @@ pub fn router_create_pipe_transport(
         router
             .create_pipe_transport(option)
             .await
-            .map(PipeTransportRef::resource)
+            .map(PipeTransportRef::new)
+            .map(ResourceArc::new)
             .map_err(|error| format!("{}", error))
     })
 }
