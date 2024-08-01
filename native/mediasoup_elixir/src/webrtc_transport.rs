@@ -1,27 +1,31 @@
-use crate::consumer::ConsumerOptionsStruct;
-use crate::data_consumer::DataConsumerOptionsStruct;
-use crate::data_producer::DataProducerOptionsStruct;
+use crate::consumer::{ConsumerOptionsStruct, ConsumerRef};
+use crate::data_consumer::{DataConsumerOptionsStruct, DataConsumerRef};
+use crate::data_producer::{DataProducerOptionsStruct, DataProducerRef};
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
-use crate::producer::ProducerOptionsStruct;
-use crate::{
-    atoms, send_async_nif_result, send_msg_from_other_thread, ConsumerRef, DataConsumerRef,
-    DataProducerRef, ProducerRef, WebRtcServerRef, WebRtcTransportRef,
-};
-use mediasoup::consumer::ConsumerOptions;
-use mediasoup::data_consumer::DataConsumerOptions;
-use mediasoup::data_producer::DataProducerOptions;
+use crate::producer::{ProducerOptionsStruct, ProducerRef};
+use crate::webrtc_server::WebRtcServerRef;
+use crate::{atoms, send_async_nif_result, send_msg_from_other_thread, DisposableResourceWrapper};
 use mediasoup::data_structures::{
     DtlsParameters, DtlsState, IceParameters, IceRole, IceState, ListenInfo, SctpState,
     TransportTuple,
 };
+use mediasoup::prelude::{
+    ConsumerOptions, DataConsumerOptions, DataProducerOptions, Transport, TransportGeneric,
+    WebRtcTransport,
+};
 use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
-use mediasoup::transport::{Transport, TransportGeneric, TransportId};
+use mediasoup::transport::TransportId;
 use mediasoup::webrtc_transport::{
     WebRtcTransportListenInfos, WebRtcTransportOptions, WebRtcTransportRemoteParameters,
 };
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+
+pub type WebRtcTransportRef = DisposableResourceWrapper<WebRtcTransport>;
+
+#[rustler::resource_impl]
+impl rustler::Resource for WebRtcTransportRef {}
 
 #[rustler::nif]
 pub fn webrtc_transport_id(
@@ -316,7 +320,7 @@ pub fn webrtc_transport_event(
         transport
             .on_ice_selected_tuple_change(move |arg| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (
                         atoms::on_ice_selected_tuple_change(),
                         JsonSerdeWrap::new(arg.clone()),

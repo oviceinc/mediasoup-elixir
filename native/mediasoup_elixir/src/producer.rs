@@ -1,9 +1,13 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::{send_async_nif_result, send_msg_from_other_thread, ProducerRef};
-use mediasoup::producer::{ProducerId, ProducerOptions, ProducerScore, ProducerType};
+use crate::{send_async_nif_result, send_msg_from_other_thread, DisposableResourceWrapper};
+use mediasoup::producer::{Producer, ProducerId, ProducerOptions, ProducerScore, ProducerType};
 use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+
+pub type ProducerRef = DisposableResourceWrapper<Producer>;
+#[rustler::resource_impl]
+impl rustler::Resource for ProducerRef {}
 
 #[rustler::nif]
 pub fn producer_id(producer: ResourceArc<ProducerRef>) -> NifResult<JsonSerdeWrap<ProducerId>> {
@@ -123,11 +127,10 @@ pub fn producer_event(
     }
 
     if event_types.contains(&atoms::on_video_orientation_change()) {
-        let pid = pid.clone();
         producer
             .on_video_orientation_change(move |orientation| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (
                         atoms::on_video_orientation_change(),
                         JsonSerdeWrap::new(orientation),
@@ -141,7 +144,7 @@ pub fn producer_event(
         producer
             .on_score(move |score| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (atoms::on_score(), JsonSerdeWrap::new(score.to_vec())),
                 );
             })

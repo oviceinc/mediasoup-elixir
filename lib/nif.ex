@@ -84,6 +84,9 @@ defmodule Mediasoup.Nif do
   defp pipe_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
   defp pipe_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
 
+  defp pipe_transport_set_max_incoming_bitrate_async(_transport, _bitrate),
+    do: :erlang.nif_error(:nif_not_loaded)
+
   defp pipe_transport_consume_data_async(_transport, _option),
     do: :erlang.nif_error(:nif_not_loaded)
 
@@ -339,6 +342,11 @@ defmodule Mediasoup.Nif do
 
   def pipe_transport_produce(transport, option),
     do: pipe_transport_produce_async(transport, option) |> handle_async_nif_result()
+
+  def pipe_transport_set_max_incoming_bitrate(transport, bitrate),
+    do:
+      pipe_transport_set_max_incoming_bitrate_async(transport, bitrate)
+      |> handle_async_nif_result()
 
   def pipe_transport_produce_data(transport, option),
     do: pipe_transport_produce_data_async(transport, option) |> handle_async_nif_result()

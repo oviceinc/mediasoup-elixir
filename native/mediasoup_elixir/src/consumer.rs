@@ -1,13 +1,16 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::ConsumerRef;
-use crate::{send_async_nif_result, send_msg_from_other_thread};
+use crate::{send_async_nif_result, send_msg_from_other_thread, DisposableResourceWrapper};
 use mediasoup::consumer::{
-    ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerType,
+    Consumer, ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerType,
 };
 use mediasoup::producer::ProducerId;
 use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+
+pub type ConsumerRef = DisposableResourceWrapper<Consumer>;
+#[rustler::resource_impl]
+impl rustler::Resource for ConsumerRef {}
 
 #[rustler::nif]
 pub fn consumer_id(consumer: ResourceArc<ConsumerRef>) -> NifResult<JsonSerdeWrap<ConsumerId>> {
@@ -233,11 +236,10 @@ pub fn consumer_event(
     }
 
     if event_types.contains(&atoms::on_layers_change()) {
-        let pid = pid.clone();
         consumer
             .on_layers_change(move |layer| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (atoms::on_layers_change(), JsonSerdeWrap::new(*layer)),
                 );
             })
@@ -248,7 +250,7 @@ pub fn consumer_event(
         consumer
             .on_score(move |score| {
                 send_msg_from_other_thread(
-                    pid.clone(),
+                    pid,
                     (atoms::on_score(), JsonSerdeWrap::new(score.clone())),
                 );
             })
@@ -285,7 +287,7 @@ impl ConsumerOptionsStruct {
         if let Some(pipe) = self.pipe {
             option.pipe = pipe;
         }
-        option.mid = self.mid.clone();
+        option.mid.clone_from(&self.mid);
         option
     }
 }

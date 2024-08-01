@@ -1,18 +1,23 @@
-use crate::consumer::ConsumerOptionsStruct;
+use crate::consumer::{ConsumerOptionsStruct, ConsumerRef};
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
-use crate::producer::ProducerOptionsStruct;
-use crate::PlainTransportRef;
-use crate::{atoms, send_async_nif_result, ConsumerRef, ProducerRef};
+use crate::producer::{ProducerOptionsStruct, ProducerRef};
+use crate::{atoms, send_async_nif_result, DisposableResourceWrapper};
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{ListenInfo, SctpState, TransportTuple};
-use mediasoup::plain_transport::{PlainTransportOptions, PlainTransportRemoteParameters};
-use mediasoup::prelude::Transport;
+use mediasoup::prelude::{
+    PlainTransport, PlainTransportOptions, PlainTransportRemoteParameters, Transport,
+    TransportGeneric, TransportId,
+};
 use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
-use mediasoup::transport::{TransportGeneric, TransportId};
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+
+pub type PlainTransportRef = DisposableResourceWrapper<PlainTransport>;
+
+#[rustler::resource_impl]
+impl rustler::Resource for PlainTransportRef {}
 
 #[derive(NifStruct)]
 #[module = "Mediasoup.PlainTransport.Options"]
@@ -31,7 +36,7 @@ impl PlainTransportOptionsStruct {
     pub fn try_to_option(&self) -> Result<PlainTransportOptions, &'static str> {
         let mut option = PlainTransportOptions::new(self.listen_info.clone());
 
-        option.rtcp_listen_info = self.rtcp_listen_info.clone();
+        option.rtcp_listen_info.clone_from(&self.rtcp_listen_info);
         if let Some(rtcp_mux) = self.rtcp_mux {
             option.rtcp_mux = rtcp_mux;
         }

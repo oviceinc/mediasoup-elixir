@@ -1,19 +1,24 @@
 use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::router::RouterOptionsStruct;
+use crate::router::{RouterOptionsStruct, RouterRef};
 use crate::task;
-use crate::webrtc_server::WebRtcServerOptionsStruct;
-use crate::{
-    send_async_nif_result, send_msg_from_other_thread, RouterRef, WebRtcServerRef, WorkerRef,
-};
+use crate::webrtc_server::{WebRtcServerOptionsStruct, WebRtcServerRef};
+use crate::DisposableResourceWrapper;
+use crate::{send_async_nif_result, send_msg_from_other_thread};
 use mediasoup::worker::{
-    WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings, WorkerUpdateSettings,
+    Worker, WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
+    WorkerUpdateSettings,
 };
 use rustler::{Env, Error, NifResult, NifStruct, ResourceArc};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static GLOBAL_WORKER_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+pub type WorkerRef = DisposableResourceWrapper<Worker>;
+
+#[rustler::resource_impl]
+impl rustler::Resource for WorkerRef {}
 
 #[rustler::nif]
 pub fn worker_global_count() -> Result<usize, Error> {
@@ -242,7 +247,7 @@ impl WorkerSettingsStruct {
 }
 
 fn log_level_from_string(s: &str) -> NifResult<WorkerLogLevel> {
-    return match s {
+    match s {
         "debug" => Ok(WorkerLogLevel::Debug),
         "error" => Ok(WorkerLogLevel::Error),
         "Err" => Ok(WorkerLogLevel::Error), // workaround for :error to "Err" by serde
@@ -252,11 +257,11 @@ fn log_level_from_string(s: &str) -> NifResult<WorkerLogLevel> {
             "invalid type {} for WorkerLogLevel",
             s
         )))),
-    };
+    }
 }
 
 fn log_tag_from_string(s: &str) -> NifResult<WorkerLogTag> {
-    return match s {
+    match s {
         "info" => Ok(WorkerLogTag::Info),
         "ice" => Ok(WorkerLogTag::Ice),
         "dtls" => Ok(WorkerLogTag::Dtls),
@@ -274,7 +279,7 @@ fn log_tag_from_string(s: &str) -> NifResult<WorkerLogTag> {
             "invalid type {} for WorkerLogTag",
             s
         )))),
-    };
+    }
 }
 
 fn log_tags_from_strings(v: &[String]) -> NifResult<Vec<WorkerLogTag>> {
