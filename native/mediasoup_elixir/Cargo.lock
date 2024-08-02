@@ -654,12 +654,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "inventory"
-version = "0.3.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f958d3d68f4167080a18141e10381e7634563984a537f2a49a30fd8e53ac5767"
-
-[[package]]
 name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1253,11 +1247,10 @@ dependencies = [
 
 [[package]]
 name = "rustler"
-version = "0.34.0"
+version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e94bdfa68c0388cbd725f1ca54e975956482c262599e5cced04a903eec918b7f"
+checksum = "45d51ae0239c57c3a3e603dd855ace6795078ef33c95c85d397a100ac62ed352"
 dependencies = [
- "inventory",
  "rustler_codegen",
  "rustler_sys",
  "serde",
@@ -1265,12 +1258,11 @@ dependencies = [
 
 [[package]]
 name = "rustler_codegen"
-version = "0.34.0"
+version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "996dc019acb78b91b4e0c1bd6fa2cd509a835d309de762dc15213b97eac399da"
+checksum = "27061f1a2150ad64717dca73902678c124b0619b0d06563294df265bc84759e1"
 dependencies = [
  "heck 0.5.0",
- "inventory",
  "proc-macro2",
  "quote",
  "syn 2.0.52",
@@ -1350,11 +1342,12 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.117"
+version = "1.0.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "455182ea6142b14f93f4bc5320a2b31c1f266b66a4a5c858b013302a5d8cbfc3"
+checksum = "784b6203951c57ff748476b126ccb5e8e2959a5c19e5c617ab1956be3dbc68da"
 dependencies = [
  "itoa",
+ "memchr",
  "ryu",
  "serde",
 ]
