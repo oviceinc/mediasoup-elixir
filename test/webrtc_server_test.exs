@@ -23,6 +23,7 @@ defmodule MediasoupElixirWebRtcServerTest do
   test "unavailable_infos_fails", %{worker: worker} do
     assert capture_log(fn ->
              IntegrateTest.WebRtcServerTest.unavailable_infos_fails(worker)
+             Process.sleep(10)
            end) =~ "address already in use"
   end
 end
