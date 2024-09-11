@@ -302,6 +302,11 @@ defmodule IntegrateTest.PipeTransportTest do
                "encrypt" => false,
                "id" => 13,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 14,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
@@ -346,6 +351,11 @@ defmodule IntegrateTest.PipeTransportTest do
                "encrypt" => false,
                "id" => 13,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 14,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              }
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
@@ -402,6 +412,11 @@ defmodule IntegrateTest.PipeTransportTest do
                "encrypt" => false,
                "id" => 13,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 14,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
@@ -446,6 +461,11 @@ defmodule IntegrateTest.PipeTransportTest do
                "encrypt" => false,
                "id" => 13,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 14,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              }
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
@@ -559,6 +579,11 @@ defmodule IntegrateTest.PipeTransportTest do
                "encrypt" => false,
                "id" => 13,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 14,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
