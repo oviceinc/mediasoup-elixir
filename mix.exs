@@ -49,7 +49,7 @@ defmodule MediasoupElixir.MixProject do
       {:rustler_precompiled, "~> 0.7"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18.0", only: :test},
-      {:local_cluster, "~> 1.2", only: :test},
+      {:local_cluster, "~> 2.0", only: :test},
       # global_flags used in local_cluster
       {:global_flags, "~> 1.0", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
