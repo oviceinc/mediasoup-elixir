@@ -4,7 +4,7 @@ use crate::router::{RouterOptionsStruct, RouterRef};
 use crate::task;
 use crate::webrtc_server::{WebRtcServerOptionsStruct, WebRtcServerRef};
 use crate::DisposableResourceWrapper;
-use crate::{send_async_nif_result, send_msg_from_other_thread};
+use crate::{send_async_nif_result, send_async_nif_result_with_from, send_msg_from_other_thread};
 use mediasoup::worker::{
     Worker, WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
     WorkerUpdateSettings,
@@ -42,10 +42,11 @@ pub fn worker_create_router(
     env: Env,
     worker: ResourceArc<WorkerRef>,
     option: RouterOptionsStruct,
-) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    from: rustler::Term,
+) -> NifResult<rustler::Atom> {
     let worker = worker.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         let option = option.to_option();
         worker
             .create_router(option)
@@ -61,12 +62,13 @@ pub fn worker_create_webrtc_server(
     env: Env,
     worker: ResourceArc<WorkerRef>,
     option: WebRtcServerOptionsStruct,
-) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    from: rustler::Term,
+) -> NifResult<rustler::Atom> {
     let worker = worker.get_resource()?;
     let option = option
         .try_to_option()
         .map_err(|error| Error::Term(Box::new(error.to_string())))?;
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         worker
             .create_webrtc_server(option)
             .await
@@ -80,9 +82,10 @@ pub fn worker_create_webrtc_server(
 pub fn worker_dump(
     env: Env,
     worker: ResourceArc<WorkerRef>,
-) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    from: rustler::Term,
+) -> NifResult<rustler::Atom> {
     let worker = worker.get_resource()?;
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         worker
             .dump()
             .await
@@ -101,16 +104,19 @@ pub fn worker_update_settings(
     env: Env,
     worker: ResourceArc<WorkerRef>,
     settings: WorkerUpdateableSettingsStruct,
-) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    from: rustler::Term,
+) -> NifResult<rustler::Atom> {
     let worker = worker.get_resource()?;
 
     let settings = settings.try_to_setting()?;
 
-    send_async_nif_result(env, async move {
-        worker
-            .update_settings(settings)
-            .await
-            .map_err(|error| format!("{}", error))
+    send_async_nif_result_with_from(env, from, async move {
+        let result = worker.update_settings(settings).await;
+
+        match result {
+            Ok(_) => (atoms::ok(),),
+            Err(_err) => (atoms::error(),),
+        }
     })
 }
 

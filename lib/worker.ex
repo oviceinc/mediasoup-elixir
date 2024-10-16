@@ -208,33 +208,50 @@ defmodule Mediasoup.Worker do
   end
 
   NifWrap.def_handle_call_nif(%{
-    id: &Nif.worker_id/1,
-    update_settings: &Nif.worker_update_settings/2,
-    dump: &Nif.worker_dump/1
+    id: &Nif.worker_id/1
   })
 
-  def handle_call(
-        {:create_router, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.worker_create_router(reference, option)
-      |> NifWrap.handle_create_result(Router, supervisor)
+  NifWrap.def_handle_call_async_nif(%{
+    update_settings: &Nif.worker_update_settings_async/3,
+    create_router: &Nif.worker_create_router_async/3,
+    create_webrtc_server: &Nif.worker_create_webrtc_server_async/3,
+    dump: &Nif.worker_dump_async/2
+  })
 
-    {:reply, ret, state}
+  def handle_info(
+        {:mediasoup_async_nif_result, {:create_router, from}, result},
+        %{supervisor: supervisor} = state
+      ) do
+    GenServer.reply(from, NifWrap.handle_create_result(result, Router, supervisor))
+    {:noreply, state}
   end
 
-  def handle_call(
-        {:create_webrtc_server, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
+  def handle_info(
+        {:mediasoup_async_nif_result, {:create_webrtc_server, from}, result},
+        %{supervisor: supervisor} = state
       ) do
-    ret =
-      Nif.worker_create_webrtc_server(reference, option)
-      |> NifWrap.handle_create_result(WebRtcServer, supervisor)
+    GenServer.reply(from, NifWrap.handle_create_result(result, WebRtcServer, supervisor))
+    {:noreply, state}
+  end
 
-    {:reply, ret, state}
+  def handle_info(
+        {:mediasoup_async_nif_result, {:dump, from}, result},
+        state
+      ) do
+    case result do
+      {:ok, dump} -> GenServer.reply(from, dump)
+      error -> GenServer.reply(from, error)
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
+      ) do
+    GenServer.reply(from, result)
+    {:noreply, state}
   end
 
   def handle_call(

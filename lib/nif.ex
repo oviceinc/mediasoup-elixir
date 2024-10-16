@@ -52,12 +52,6 @@ defmodule Mediasoup.Nif do
   ## worker with async
   defp create_worker_async(), do: :erlang.nif_error(:nif_not_loaded)
   defp create_worker_async(_option), do: :erlang.nif_error(:nif_not_loaded)
-  defp worker_create_router_async(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
-  defp worker_dump_async(_worker), do: :erlang.nif_error(:nif_not_loaded)
-  defp worker_update_settings_async(_worker, _option), do: :erlang.nif_error(:nif_not_loaded)
-
-  defp worker_create_webrtc_server_async(_worker, _option),
-    do: :erlang.nif_error(:nif_not_loaded)
 
   ## router with async
   defp router_create_pipe_transport_async(
@@ -191,9 +185,10 @@ defmodule Mediasoup.Nif do
   def worker_global_count(), do: :erlang.nif_error(:nif_not_loaded)
 
   # worker
-  @spec worker_create_router(reference, Router.create_option()) :: {:ok, reference()} | {:error}
-  def worker_create_router(worker, option),
-    do: worker_create_router_async(worker, option) |> handle_async_nif_result()
+  @spec worker_create_router_async(reference, Router.create_option(), term()) ::
+          :ok | :error
+  def worker_create_router_async(_worker, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
 
   @spec worker_id(reference) :: String.t()
   def worker_id(_worker), do: :erlang.nif_error(:nif_not_loaded)
@@ -203,16 +198,18 @@ defmodule Mediasoup.Nif do
   def worker_event(_worker, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
   @spec worker_closed(reference) :: boolean
   def worker_closed(_worker), do: :erlang.nif_error(:nif_not_loaded)
-  @spec worker_update_settings(reference, Worker.update_option()) :: {:ok} | {:error}
-  def worker_update_settings(worker, option),
-    do: worker_update_settings_async(worker, option) |> handle_async_nif_result()
 
-  def worker_create_webrtc_server(worker, option),
-    do: worker_create_webrtc_server_async(worker, option) |> handle_async_nif_result()
+  @spec worker_update_settings_async(reference, Worker.update_option(), GenServer.from()) ::
+          {:ok} | {:error}
+  def worker_update_settings_async(_worker, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec worker_dump(reference) :: map | {:error}
-  def worker_dump(worker),
-    do: worker_dump_async(worker) |> handle_async_nif_result() |> unwrap_ok()
+  def worker_create_webrtc_server_async(_worker, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  @spec worker_dump_async(reference, term()) :: map | {:error}
+  def worker_dump_async(_worker, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
 
   # router
   @spec router_id(reference) :: String.t()

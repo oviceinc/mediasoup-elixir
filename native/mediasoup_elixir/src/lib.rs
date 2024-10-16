@@ -12,11 +12,13 @@ mod producer;
 mod resource;
 mod router;
 mod task;
+mod term_box;
 mod webrtc_server;
 mod webrtc_transport;
 mod worker;
 
 use crate::resource::DisposableResourceWrapper;
+use crate::term_box::TermBox;
 
 use futures_lite::future;
 use rustler::{Atom, Encoder, Env, LocalPid, NifResult, OwnedEnv};
@@ -57,6 +59,31 @@ where
     .detach();
 
     Ok((atoms::ok(), result_key))
+}
+
+pub fn send_async_nif_result_with_from<T, Fut>(
+    env: Env,
+    from: rustler::Term,
+    future: Fut,
+) -> NifResult<Atom>
+where
+    T: Encoder,
+    Fut: future::Future<Output = T> + Send + 'static,
+{
+    let pid = env.pid();
+    let mut my_env = OwnedEnv::new();
+
+    let from = TermBox::new(from);
+    task::spawn(async move {
+        let result = future.await;
+
+        let _ = my_env.send_and_clear(&pid, |env| {
+            (atoms::mediasoup_async_nif_result(), from.get(env), result).encode(env)
+        });
+    })
+    .detach();
+
+    Ok(atoms::ok())
 }
 
 rustler::init!("Elixir.Mediasoup.Nif");
