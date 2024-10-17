@@ -2,7 +2,7 @@ use crate::consumer::{ConsumerOptionsStruct, ConsumerRef};
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::{ProducerOptionsStruct, ProducerRef};
-use crate::{atoms, send_async_nif_result, DisposableResourceWrapper};
+use crate::{atoms, send_async_nif_result_with_from, DisposableResourceWrapper};
 use mediasoup::consumer::ConsumerOptions;
 use mediasoup::data_structures::{ListenInfo, SctpState, TransportTuple};
 use mediasoup::prelude::{
@@ -12,7 +12,7 @@ use mediasoup::prelude::{
 use mediasoup::producer::ProducerOptions;
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
-use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type PlainTransportRef = DisposableResourceWrapper<PlainTransport>;
 
@@ -108,11 +108,12 @@ pub fn plain_transport_connect(
     env: Env,
     transport: ResourceArc<PlainTransportRef>,
     option: JsonSerdeWrap<PlainTransportRemoteParameters>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
     let option: PlainTransportRemoteParameters = option.clone();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .connect(option)
             .await
@@ -124,10 +125,11 @@ pub fn plain_transport_connect(
 pub fn plain_transport_get_stats(
     env: Env,
     transport: ResourceArc<PlainTransportRef>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .get_stats()
             .await
@@ -141,12 +143,13 @@ pub fn plain_transport_produce(
     env: Env,
     transport: ResourceArc<PlainTransportRef>,
     option: ProducerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
     let option: ProducerOptions = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .produce(option)
             .await
@@ -161,12 +164,13 @@ pub fn plain_transport_consume(
     env: Env,
     transport: ResourceArc<PlainTransportRef>,
     option: ConsumerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
     let option: ConsumerOptions = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .consume(option)
             .await

@@ -61,35 +61,23 @@ defmodule Mediasoup.Nif do
   def plain_transport_sctp_state(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
   ## methods
-  ### plain transport with async
-  defp plain_transport_connect_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
-  defp plain_transport_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  defp plain_transport_get_stats_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  defp plain_transport_produce_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
-  defp plain_transport_consume_async(_transport, _option), do: :erlang.nif_error(:nif_not_loaded)
 
   ### plain tranasport call
-  @spec plain_transport_connect(reference, any) :: {:ok} | {:error, String.t()}
-  def plain_transport_connect(transport, option),
-    do: plain_transport_connect_async(transport, option) |> handle_async_nif_result()
+  def plain_transport_connect_async(_transport, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
 
   @spec plain_transport_id(reference) :: String.t()
   def plain_transport_id(_transport), do: :erlang.nif_error(:nif_not_loaded)
-  @spec plain_transport_dump(reference) :: {:ok} | {:error, String.t()}
-  def plain_transport_dump(transport),
-    do: plain_transport_dump_async(transport) |> handle_async_nif_result() |> unwrap_ok()
 
-  @spec plain_transport_get_stats(reference) :: {:ok} | {:error, String.t()}
-  def plain_transport_get_stats(transport),
-    do: plain_transport_get_stats_async(transport) |> handle_async_nif_result() |> unwrap_ok()
+  def plain_transport_dump_async(_transport, _from), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec plain_transport_produce(reference, any) :: {:ok, reference()} | {:error, String.t()}
-  def plain_transport_produce(transport, option),
-    do: plain_transport_produce_async(transport, option) |> handle_async_nif_result()
+  def plain_transport_get_stats_async(_transport, _from), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec plain_transport_consume(reference, any) :: {:ok, reference()} | {:error, String.t()}
-  def plain_transport_consume(transport, option),
-    do: plain_transport_consume_async(transport, option) |> handle_async_nif_result()
+  def plain_transport_produce_async(_transport, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  def plain_transport_consume_async(_transport, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
 
   @spec plain_transport_close(reference) :: {:ok} | {:error}
   def plain_transport_close(_transport), do: :erlang.nif_error(:nif_not_loaded)
