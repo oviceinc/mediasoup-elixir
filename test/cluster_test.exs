@@ -3,12 +3,14 @@ defmodule ClusterTest do
   alias Mediasoup.{Worker, Router, WebRtcTransport, Consumer, Producer}
 
   setup_all do
-    nodes =
-      LocalCluster.start_nodes(:spawn, 1,
+    {:ok, cluster} =
+      LocalCluster.start_link(1,
         files: [
           __ENV__.file
         ]
       )
+
+    {:ok, nodes} = LocalCluster.nodes(cluster)
 
     %{nodes: nodes}
   end
