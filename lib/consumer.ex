@@ -333,20 +333,19 @@ defmodule Mediasoup.Consumer do
 
   @impl true
   def handle_info(
-        {:mediasoup_async_nif_result, {unwrap_ok_func, from}, result},
-        state
-      )
-      when unwrap_ok_func in [:set_priority, :dump, :get_stats] do
-    GenServer.reply(from, result |> Nif.unwrap_ok())
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {_, from}, result},
+        {:mediasoup_async_nif_result, {func, from}, result},
         state
       ) do
-    GenServer.reply(from, result)
+    reply =
+      case func do
+        func when func in [:set_priority, :dump, :get_stats] ->
+          Nif.unwrap_ok(result)
+
+        _ ->
+          result
+      end
+
+    GenServer.reply(from, reply)
     {:noreply, state}
   end
 

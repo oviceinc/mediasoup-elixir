@@ -111,9 +111,7 @@ pub fn worker_update_settings(
     let settings = settings.try_to_setting()?;
 
     send_async_nif_result_with_from(env, from, async move {
-        let result = worker.update_settings(settings).await;
-
-        match result {
+        match worker.update_settings(settings).await {
             Ok(_) => (atoms::ok(),),
             Err(_err) => (atoms::error(),),
         }
