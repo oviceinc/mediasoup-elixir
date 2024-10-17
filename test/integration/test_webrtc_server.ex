@@ -139,6 +139,42 @@ defmodule IntegrateTest.WebRtcServerTest do
            )
   end
 
+  def create_webrtc_server_close(worker) do
+    {:ok, webrtc_server} =
+      Worker.create_webrtc_server(worker, %WebRtcServer.Options{
+        listen_infos: [
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1",
+            port: 10111,
+            protocol: :tcp
+          },
+          %{
+            ip: "0.0.0.0",
+            announcedIp: "9.9.9.2",
+            port: 10112,
+            protocol: :tcp
+          },
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1",
+            port: 10111,
+            protocol: :udp
+          },
+          %{
+            ip: "0.0.0.0",
+            announcedIp: "9.9.9.2",
+            port: 10112,
+            protocol: :udp
+          }
+        ]
+      })
+
+    assert !WebRtcServer.closed?(webrtc_server)
+    assert :ok == WebRtcServer.close(webrtc_server)
+    assert WebRtcServer.closed?(webrtc_server)
+  end
+
   def create_webrtc_server_without_specifying_port_succeeds(worker) do
     {_worker, router} = init(worker)
 

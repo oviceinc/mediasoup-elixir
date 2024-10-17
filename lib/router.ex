@@ -324,6 +324,7 @@ defmodule Mediasoup.Router do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
@@ -331,6 +332,7 @@ defmodule Mediasoup.Router do
     {:ok, Map.put(state, :supervisor, supervisor)}
   end
 
+  @impl true
   def handle_call(
         {:event, [listener, event_types]},
         _from,
@@ -364,10 +366,11 @@ defmodule Mediasoup.Router do
     create_plain_transport: &Nif.router_create_plain_transport_async/3
   })
 
+  @impl true
   def handle_call(
         {:create_webrtc_transport, [option]},
         from,
-        %{reference: reference, supervisor: supervisor} = state
+        %{reference: reference} = state
       ) do
     option =
       Map.update(option, :webrtc_server, nil, fn webrtc_server ->
@@ -455,6 +458,7 @@ defmodule Mediasoup.Router do
     {:noreply, state}
   end
 
+  @impl true
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
     DynamicSupervisor.stop(supervisor, reason)
     Nif.router_close(reference)

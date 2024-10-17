@@ -182,11 +182,13 @@ defmodule Mediasoup.Producer do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, state}
   end
 
+  @impl true
   def handle_call(
         {:event, [listener, event_types]},
         _from,
@@ -200,6 +202,7 @@ defmodule Mediasoup.Producer do
     {:reply, result, state}
   end
 
+  @impl true
   def handle_call(
         {:struct_from_pid, _arg},
         _from,

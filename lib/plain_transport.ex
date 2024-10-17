@@ -209,6 +209,7 @@ defmodule Mediasoup.PlainTransport do
     consume(transport, Consumer.Options.from_map(option))
   end
 
+  @impl true
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
     DynamicSupervisor.stop(supervisor, reason)
     Nif.plain_transport_close(reference)
@@ -270,6 +271,7 @@ defmodule Mediasoup.PlainTransport do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
