@@ -136,12 +136,6 @@ defmodule Mediasoup.Nif do
   def plain_transport_event(_transport, _pid, _event_types),
     do: :erlang.nif_error(:nif_not_loaded)
 
-  ## producer with async
-  defp producer_pause_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
-  defp producer_resume_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
-  defp producer_get_stats_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
-  defp producer_dump_async(_producer), do: :erlang.nif_error(:nif_not_loaded)
-
   # construct worker
   def create_worker(), do: create_worker_async() |> handle_async_nif_result()
   def create_worker(option), do: create_worker_async(option) |> handle_async_nif_result()
@@ -400,10 +394,8 @@ defmodule Mediasoup.Nif do
   def producer_rtp_parameters(_producer), do: :erlang.nif_error(:nif_not_loaded)
   @spec producer_close(reference) :: {:ok} | {:error}
   def producer_close(_consumer), do: :erlang.nif_error(:nif_not_loaded)
-  @spec producer_pause(reference) :: {:ok} | {:error}
-  def producer_pause(producer), do: producer_pause_async(producer) |> handle_async_nif_result()
-  @spec producer_resume(reference) :: {:ok} | {:error}
-  def producer_resume(producer), do: producer_resume_async(producer) |> handle_async_nif_result()
+  def producer_pause_async(_producer, _from), do: :erlang.nif_error(:nif_not_loaded)
+  def producer_resume_async(_producer, _from), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec producer_closed(reference) :: boolean()
   def producer_closed(_producer), do: :erlang.nif_error(:nif_not_loaded)
@@ -412,15 +404,13 @@ defmodule Mediasoup.Nif do
 
   @spec producer_score(reference) :: list() | {:error}
   def producer_score(_producer), do: :erlang.nif_error(:nif_not_loaded)
-  @spec producer_get_stats(reference) :: list() | {:error}
-  def producer_get_stats(producer),
-    do: producer_get_stats_async(producer) |> handle_async_nif_result() |> unwrap_ok()
+
+  def producer_get_stats_async(_producer, _from), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec producer_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def producer_event(_producer, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
 
-  def producer_dump(producer),
-    do: producer_dump_async(producer) |> handle_async_nif_result() |> unwrap_ok()
+  def producer_dump_async(_producer, _from), do: :erlang.nif_error(:nif_not_loaded)
 
   # data_producer
   @spec data_producer_id(reference) :: String.t()

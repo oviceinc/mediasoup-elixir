@@ -452,6 +452,7 @@ defmodule Mediasoup.WebRtcTransport do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
@@ -459,6 +460,7 @@ defmodule Mediasoup.WebRtcTransport do
     {:ok, Map.put(state, :supervisor, supervisor)}
   end
 
+  @impl true
   def handle_call(
         {:event, [listener, event_types]},
         _from,
@@ -472,6 +474,7 @@ defmodule Mediasoup.WebRtcTransport do
     {:reply, result, state}
   end
 
+  @impl true
   def handle_call(
         {:struct_from_pid, _arg},
         _from,
@@ -568,6 +571,7 @@ defmodule Mediasoup.WebRtcTransport do
     {:noreply, state}
   end
 
+  @impl true
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
     DynamicSupervisor.stop(supervisor, reason)
     Nif.webrtc_transport_close(reference)

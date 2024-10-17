@@ -210,28 +210,52 @@ defmodule Mediasoup.Producer do
 
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.producer_closed/1,
-    dump: &Nif.producer_dump/1,
     paused?: &Nif.producer_paused/1,
-    score: &Nif.producer_score/1,
-    get_stats: &Nif.producer_get_stats/1,
-    pause: &Nif.producer_pause/1,
-    resume: &Nif.producer_resume/1
+    score: &Nif.producer_score/1
   })
 
+  NifWrap.def_handle_call_async_nif(%{
+    pause: &Nif.producer_pause_async/2,
+    resume: &Nif.producer_resume_async/2,
+    get_stats: &Nif.producer_get_stats_async/2,
+    dump: &Nif.producer_dump_async/2
+  })
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, nil, _},
+        state
+      ) do
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
+      ) do
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_info({:on_resume}, %{reference: reference} = state) do
-    Nif.producer_resume(reference)
+    Nif.producer_resume_async(reference, nil)
     {:noreply, state}
   end
 
+  @impl true
   def handle_info({:on_pause}, %{reference: reference} = state) do
-    Nif.producer_pause(reference)
+    Nif.producer_pause_async(reference, nil)
     {:noreply, state}
   end
 
+  @impl true
   def handle_info({:on_close}, state) do
     {:stop, :normal, state}
   end
 
+  @impl true
   def terminate(_reason, %{reference: reference} = _state) do
     Nif.producer_close(reference)
     :ok
