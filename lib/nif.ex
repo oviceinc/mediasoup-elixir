@@ -53,21 +53,6 @@ defmodule Mediasoup.Nif do
   defp create_worker_async(), do: :erlang.nif_error(:nif_not_loaded)
   defp create_worker_async(_option), do: :erlang.nif_error(:nif_not_loaded)
 
-  ## router with async
-  defp router_create_pipe_transport_async(
-         _reference,
-         _option
-       ),
-       do: :erlang.nif_error(:nif_not_loaded)
-
-  defp router_create_webrtc_transport_async(_router, _option),
-    do: :erlang.nif_error(:nif_not_loaded)
-
-  defp router_create_plain_transport_async(_router, _option),
-    do: :erlang.nif_error(:nif_not_loaded)
-
-  defp router_dump_async(_router), do: :erlang.nif_error(:nif_not_loaded)
-
   ## webrtc_server with async
   defp webrtc_server_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
 
@@ -178,21 +163,18 @@ defmodule Mediasoup.Nif do
 
   def router_closed(_router), do: :erlang.nif_error(:nif_not_loaded)
 
-  def router_create_pipe_transport(
-        router,
-        option
+  def router_create_pipe_transport_async(
+        _reference,
+        _option,
+        _from
       ),
-      do: router_create_pipe_transport_async(router, option) |> handle_async_nif_result()
+      do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec router_create_webrtc_transport(reference, map) ::
-          {:ok, reference()} | {:error, String.t()}
-  def router_create_webrtc_transport(router, option),
-    do: router_create_webrtc_transport_async(router, option) |> handle_async_nif_result()
+  def router_create_webrtc_transport_async(_router, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec router_create_plain_transport(reference, map) ::
-          {:ok, reference()} | {:error, String.t()}
-  def router_create_plain_transport(router, option),
-    do: router_create_plain_transport_async(router, option) |> handle_async_nif_result()
+  def router_create_plain_transport_async(_router, _option, _from),
+    do: :erlang.nif_error(:nif_not_loaded)
 
   @spec router_can_consume(reference, String.t(), Router.rtpCapabilities()) :: boolean
   def router_can_consume(_router, _producer_id, _rtp_capabilities),
@@ -203,9 +185,7 @@ defmodule Mediasoup.Nif do
 
   @spec router_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def router_event(_router, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
-  @spec router_dump(reference) :: any
-  def router_dump(router),
-    do: router_dump_async(router) |> handle_async_nif_result() |> unwrap_ok()
+  def router_dump_async(router, from), do: :erlang.nif_error(:nif_not_loaded)
 
   # webrtc_server
   @spec webrtc_server_id(reference) :: String.t()

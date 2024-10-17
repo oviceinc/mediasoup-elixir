@@ -354,26 +354,19 @@ defmodule Mediasoup.Router do
 
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.router_closed/1,
-    dump: &Nif.router_dump/1,
     can_consume?: &Nif.router_can_consume/3,
     rtp_capabilities: &Nif.router_rtp_capabilities/1
   })
 
-  def handle_call(
-        {:create_pipe_transport, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.router_create_pipe_transport(reference, option)
-      |> NifWrap.handle_create_result(PipeTransport, supervisor)
-
-    {:reply, ret, state}
-  end
+  NifWrap.def_handle_call_async_nif(%{
+    dump: &Nif.router_dump_async/2,
+    create_pipe_transport: &Nif.router_create_pipe_transport_async/3,
+    create_plain_transport: &Nif.router_create_plain_transport_async/3
+  })
 
   def handle_call(
         {:create_webrtc_transport, [option]},
-        _from,
+        from,
         %{reference: reference, supervisor: supervisor} = state
       ) do
     option =
@@ -385,23 +378,14 @@ defmodule Mediasoup.Router do
         end
       end)
 
-    ret =
-      Nif.router_create_webrtc_transport(reference, option)
-      |> NifWrap.handle_create_result(WebRtcTransport, supervisor)
-
-    {:reply, ret, state}
-  end
-
-  def handle_call(
-        {:create_plain_transport, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.router_create_plain_transport(reference, option)
-      |> NifWrap.handle_create_result(PlainTransport, supervisor)
-
-    {:reply, ret, state}
+    case Nif.router_create_webrtc_transport_async(
+           reference,
+           option,
+           {:create_webrtc_transport, from}
+         ) do
+      :ok -> {:noreply, state}
+      error -> {:reply, error, state}
+    end
   end
 
   def handle_call({:get_node}, _from, state) do
@@ -433,6 +417,42 @@ defmodule Mediasoup.Router do
 
   def handle_call({:put_pipe_transport_pair, id, pair}, _from, state) do
     {:reply, :ok, Map.put(state, :mapped_pipe_transports, %{id => pair})}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {:create_pipe_transport, from}, result},
+        %{supervisor: supervisor} = state
+      ) do
+    GenServer.reply(from, NifWrap.handle_create_result(result, PipeTransport, supervisor))
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {:create_plain_transport, from}, result},
+        %{supervisor: supervisor} = state
+      ) do
+    GenServer.reply(from, NifWrap.handle_create_result(result, PlainTransport, supervisor))
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {:create_webrtc_transport, from}, result},
+        %{supervisor: supervisor} = state
+      ) do
+    GenServer.reply(from, NifWrap.handle_create_result(result, WebRtcTransport, supervisor))
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
+      ) do
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
   end
 
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
