@@ -154,7 +154,7 @@ defmodule Mediasoup.Nif do
 
   @spec router_event(reference, pid, [atom()]) :: {:ok} | {:error}
   def router_event(_router, _pid, _event_types), do: :erlang.nif_error(:nif_not_loaded)
-  def router_dump_async(router, from), do: :erlang.nif_error(:nif_not_loaded)
+  def router_dump_async(_router, _from), do: :erlang.nif_error(:nif_not_loaded)
 
   # webrtc_server
   @spec webrtc_server_id(reference) :: String.t()
@@ -295,7 +295,7 @@ defmodule Mediasoup.Nif do
   def consumer_pause_async(_consumer, _from), do: :erlang.nif_error(:nif_not_loaded)
   def consumer_resume_async(_consumer, _from), do: :erlang.nif_error(:nif_not_loaded)
 
-  def consumer_set_preferred_layers_async(_consumer, _referred_layers, _from),
+  def consumer_set_preferred_layers_async(_consumer, _preferred_layers, _from),
     do: :erlang.nif_error(:nif_not_loaded)
 
   def consumer_set_priority_async(_consumer, _priority, _from),

@@ -3,7 +3,7 @@ use rustler::env::SavedTerm;
 use rustler::Env;
 use rustler::Term;
 
-// https://github.com/rusterlium/rustler/issues/333#issuecomment-702236600
+// based on https://github.com/rusterlium/rustler/issues/333#issuecomment-702236600
 
 pub struct TermBox {
     inner: std::sync::Mutex<TermBoxContents>,
@@ -22,7 +22,7 @@ impl TermBox {
     }
 
     pub fn get<'a>(&self, env: Env<'a>) -> Term<'a> {
-        let inner = self.inner.lock().unwrap();
+        let inner = self.inner.lock().expect("Failed to acquire the mutex lock");
 
         // Copy over term from owned environment to the target environment
         inner.owned_env.run(|inner_env| {

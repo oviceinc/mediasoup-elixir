@@ -299,21 +299,18 @@ defmodule Mediasoup.PlainTransport do
     {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
-  @impl true
   def handle_info(
-        {:mediasoup_async_nif_result, {:produce, from}, result},
+        {:mediasoup_async_nif_result, {message_tag, from}, result},
         %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, Producer, supervisor))
-    {:noreply, state}
-  end
+      )
+      when message_tag in [:produce, :consume] do
+    module =
+      case message_tag do
+        :produce -> Producer
+        :consume -> Consumer
+      end
 
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {:consume, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, Consumer, supervisor))
+    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
     {:noreply, state}
   end
 

@@ -422,30 +422,23 @@ defmodule Mediasoup.Router do
     {:reply, :ok, Map.put(state, :mapped_pipe_transports, %{id => pair})}
   end
 
-  @impl true
   def handle_info(
-        {:mediasoup_async_nif_result, {:create_pipe_transport, from}, result},
+        {:mediasoup_async_nif_result, {operation, from}, result},
         %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, PipeTransport, supervisor))
-    {:noreply, state}
-  end
+      )
+      when operation in [
+             :create_pipe_transport,
+             :create_plain_transport,
+             :create_webrtc_transport
+           ] do
+    module =
+      case operation do
+        :create_pipe_transport -> PipeTransport
+        :create_plain_transport -> PlainTransport
+        :create_webrtc_transport -> WebRtcTransport
+      end
 
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {:create_plain_transport, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, PlainTransport, supervisor))
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {:create_webrtc_transport, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, WebRtcTransport, supervisor))
+    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
     {:noreply, state}
   end
 

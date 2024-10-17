@@ -510,39 +510,20 @@ defmodule Mediasoup.WebRtcTransport do
     restart_ice: &Nif.webrtc_transport_restart_ice_async/2
   })
 
-  @impl true
   def handle_info(
-        {:mediasoup_async_nif_result, {:produce, from}, result},
+        {:mediasoup_async_nif_result, {message_tag, from}, result},
         %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, Producer, supervisor))
-    {:noreply, state}
-  end
+      )
+      when message_tag in [:produce, :consume, :produce_data, :consume_data] do
+    module =
+      case message_tag do
+        :produce -> Producer
+        :consume -> Consumer
+        :produce_data -> DataProducer
+        :consume_data -> DataConsumer
+      end
 
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {:consume, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, Consumer, supervisor))
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {:produce_data, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, DataProducer, supervisor))
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {:consume_data, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, DataConsumer, supervisor))
+    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
     {:noreply, state}
   end
 
