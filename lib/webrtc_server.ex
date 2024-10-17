@@ -121,8 +121,11 @@ defmodule Mediasoup.WebRtcServer do
 
   NifWrap.def_handle_call_nif(%{
     close: &Nif.webrtc_server_close/1,
-    closed?: &Nif.webrtc_server_closed/1,
-    dump: &Nif.webrtc_server_dump/1
+    closed?: &Nif.webrtc_server_closed/1
+  })
+
+  NifWrap.def_handle_call_async_nif(%{
+    dump: &Nif.webrtc_server_dump_async/2
   })
 
   def handle_call(
@@ -131,5 +134,14 @@ defmodule Mediasoup.WebRtcServer do
         %{reference: reference} = state
       ) do
     {:reply, reference, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
+      ) do
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
   end
 end

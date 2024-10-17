@@ -1,8 +1,10 @@
-use crate::{atoms, json_serde::JsonSerdeWrap, send_async_nif_result, DisposableResourceWrapper};
+use crate::{
+    atoms, json_serde::JsonSerdeWrap, send_async_nif_result_with_from, DisposableResourceWrapper,
+};
 use mediasoup::prelude::{
     ListenInfo, WebRtcServer, WebRtcServerId, WebRtcServerListenInfos, WebRtcServerOptions,
 };
-use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type WebRtcServerRef = DisposableResourceWrapper<WebRtcServer>;
 
@@ -56,10 +58,11 @@ pub fn webrtc_server_closed(server: ResourceArc<WebRtcServerRef>) -> NifResult<b
 pub fn webrtc_server_dump(
     env: Env,
     server: ResourceArc<WebRtcServerRef>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let server = server.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         server
             .dump()
             .await

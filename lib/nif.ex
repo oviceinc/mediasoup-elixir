@@ -53,9 +53,6 @@ defmodule Mediasoup.Nif do
   defp create_worker_async(), do: :erlang.nif_error(:nif_not_loaded)
   defp create_worker_async(_option), do: :erlang.nif_error(:nif_not_loaded)
 
-  ## webrtc_server with async
-  defp webrtc_server_dump_async(_transport), do: :erlang.nif_error(:nif_not_loaded)
-
   # plain transport
   ## properties
   def plain_transport_tuple(_transport), do: :erlang.nif_error(:nif_not_loaded)
@@ -178,9 +175,8 @@ defmodule Mediasoup.Nif do
   def webrtc_server_close(_server), do: :erlang.nif_error(:nif_not_loaded)
   @spec webrtc_server_closed(reference) :: boolean
   def webrtc_server_closed(_server), do: :erlang.nif_error(:nif_not_loaded)
-  @spec webrtc_server_dump(reference) :: boolean
-  def webrtc_server_dump(server),
-    do: webrtc_server_dump_async(server) |> handle_async_nif_result() |> unwrap_ok()
+
+  def webrtc_server_dump_async(_server, _from), do: :erlang.nif_error(:nif_not_loaded)
 
   # webrtc_transport
   @spec webrtc_transport_id(reference) :: String.t()
