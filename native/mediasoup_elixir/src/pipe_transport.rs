@@ -1,11 +1,10 @@
-use crate::atoms;
 use crate::consumer::{ConsumerOptionsStruct, ConsumerRef};
 use crate::data_consumer::{DataConsumerOptionsStruct, DataConsumerRef};
 use crate::data_producer::{DataProducerOptionsStruct, DataProducerRef};
 use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::{ProducerOptionsStruct, ProducerRef};
-use crate::{send_async_nif_result, DisposableResourceWrapper};
+use crate::{atoms, send_async_nif_result_with_from, DisposableResourceWrapper};
 use mediasoup::data_structures::{ListenInfo, SctpState, TransportTuple};
 use mediasoup::prelude::{
     PipeTransport, PipeTransportOptions, PipeTransportRemoteParameters, Transport,
@@ -14,7 +13,7 @@ use mediasoup::prelude::{
 
 use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::srtp_parameters::SrtpParameters;
-use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type PipeTransportRef = DisposableResourceWrapper<PipeTransport>;
 
@@ -109,11 +108,12 @@ pub fn pipe_transport_consume(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: ConsumerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
     let option = option.to_option();
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .consume(option)
             .await
@@ -128,11 +128,12 @@ pub fn pipe_transport_consume_data(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: DataConsumerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
     let option = option.to_option();
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .consume_data(option)
             .await
@@ -147,12 +148,13 @@ pub fn pipe_transport_connect(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: JsonSerdeWrap<PipeTransportRemoteParameters>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
     let option = option.clone();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .connect(option)
             .await
@@ -165,11 +167,12 @@ pub fn pipe_transport_produce(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: ProducerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
     let option = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .produce(option)
             .await
@@ -184,11 +187,12 @@ pub fn pipe_transport_produce_data(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
     option: DataProducerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
     let option = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .produce_data(option)
             .await
@@ -202,10 +206,11 @@ pub fn pipe_transport_produce_data(
 pub fn pipe_transport_get_stats(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .get_stats()
             .await
@@ -219,10 +224,11 @@ pub fn pipe_transport_set_max_incoming_bitrate(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
     bitrate: u32,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .set_max_incoming_bitrate(bitrate)
             .await
@@ -257,10 +263,11 @@ pub fn pipe_transport_srtp_parameters(
 pub fn pipe_transport_dump(
     env: Env,
     transport: ResourceArc<PipeTransportRef>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .dump()
             .await
