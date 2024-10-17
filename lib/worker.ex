@@ -238,10 +238,7 @@ defmodule Mediasoup.Worker do
         {:mediasoup_async_nif_result, {:dump, from}, result},
         state
       ) do
-    case result do
-      {:ok, dump} -> GenServer.reply(from, dump)
-      error -> GenServer.reply(from, error)
-    end
+    GenServer.reply(from, result |> Nif.unwrap_ok())
 
     {:noreply, state}
   end

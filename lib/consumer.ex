@@ -312,21 +312,43 @@ defmodule Mediasoup.Consumer do
 
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.consumer_closed/1,
-    dump: &Nif.consumer_dump/1,
     paused?: &Nif.consumer_paused/1,
     producer_paused?: &Nif.consumer_producer_paused/1,
     priority: &Nif.consumer_priority/1,
     score: &Nif.consumer_score/1,
     preferred_layers: &Nif.consumer_preferred_layers/1,
-    current_layers: &Nif.consumer_current_layers/1,
-    get_stats: &Nif.consumer_get_stats/1,
-    pause: &Nif.consumer_pause/1,
-    resume: &Nif.consumer_resume/1,
-    set_preferred_layers: &Nif.consumer_set_preferred_layers/2,
-    set_priority: &Nif.consumer_set_priority/2,
-    unset_priority: &Nif.consumer_unset_priority/1,
-    request_key_frame: &Nif.consumer_request_key_frame/1
+    current_layers: &Nif.consumer_current_layers/1
   })
+
+  NifWrap.def_handle_call_async_nif(%{
+    set_preferred_layers: &Nif.consumer_set_preferred_layers_async/3,
+    set_priority: &Nif.consumer_set_priority_async/3,
+    request_key_frame: &Nif.consumer_request_key_frame_async/2,
+    unset_priority: &Nif.consumer_unset_priority_async/2,
+    dump: &Nif.consumer_dump_async/2,
+    get_stats: &Nif.consumer_get_stats_async/2,
+    pause: &Nif.consumer_pause_async/2,
+    resume: &Nif.consumer_resume_async/2
+  })
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {unwrap_ok_func, from}, result},
+        state
+      )
+      when unwrap_ok_func in [:set_priority, :dump, :get_stats] do
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
+      ) do
+    GenServer.reply(from, result)
+    {:noreply, state}
+  end
 
   @impl true
   def handle_info({:on_close}, state) do
