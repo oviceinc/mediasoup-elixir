@@ -16,6 +16,10 @@ defmodule MediasoupElixirWebRtcServerTest do
     IntegrateTest.WebRtcServerTest.create_webrtc_server_succeeds(worker)
   end
 
+  test "create_webrtc_server_close", %{worker: worker} do
+    IntegrateTest.WebRtcServerTest.create_webrtc_server_close(worker)
+  end
+
   test "create_webrtc_server_without_specifying_port_succeeds", %{worker: worker} do
     IntegrateTest.WebRtcServerTest.create_webrtc_server_without_specifying_port_succeeds(worker)
   end

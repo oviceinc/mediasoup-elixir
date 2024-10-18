@@ -452,6 +452,7 @@ defmodule Mediasoup.WebRtcTransport do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
@@ -459,6 +460,7 @@ defmodule Mediasoup.WebRtcTransport do
     {:ok, Map.put(state, :supervisor, supervisor)}
   end
 
+  @impl true
   def handle_call(
         {:event, [listener, event_types]},
         _from,
@@ -472,6 +474,7 @@ defmodule Mediasoup.WebRtcTransport do
     {:reply, result, state}
   end
 
+  @impl true
   def handle_call(
         {:struct_from_pid, _arg},
         _from,
@@ -483,71 +486,73 @@ defmodule Mediasoup.WebRtcTransport do
   NifWrap.def_handle_call_nif(%{
     close: &Nif.webrtc_transport_close/1,
     closed?: &Nif.webrtc_transport_closed/1,
-    dump: &Nif.webrtc_transport_dump/1,
-    get_stats: &Nif.webrtc_transport_get_stats/1,
     sctp_state: &Nif.webrtc_transport_sctp_state/1,
-    connect: &Nif.webrtc_transport_connect/2,
     ice_parameters: &Nif.webrtc_transport_ice_parameters/1,
     ice_candidates: &Nif.webrtc_transport_ice_candidates/1,
     ice_role: &Nif.webrtc_transport_ice_role/1,
     ice_state: &Nif.webrtc_transport_ice_state/1,
-    restart_ice: &Nif.webrtc_transport_restart_ice/1,
     ice_selected_tuple: &Nif.webrtc_transport_ice_selected_tuple/1,
     sctp_parameters: &Nif.webrtc_transport_sctp_parameters/1,
-    set_max_incoming_bitrate: &Nif.webrtc_transport_set_max_incoming_bitrate/2,
-    set_max_outgoing_bitrate: &Nif.webrtc_transport_set_max_outgoing_bitrate/2,
     dtls_parameters: &Nif.webrtc_transport_dtls_parameters/1,
     dtls_state: &Nif.webrtc_transport_dtls_state/1
   })
 
-  def handle_call(
-        {:produce, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.webrtc_transport_produce(reference, option)
-      |> NifWrap.handle_create_result(Producer, supervisor)
+  NifWrap.def_handle_call_async_nif(%{
+    produce: &Nif.webrtc_transport_produce_async/3,
+    consume: &Nif.webrtc_transport_consume_async/3,
+    produce_data: &Nif.webrtc_transport_produce_data_async/3,
+    consume_data: &Nif.webrtc_transport_consume_data_async/3,
+    connect: &Nif.webrtc_transport_connect_async/3,
+    get_stats: &Nif.webrtc_transport_get_stats_async/2,
+    dump: &Nif.webrtc_transport_dump_async/2,
+    set_max_incoming_bitrate: &Nif.webrtc_transport_set_max_incoming_bitrate_async/3,
+    set_max_outgoing_bitrate: &Nif.webrtc_transport_set_max_outgoing_bitrate_async/3,
+    restart_ice: &Nif.webrtc_transport_restart_ice_async/2
+  })
 
-    {:reply, ret, state}
+  def handle_info(
+        {:mediasoup_async_nif_result, {message_tag, from}, result},
+        %{supervisor: supervisor} = state
+      )
+      when message_tag in [:produce, :consume, :produce_data, :consume_data] do
+    module =
+      case message_tag do
+        :produce -> Producer
+        :consume -> Consumer
+        :produce_data -> DataProducer
+        :consume_data -> DataConsumer
+      end
+
+    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
+    {:noreply, state}
   end
 
-  def handle_call(
-        {:produce_data, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.webrtc_transport_produce_data(reference, option)
-      |> NifWrap.handle_create_result(DataProducer, supervisor)
-
-    {:reply, ret, state}
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {unwrap_ok_func, from}, result},
+        state
+      )
+      when unwrap_ok_func in [
+             :connect,
+             :dump,
+             :get_stats,
+             :set_max_incoming_bitrate,
+             :set_max_outgoing_bitrate
+           ] do
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
   end
 
-  def handle_call(
-        {:consume, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
       ) do
-    ret =
-      Nif.webrtc_transport_consume(reference, option)
-      |> NifWrap.handle_create_result(Consumer, supervisor)
-
-    {:reply, ret, state}
+    GenServer.reply(from, result)
+    {:noreply, state}
   end
 
-  def handle_call(
-        {:consume_data, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.webrtc_transport_consume_data(reference, option)
-      |> NifWrap.handle_create_result(DataConsumer, supervisor)
-
-    {:reply, ret, state}
-  end
-
+  @impl true
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
     DynamicSupervisor.stop(supervisor, reason)
     Nif.webrtc_transport_close(reference)

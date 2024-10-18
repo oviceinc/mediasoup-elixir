@@ -324,6 +324,7 @@ defmodule Mediasoup.Router do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
@@ -331,6 +332,7 @@ defmodule Mediasoup.Router do
     {:ok, Map.put(state, :supervisor, supervisor)}
   end
 
+  @impl true
   def handle_call(
         {:event, [listener, event_types]},
         _from,
@@ -354,27 +356,21 @@ defmodule Mediasoup.Router do
 
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.router_closed/1,
-    dump: &Nif.router_dump/1,
     can_consume?: &Nif.router_can_consume/3,
     rtp_capabilities: &Nif.router_rtp_capabilities/1
   })
 
-  def handle_call(
-        {:create_pipe_transport, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.router_create_pipe_transport(reference, option)
-      |> NifWrap.handle_create_result(PipeTransport, supervisor)
+  NifWrap.def_handle_call_async_nif(%{
+    dump: &Nif.router_dump_async/2,
+    create_pipe_transport: &Nif.router_create_pipe_transport_async/3,
+    create_plain_transport: &Nif.router_create_plain_transport_async/3
+  })
 
-    {:reply, ret, state}
-  end
-
+  @impl true
   def handle_call(
         {:create_webrtc_transport, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
+        from,
+        %{reference: reference} = state
       ) do
     option =
       Map.update(option, :webrtc_server, nil, fn webrtc_server ->
@@ -385,23 +381,14 @@ defmodule Mediasoup.Router do
         end
       end)
 
-    ret =
-      Nif.router_create_webrtc_transport(reference, option)
-      |> NifWrap.handle_create_result(WebRtcTransport, supervisor)
-
-    {:reply, ret, state}
-  end
-
-  def handle_call(
-        {:create_plain_transport, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.router_create_plain_transport(reference, option)
-      |> NifWrap.handle_create_result(PlainTransport, supervisor)
-
-    {:reply, ret, state}
+    case Nif.router_create_webrtc_transport_async(
+           reference,
+           option,
+           {:create_webrtc_transport, from}
+         ) do
+      :ok -> {:noreply, state}
+      error -> {:reply, error, state}
+    end
   end
 
   def handle_call({:get_node}, _from, state) do
@@ -435,6 +422,36 @@ defmodule Mediasoup.Router do
     {:reply, :ok, Map.put(state, :mapped_pipe_transports, %{id => pair})}
   end
 
+  def handle_info(
+        {:mediasoup_async_nif_result, {operation, from}, result},
+        %{supervisor: supervisor} = state
+      )
+      when operation in [
+             :create_pipe_transport,
+             :create_plain_transport,
+             :create_webrtc_transport
+           ] do
+    module =
+      case operation do
+        :create_pipe_transport -> PipeTransport
+        :create_plain_transport -> PlainTransport
+        :create_webrtc_transport -> WebRtcTransport
+      end
+
+    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
+      ) do
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
+  end
+
+  @impl true
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
     DynamicSupervisor.stop(supervisor, reason)
     Nif.router_close(reference)

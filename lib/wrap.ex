@@ -70,6 +70,25 @@ defmodule Mediasoup.NifWrap do
     end
   end
 
+  @spec def_handle_call_async_nif(any) ::
+          {:__block__, [], [{:@, [...], [...]} | {:def, [...], [...]}, ...]}
+  defmacro def_handle_call_async_nif(nif_call_map) do
+    quote do
+      @nif_map unquote(nif_call_map)
+      @nif_keylist Map.keys(@nif_map)
+
+      def handle_call(
+            {function, arg},
+            from,
+            %{reference: reference} = state
+          )
+          when function in @nif_keylist do
+        result = apply(Map.fetch!(@nif_map, function), [reference | arg] ++ [{function, from}])
+        {:noreply, state}
+      end
+    end
+  end
+
   def handle_create_result(create_result, module, supervisor) do
     with {:ok, ref} <- create_result,
          {:ok, pid} <-

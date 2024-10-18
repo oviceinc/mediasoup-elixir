@@ -1,9 +1,9 @@
-use crate::atoms;
 use crate::json_serde::JsonSerdeWrap;
-use crate::{send_async_nif_result, send_msg_from_other_thread, DisposableResourceWrapper};
+use crate::{atoms, send_async_nif_result_with_from};
+use crate::{send_msg_from_other_thread, DisposableResourceWrapper};
 use mediasoup::producer::{Producer, ProducerId, ProducerOptions, ProducerScore, ProducerType};
 use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
-use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type ProducerRef = DisposableResourceWrapper<Producer>;
 #[rustler::resource_impl]
@@ -41,10 +41,10 @@ pub fn producer_close(producer: ResourceArc<ProducerRef>) -> NifResult<(Atom,)> 
     Ok((atoms::ok(),))
 }
 #[rustler::nif(name = "producer_pause_async")]
-pub fn producer_pause(env: Env, producer: ResourceArc<ProducerRef>) -> NifResult<(Atom, Atom)> {
+pub fn producer_pause(env: Env, producer: ResourceArc<ProducerRef>, from: Term) -> NifResult<Atom> {
     let producer = producer.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         producer.pause().await.map_err(|error| format!("{}", error))
     })
 }
@@ -72,10 +72,14 @@ pub fn producer_score(
 }
 
 #[rustler::nif(name = "producer_get_stats_async")]
-pub fn producer_get_stats(env: Env, producer: ResourceArc<ProducerRef>) -> NifResult<(Atom, Atom)> {
+pub fn producer_get_stats(
+    env: Env,
+    producer: ResourceArc<ProducerRef>,
+    from: Term,
+) -> NifResult<Atom> {
     let producer = producer.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         producer
             .get_stats()
             .await
@@ -85,10 +89,14 @@ pub fn producer_get_stats(env: Env, producer: ResourceArc<ProducerRef>) -> NifRe
 }
 
 #[rustler::nif(name = "producer_resume_async")]
-pub fn producer_resume(env: Env, producer: ResourceArc<ProducerRef>) -> NifResult<(Atom, Atom)> {
+pub fn producer_resume(
+    env: Env,
+    producer: ResourceArc<ProducerRef>,
+    from: Term,
+) -> NifResult<Atom> {
     let producer = producer.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         producer
             .resume()
             .await
@@ -97,10 +105,10 @@ pub fn producer_resume(env: Env, producer: ResourceArc<ProducerRef>) -> NifResul
 }
 
 #[rustler::nif(name = "producer_dump_async")]
-pub fn producer_dump(env: Env, producer: ResourceArc<ProducerRef>) -> NifResult<(Atom, Atom)> {
+pub fn producer_dump(env: Env, producer: ResourceArc<ProducerRef>, from: Term) -> NifResult<Atom> {
     let producer = producer.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         producer
             .dump()
             .await

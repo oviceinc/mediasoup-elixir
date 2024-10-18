@@ -209,6 +209,7 @@ defmodule Mediasoup.PlainTransport do
     consume(transport, Consumer.Options.from_map(option))
   end
 
+  @impl true
   def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
     DynamicSupervisor.stop(supervisor, reason)
     Nif.plain_transport_close(reference)
@@ -223,13 +224,18 @@ defmodule Mediasoup.PlainTransport do
     sctp_state: &Nif.plain_transport_sctp_state/1,
     srtp_parameters: &Nif.plain_transport_srtp_parameters/1,
     # methods
-    connect: &Nif.plain_transport_connect/2,
-    dump: &Nif.plain_transport_dump/1,
-    get_stats: &Nif.plain_transport_get_stats/1,
     close: &Nif.plain_transport_close/1,
     closed?: &Nif.plain_transport_closed/1,
     # events
     event: &Nif.plain_transport_event/3
+  })
+
+  NifWrap.def_handle_call_async_nif(%{
+    connect: &Nif.plain_transport_connect_async/3,
+    dump: &Nif.plain_transport_dump_async/2,
+    get_stats: &Nif.plain_transport_get_stats_async/2,
+    produce: &Nif.plain_transport_produce_async/3,
+    consume: &Nif.plain_transport_consume_async/3
   })
 
   # Mediasoup Plain Transport Events
@@ -265,6 +271,7 @@ defmodule Mediasoup.PlainTransport do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
@@ -292,27 +299,27 @@ defmodule Mediasoup.PlainTransport do
     {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
-  def handle_call(
-        {:produce, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
-      ) do
-    ret =
-      Nif.plain_transport_produce(reference, option)
-      |> NifWrap.handle_create_result(Producer, supervisor)
+  def handle_info(
+        {:mediasoup_async_nif_result, {message_tag, from}, result},
+        %{supervisor: supervisor} = state
+      )
+      when message_tag in [:produce, :consume] do
+    module =
+      case message_tag do
+        :produce -> Producer
+        :consume -> Consumer
+      end
 
-    {:reply, ret, state}
+    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
+    {:noreply, state}
   end
 
-  def handle_call(
-        {:consume, [option]},
-        _from,
-        %{reference: reference, supervisor: supervisor} = state
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
       ) do
-    ret =
-      Nif.plain_transport_consume(reference, option)
-      |> NifWrap.handle_create_result(Consumer, supervisor)
-
-    {:reply, ret, state}
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
   end
 end

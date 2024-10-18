@@ -5,7 +5,9 @@ use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::{ProducerOptionsStruct, ProducerRef};
 use crate::webrtc_server::WebRtcServerRef;
-use crate::{atoms, send_async_nif_result, send_msg_from_other_thread, DisposableResourceWrapper};
+use crate::{
+    atoms, send_async_nif_result_with_from, send_msg_from_other_thread, DisposableResourceWrapper,
+};
 use mediasoup::data_structures::{
     DtlsParameters, DtlsState, IceParameters, IceRole, IceState, ListenInfo, SctpState,
     TransportTuple,
@@ -20,7 +22,7 @@ use mediasoup::transport::TransportId;
 use mediasoup::webrtc_transport::{
     WebRtcTransportListenInfos, WebRtcTransportOptions, WebRtcTransportRemoteParameters,
 };
-use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc};
+use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type WebRtcTransportRef = DisposableResourceWrapper<WebRtcTransport>;
 
@@ -54,12 +56,13 @@ pub fn webrtc_transport_consume(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: ConsumerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
     let option: ConsumerOptions = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .consume(option)
             .await
@@ -74,12 +77,13 @@ pub fn webrtc_transport_consume_data(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: DataConsumerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
     let option: DataConsumerOptions = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .consume_data(option)
             .await
@@ -94,11 +98,12 @@ pub fn webrtc_transport_connect(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: JsonSerdeWrap<WebRtcTransportRemoteParameters>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
     let option: WebRtcTransportRemoteParameters = option.clone();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .connect(option)
             .await
@@ -111,11 +116,12 @@ pub fn webrtc_transport_produce(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: ProducerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
     let option: ProducerOptions = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .produce(option)
             .await
@@ -130,11 +136,12 @@ pub fn webrtc_transport_produce_data(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     option: DataProducerOptionsStruct,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
     let option: DataProducerOptions = option.to_option();
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .produce_data(option)
             .await
@@ -181,10 +188,11 @@ pub fn webrtc_transport_set_max_incoming_bitrate(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     bitrate: u32,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .set_max_incoming_bitrate(bitrate)
             .await
@@ -197,10 +205,11 @@ pub fn webrtc_transport_set_max_outgoing_bitrate(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
     bitrate: u32,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .set_max_outgoing_bitrate(bitrate)
             .await
@@ -220,10 +229,11 @@ pub fn webrtc_transport_ice_state(
 pub fn webrtc_transport_restart_ice(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .restart_ice()
             .await
@@ -236,10 +246,11 @@ pub fn webrtc_transport_restart_ice(
 pub fn webrtc_transport_get_stats(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .get_stats()
             .await
@@ -252,10 +263,11 @@ pub fn webrtc_transport_get_stats(
 pub fn webrtc_transport_dump(
     env: Env,
     transport: ResourceArc<WebRtcTransportRef>,
-) -> NifResult<(Atom, Atom)> {
+    from: Term,
+) -> NifResult<Atom> {
     let transport = transport.get_resource()?;
 
-    send_async_nif_result(env, async move {
+    send_async_nif_result_with_from(env, from, async move {
         transport
             .dump()
             .await
