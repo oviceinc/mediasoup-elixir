@@ -688,12 +688,12 @@ defmodule IntegrateTest.ConsumerTest do
 
     assert {:ok} === Producer.pause(audio_producer)
 
-    Consumer.pause(audio_consumer)
+    assert {:ok} === Consumer.pause(audio_consumer)
 
     consumer_dump = Consumer.dump(audio_consumer)
     assert consumer_dump["paused"] == true
 
-    Consumer.resume(audio_consumer)
+    assert {:ok} === Consumer.resume(audio_consumer)
 
     consumer_dump = Consumer.dump(audio_consumer)
     assert consumer_dump["paused"] == false
@@ -713,10 +713,11 @@ defmodule IntegrateTest.ConsumerTest do
         rtpCapabilities: consumer_device_capabilities()
       })
 
-    Consumer.set_preferred_layers(audio_consumer, %{
-      spatialLayer: 1,
-      temporalLayer: 1
-    })
+    assert {:ok} ==
+             Consumer.set_preferred_layers(audio_consumer, %{
+               spatialLayer: 1,
+               temporalLayer: 1
+             })
 
     assert Consumer.preferred_layers(audio_consumer) === nil
 
@@ -764,9 +765,9 @@ defmodule IntegrateTest.ConsumerTest do
 
     assert {:ok} === Producer.pause(video_producer)
 
-    {:ok} = Consumer.set_priority(video_consumer, 2)
+    assert {:ok} == Consumer.set_priority(video_consumer, 2)
     assert Consumer.priority(video_consumer) == 2
-    Consumer.unset_priority(video_consumer)
+    assert {:ok} == Consumer.unset_priority(video_consumer)
     assert Consumer.priority(video_consumer) == 1
     Mediasoup.WebRtcTransport.close(transport_1)
     Mediasoup.WebRtcTransport.close(transport_2)
@@ -784,7 +785,7 @@ defmodule IntegrateTest.ConsumerTest do
         rtpCapabilities: consumer_device_capabilities()
       })
 
-    Consumer.request_key_frame(audio_consumer)
+    assert {:ok} === Consumer.request_key_frame(audio_consumer)
   end
 
   def close_event(worker) do

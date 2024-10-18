@@ -336,16 +336,11 @@ defmodule Mediasoup.Consumer do
         {:mediasoup_async_nif_result, {func, from}, result},
         state
       ) do
-    reply =
-      case func do
-        func when func in [:set_priority, :dump, :get_stats] ->
-          Nif.unwrap_ok(result)
+    GenServer.reply(
+      from,
+      Nif.unwrap_ok(result)
+    )
 
-        _ ->
-          result
-      end
-
-    GenServer.reply(from, reply)
     {:noreply, state}
   end
 
