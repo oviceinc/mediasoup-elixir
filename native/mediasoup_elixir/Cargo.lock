@@ -165,7 +165,7 @@ dependencies = [
  "async-task",
  "concurrent-queue",
  "fastrand 2.0.1",
- "futures-lite 2.3.0",
+ "futures-lite 2.5.0",
  "slab",
 ]
 
@@ -490,9 +490,9 @@ dependencies = [
 
 [[package]]
 name = "futures-lite"
-version = "2.3.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52527eb5074e35e9339c6b4e8d12600c7128b68fb25dcb9fa9dec18f7c25f3a5"
+checksum = "cef40d21ae2c515b51041df9ed313ed21e572df340ea58a922a0aefe7e8891a1"
 dependencies = [
  "fastrand 2.0.1",
  "futures-core",
@@ -818,7 +818,7 @@ version = "3.14.2"
 dependencies = [
  "async-executor",
  "env_logger",
- "futures-lite 2.3.0",
+ "futures-lite 2.5.0",
  "log",
  "mediasoup",
  "num_cpus",
