@@ -103,7 +103,7 @@ defmodule Mediasoup.Worker do
   Worker identifier.
   """
   def id(pid) do
-    GenServer.call(pid, {:id, []})
+    NifWrap.call(pid, {:id, []})
   end
 
   @doc """
@@ -119,7 +119,7 @@ defmodule Mediasoup.Worker do
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createRouter
   """
   def create_router(pid, %Router.Options{} = option) do
-    GenServer.call(pid, {:create_router, [option]})
+    NifWrap.call(pid, {:create_router, [option]})
   end
 
   def create_router(worker, option) do
@@ -131,7 +131,7 @@ defmodule Mediasoup.Worker do
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createWebRtcServer
   """
   def create_webrtc_server(pid, %WebRtcServer.Options{} = option) do
-    GenServer.call(pid, {:create_webrtc_server, [WebRtcServer.Options.normalize(option)]})
+    NifWrap.call(pid, {:create_webrtc_server, [WebRtcServer.Options.normalize(option)]})
   end
 
   @spec update_settings(t, update_option) :: {:ok} | {:error}
@@ -140,7 +140,7 @@ defmodule Mediasoup.Worker do
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-updateSettings
   """
   def update_settings(pid, %UpdateableSettings{} = settings) do
-    GenServer.call(pid, {:update_settings, [settings]})
+    NifWrap.call(pid, {:update_settings, [settings]})
   end
 
   def update_settings(worker, settings) do
@@ -160,7 +160,7 @@ defmodule Mediasoup.Worker do
   Dump internal stat for Worker.
   """
   def dump(pid) do
-    GenServer.call(pid, {:dump, []})
+    NifWrap.call(pid, {:dump, []})
   end
 
   @type event_type ::
@@ -178,7 +178,7 @@ defmodule Mediasoup.Worker do
           :on_dead
         ]
       ) do
-    GenServer.call(pid, {:event, [lisener, event_types]})
+    NifWrap.call(pid, {:event, [lisener, event_types]})
   end
 
   @spec worker_count :: non_neg_integer()

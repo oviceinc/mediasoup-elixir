@@ -47,13 +47,13 @@ defmodule Mediasoup.DataProducer do
 
   @spec closed?(t) :: boolean
   def closed?(%DataProducer{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @type event_type :: :on_close
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(%DataProducer{pid: pid}, listener, event_types \\ [:on_close]) do
-    GenServer.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   @spec struct_from_pid(pid()) :: DataProducer.t()

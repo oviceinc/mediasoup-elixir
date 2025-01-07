@@ -64,8 +64,12 @@ defmodule Mediasoup.NifWrap do
             %{reference: reference} = state
           )
           when function in @nif_keylist do
-        result = apply(Map.fetch!(@nif_map, function), [reference | arg])
-        {:reply, result, state}
+        try do
+          result = apply(Map.fetch!(@nif_map, function), [reference | arg])
+          {:reply, result, state}
+        rescue
+          e -> {:reply, {:raise_error, e}, state}
+        end
       end
     end
   end
@@ -83,8 +87,21 @@ defmodule Mediasoup.NifWrap do
             %{reference: reference} = state
           )
           when function in @nif_keylist do
-        result = apply(Map.fetch!(@nif_map, function), [reference | arg] ++ [{function, from}])
-        {:noreply, state}
+        try do
+          result = apply(Map.fetch!(@nif_map, function), [reference | arg] ++ [{function, from}])
+          {:noreply, state}
+        rescue
+          e -> {:reply, {:raise_error, e}, state}
+        end
+      end
+    end
+  end
+
+  defmacro call(pid, args) do
+    quote do
+      case GenServer.call(unquote(pid), unquote(args)) do
+        {:raise_error, e} -> raise e
+        result -> result
       end
     end
   end

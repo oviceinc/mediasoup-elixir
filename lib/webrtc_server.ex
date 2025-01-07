@@ -80,7 +80,7 @@ defmodule Mediasoup.WebRtcServer do
   Tells whether the given WebRtcServer is closed on the local node.
   """
   def closed?(%WebRtcServer{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @spec dump(t) :: any | {:error, :terminated}
@@ -88,7 +88,7 @@ defmodule Mediasoup.WebRtcServer do
   Dump internal stat for WebRtcServer.
   """
   def dump(%WebRtcServer{pid: pid}) do
-    GenServer.call(pid, {:dump, []})
+    NifWrap.call(pid, {:dump, []})
   end
 
   @spec struct_from_pid(pid()) :: WebRtcServer.t()

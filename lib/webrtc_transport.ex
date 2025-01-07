@@ -216,7 +216,7 @@ defmodule Mediasoup.WebRtcTransport do
   Tells whether the given WebRtcTransport is closed on the local node.
   """
   def closed?(%WebRtcTransport{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::
@@ -226,7 +226,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consume
   """
   def consume(%WebRtcTransport{pid: pid}, %Consumer.Options{} = option) do
-    GenServer.call(pid, {:consume, [option]})
+    NifWrap.call(pid, {:consume, [option]})
   end
 
   def consume(%WebRtcTransport{} = transport, option) do
@@ -240,7 +240,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consumedata
   """
   def consume_data(%WebRtcTransport{pid: pid}, %DataConsumer.Options{} = option) do
-    GenServer.call(pid, {:consume_data, [option]})
+    NifWrap.call(pid, {:consume_data, [option]})
   end
 
   def consume_data(%WebRtcTransport{} = transport, option) do
@@ -254,7 +254,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-produce
   """
   def produce(%WebRtcTransport{pid: pid}, %Producer.Options{} = option) do
-    GenServer.call(pid, {:produce, [option]})
+    NifWrap.call(pid, {:produce, [option]})
   end
 
   def produce(%WebRtcTransport{} = transport, %{} = option) do
@@ -268,7 +268,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-producedata
   """
   def produce_data(%WebRtcTransport{pid: pid}, %DataProducer.Options{} = option) do
-    GenServer.call(pid, {:produce_data, [option]})
+    NifWrap.call(pid, {:produce_data, [option]})
   end
 
   def produce_data(%WebRtcTransport{} = transport, %{} = option) do
@@ -281,7 +281,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-connect
   """
   def connect(%WebRtcTransport{pid: pid}, option) do
-    GenServer.call(pid, {:connect, [option]})
+    NifWrap.call(pid, {:connect, [option]})
   end
 
   @spec ice_parameters(t) :: ice_parameter() | {:error, :terminated}
@@ -290,7 +290,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceParameters
   """
   def ice_parameters(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:ice_parameters, []})
+    NifWrap.call(pid, {:ice_parameters, []})
   end
 
   @spec sctp_parameters(t) :: map() | {:error, :terminated}
@@ -299,7 +299,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-sctpParameters
   """
   def sctp_parameters(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:sctp_parameters, []})
+    NifWrap.call(pid, {:sctp_parameters, []})
   end
 
   @spec ice_candidates(t) :: list(any)
@@ -309,7 +309,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceCandidates
   """
   def ice_candidates(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:ice_candidates, []})
+    NifWrap.call(pid, {:ice_candidates, []})
   end
 
   @spec ice_role(t) :: String.t() | {:error, :terminated}
@@ -319,17 +319,17 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceRole
   """
   def ice_role(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:ice_role, []})
+    NifWrap.call(pid, {:ice_role, []})
   end
 
   @spec set_max_incoming_bitrate(t, integer) :: {:ok} | {:error, :terminated}
   def set_max_incoming_bitrate(%WebRtcTransport{pid: pid}, bitrate) do
-    GenServer.call(pid, {:set_max_incoming_bitrate, [bitrate]})
+    NifWrap.call(pid, {:set_max_incoming_bitrate, [bitrate]})
   end
 
   @spec set_max_outgoing_bitrate(t, integer) :: {:ok} | {:error, :terminated}
   def set_max_outgoing_bitrate(%WebRtcTransport{pid: pid}, bitrate) do
-    GenServer.call(pid, {:set_max_outgoing_bitrate, [bitrate]})
+    NifWrap.call(pid, {:set_max_outgoing_bitrate, [bitrate]})
   end
 
   @spec ice_state(t) :: String.t() | {:error, :terminated}
@@ -339,7 +339,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceState
   """
   def ice_state(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:ice_state, []})
+    NifWrap.call(pid, {:ice_state, []})
   end
 
   @spec restart_ice(t) :: {:ok, ice_parameter} | {:error, :terminated}
@@ -349,7 +349,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceState
   """
   def restart_ice(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:restart_ice, []})
+    NifWrap.call(pid, {:restart_ice, []})
   end
 
   @spec ice_selected_tuple(t) :: String.t() | nil | {:error, :terminated}
@@ -358,7 +358,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceSelectedTuple
   """
   def ice_selected_tuple(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:ice_selected_tuple, []})
+    NifWrap.call(pid, {:ice_selected_tuple, []})
   end
 
   @spec dtls_parameters(t) :: map | {:error, :terminated}
@@ -367,7 +367,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-dtlsParameters
   """
   def dtls_parameters(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:dtls_parameters, []})
+    NifWrap.call(pid, {:dtls_parameters, []})
   end
 
   @spec dtls_state(t) :: String.t() | {:error, :terminated}
@@ -376,7 +376,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-dtlsState
   """
   def dtls_state(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:dtls_state, []})
+    NifWrap.call(pid, {:dtls_state, []})
   end
 
   @spec sctp_state(t) :: String.t() | {:error, :terminated}
@@ -385,7 +385,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-sctpState
   """
   def sctp_state(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:sctp_state, []})
+    NifWrap.call(pid, {:sctp_state, []})
   end
 
   @type transport_stat :: map
@@ -395,7 +395,7 @@ defmodule Mediasoup.WebRtcTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-getStats
   """
   def get_stats(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:get_stats, []})
+    NifWrap.call(pid, {:get_stats, []})
   end
 
   @spec dump(t) :: any | {:error, :terminated}
@@ -403,7 +403,7 @@ defmodule Mediasoup.WebRtcTransport do
   Dump internal stat for WebRtcTransport.
   """
   def dump(%WebRtcTransport{pid: pid}) do
-    GenServer.call(pid, {:dump, []})
+    NifWrap.call(pid, {:dump, []})
   end
 
   @type event_type ::
@@ -430,7 +430,7 @@ defmodule Mediasoup.WebRtcTransport do
       )
 
   def event(%WebRtcTransport{pid: pid}, listener, event_types) do
-    GenServer.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   @spec struct_from_pid(pid()) :: WebRtcTransport.t()

@@ -78,7 +78,7 @@ defmodule Mediasoup.Producer do
   Dump internal stat for Producer.
   """
   def dump(%Producer{pid: pid}) do
-    GenServer.call(pid, {:dump, []})
+    NifWrap.call(pid, {:dump, []})
   end
 
   @spec pause(t) :: {:ok} | {:error}
@@ -87,7 +87,7 @@ defmodule Mediasoup.Producer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#producer-pause
   """
   def pause(%Producer{pid: pid}) do
-    GenServer.call(pid, {:pause, []})
+    NifWrap.call(pid, {:pause, []})
   end
 
   @spec resume(t) :: {:ok} | {:error}
@@ -96,7 +96,7 @@ defmodule Mediasoup.Producer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#producer-resume
   """
   def resume(%Producer{pid: pid}) do
-    GenServer.call(pid, {:resume, []})
+    NifWrap.call(pid, {:resume, []})
   end
 
   @spec score(t) :: list() | {:error}
@@ -105,7 +105,7 @@ defmodule Mediasoup.Producer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#producer-score
   """
   def score(%Producer{pid: pid}) do
-    GenServer.call(pid, {:score, []})
+    NifWrap.call(pid, {:score, []})
   end
 
   @spec get_stats(t) :: list() | {:error, reason :: term()}
@@ -115,7 +115,7 @@ defmodule Mediasoup.Producer do
   section for more details (TypeScript-oriented, but concepts apply here as well).
   """
   def get_stats(%Producer{pid: pid}) do
-    GenServer.call(pid, {:get_stats, []})
+    NifWrap.call(pid, {:get_stats, []})
   end
 
   @spec closed?(t) :: boolean()
@@ -123,7 +123,7 @@ defmodule Mediasoup.Producer do
   Tells whether the given producer is closed on the local node.
   """
   def closed?(%Producer{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @spec paused?(t) :: boolean() | {:error}
@@ -132,7 +132,7 @@ defmodule Mediasoup.Producer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#producer-paused
   """
   def paused?(%Producer{pid: pid}) do
-    GenServer.call(pid, {:paused?, []})
+    NifWrap.call(pid, {:paused?, []})
   end
 
   @type event_type ::
@@ -157,7 +157,7 @@ defmodule Mediasoup.Producer do
           :on_score
         ]
       ) do
-    GenServer.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   @spec struct_from_pid(pid()) :: Producer.t()
