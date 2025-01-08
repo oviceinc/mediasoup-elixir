@@ -172,13 +172,13 @@ defmodule Mediasoup.Worker do
   """
   def event(
         pid,
-        lisener,
+        listener,
         event_types \\ [
           :on_close,
           :on_dead
         ]
       ) do
-    NifWrap.call(pid, {:event, [lisener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   @spec worker_count :: non_neg_integer()

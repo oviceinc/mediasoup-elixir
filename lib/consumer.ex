@@ -333,7 +333,7 @@ defmodule Mediasoup.Consumer do
 
   @impl true
   def handle_info(
-        {:mediasoup_async_nif_result, {func, from}, result},
+        {:mediasoup_async_nif_result, {_func, from}, result},
         state
       ) do
     GenServer.reply(
