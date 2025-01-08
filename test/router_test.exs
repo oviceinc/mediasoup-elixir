@@ -35,8 +35,8 @@ defmodule RouterTest do
 
   test "do not crash when badarg", %{worker: worker} do
     {:ok, router} =
-      Mediasoup.Worker.create_router(worker, %{
-        mediaCodecs: {
+      Mediasoup.Worker.create_router(worker, %Mediasoup.Router.Options{
+        media_codecs: {
           %{
             kind: "audio",
             mimeType: "audio/opus",
