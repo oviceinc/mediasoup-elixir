@@ -101,7 +101,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-tuple
   """
   def tuple(%PlainTransport{pid: pid}) do
-    case GenServer.call(pid, {:tuple, []}) do
+    case NifWrap.call(pid, {:tuple, []}) do
       {:error, reason} ->
         {:error, reason}
 
@@ -122,7 +122,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-sctpParameters
   """
   def sctp_parameters(%PlainTransport{pid: pid}) do
-    GenServer.call(pid, {:sctp_parameters, []})
+    NifWrap.call(pid, {:sctp_parameters, []})
   end
 
   @spec sctp_state(t) :: String.t() | {:error, :terminated}
@@ -131,7 +131,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-sctpState
   """
   def sctp_state(%PlainTransport{pid: pid}) do
-    GenServer.call(pid, {:sctp_state, []})
+    NifWrap.call(pid, {:sctp_state, []})
   end
 
   @spec srtp_parameters(t) :: map() | {:error, :terminated}
@@ -140,7 +140,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-srtpParameters
   """
   def srtp_parameters(%PlainTransport{pid: pid}) do
-    GenServer.call(pid, {:srtp_parameters, []})
+    NifWrap.call(pid, {:srtp_parameters, []})
   end
 
   # Mediasoup Plain Transport Methods
@@ -152,7 +152,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-getStats
   """
   def get_stats(%PlainTransport{pid: pid}) do
-    GenServer.call(pid, {:get_stats, []})
+    NifWrap.call(pid, {:get_stats, []})
   end
 
   @spec connect(t, connect_option()) :: {:ok} | {:error, String.t() | :terminated}
@@ -161,7 +161,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#plainTransport-connect
   """
   def connect(%PlainTransport{pid: pid}, option) do
-    GenServer.call(pid, {:connect, [option]})
+    NifWrap.call(pid, {:connect, [option]})
   end
 
   @spec close(t) :: :ok
@@ -178,7 +178,7 @@ defmodule Mediasoup.PlainTransport do
   Tells whether the given PlainTransport is closed on the local node.
   """
   def closed?(%PlainTransport{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @spec produce(t, Producer.Options.t() | map()) ::
@@ -188,7 +188,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-produce
   """
   def produce(%PlainTransport{pid: pid}, %Producer.Options{} = option) do
-    GenServer.call(pid, {:produce, [option]})
+    NifWrap.call(pid, {:produce, [option]})
   end
 
   def produce(%PlainTransport{} = transport, %{} = option) do
@@ -202,7 +202,7 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consume
   """
   def consume(%PlainTransport{pid: pid}, %Consumer.Options{} = option) do
-    GenServer.call(pid, {:consume, [option]})
+    NifWrap.call(pid, {:consume, [option]})
   end
 
   def consume(%PlainTransport{} = transport, option) do
@@ -261,7 +261,7 @@ defmodule Mediasoup.PlainTransport do
       )
 
   def event(%PlainTransport{pid: pid}, listener, event_types) do
-    GenServer.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   # GenServer callbacks

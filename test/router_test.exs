@@ -32,4 +32,24 @@ defmodule RouterTest do
   test "close_worker", %{worker: worker} do
     IntegrateTest.RouterTest.close_worker(worker)
   end
+
+  test "do not crash when badarg", %{worker: worker} do
+    {:ok, router} =
+      Mediasoup.Worker.create_router(worker, %{
+        mediaCodecs: {
+          %{
+            kind: "audio",
+            mimeType: "audio/opus",
+            clockRate: 48000,
+            channels: 2,
+            parameters: %{},
+            rtcpFeedback: []
+          }
+        }
+      })
+
+    assert_raise ArgumentError, fn ->
+      Mediasoup.Router.can_consume?(router, {:badarg}, %{})
+    end
+  end
 end

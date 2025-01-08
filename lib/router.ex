@@ -113,7 +113,7 @@ defmodule Mediasoup.Router do
   Tells whether the given router is closed on the local node.
   """
   def closed?(%Router{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @spec create_webrtc_transport(t, WebRtcTransport.create_option()) ::
@@ -127,7 +127,7 @@ defmodule Mediasoup.Router do
         %WebRtcTransport.Options{} = option
       ) do
     option = WebRtcTransport.Options.normalize(option)
-    GenServer.call(pid, {:create_webrtc_transport, [option]})
+    NifWrap.call(pid, {:create_webrtc_transport, [option]})
   end
 
   def create_webrtc_transport(%Router{} = router, %{} = option) do
@@ -145,7 +145,7 @@ defmodule Mediasoup.Router do
         %Mediasoup.PlainTransport.Options{} = option
       ) do
     option = Mediasoup.PlainTransport.Options.normalize(option)
-    GenServer.call(pid, {:create_plain_transport, [option]})
+    NifWrap.call(pid, {:create_plain_transport, [option]})
   end
 
   def create_plain_transport(%Router{} = router, %{} = option) do
@@ -255,7 +255,7 @@ defmodule Mediasoup.Router do
   https://mediasoup.org/documentation/v3/mediasoup/api/#router-createPipeTransport
   """
   def create_pipe_transport(%Router{pid: pid}, %PipeTransport.Options{} = option) do
-    GenServer.call(pid, {:create_pipe_transport, [PipeTransport.Options.normalize(option)]})
+    NifWrap.call(pid, {:create_pipe_transport, [PipeTransport.Options.normalize(option)]})
   end
 
   @spec can_consume?(t, String.t(), rtpCapabilities) :: boolean
@@ -264,7 +264,7 @@ defmodule Mediasoup.Router do
   https://mediasoup.org/documentation/v3/mediasoup/api/#router-canConsume
   """
   def can_consume?(%Router{pid: pid}, producer_id, rtp_capabilities) do
-    GenServer.call(pid, {:can_consume?, [producer_id, rtp_capabilities]})
+    NifWrap.call(pid, {:can_consume?, [producer_id, rtp_capabilities]})
   end
 
   @spec rtp_capabilities(t) :: Router.rtpCapabilities()
@@ -273,7 +273,7 @@ defmodule Mediasoup.Router do
   https://mediasoup.org/documentation/v3/mediasoup/api/#router-rtpCapabilities
   """
   def rtp_capabilities(%Router{pid: pid}) do
-    GenServer.call(pid, {:rtp_capabilities, []})
+    NifWrap.call(pid, {:rtp_capabilities, []})
   end
 
   @spec dump(t) :: map | {:error}
@@ -281,7 +281,7 @@ defmodule Mediasoup.Router do
   Dump internal stat for Router.
   """
   def dump(%Router{pid: pid}) do
-    GenServer.call(pid, {:dump, []})
+    NifWrap.call(pid, {:dump, []})
   end
 
   @type event_type ::
@@ -302,7 +302,7 @@ defmodule Mediasoup.Router do
       )
 
   def event(%Router{pid: pid}, listener, event_types) do
-    GenServer.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   @spec struct_from_pid(pid()) :: Router.t()
@@ -459,14 +459,14 @@ defmodule Mediasoup.Router do
   end
 
   defp get_node(%Router{pid: pid}) do
-    GenServer.call(pid, {:get_node})
+    NifWrap.call(pid, {:get_node})
   end
 
   defp get_pipe_transport_pair(
          %Router{pid: pid},
          %PipeToRouterOptions{router: remote_router}
        ) do
-    GenServer.call(pid, {:get_pipe_transport_pair, Router.id(remote_router)})
+    NifWrap.call(pid, {:get_pipe_transport_pair, Router.id(remote_router)})
   end
 
   defp put_pipe_transport_pair(
@@ -474,7 +474,7 @@ defmodule Mediasoup.Router do
          %PipeToRouterOptions{router: remote_router},
          pair
        ) do
-    GenServer.call(pid, {:put_pipe_transport_pair, Router.id(remote_router), pair})
+    NifWrap.call(pid, {:put_pipe_transport_pair, Router.id(remote_router), pair})
   end
 
   defp get_or_create_pipe_transport_pair(

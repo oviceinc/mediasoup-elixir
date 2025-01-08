@@ -97,7 +97,7 @@ defmodule Mediasoup.Consumer do
   Dump internal stat for Consumer.
   """
   def dump(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:dump, []})
+    NifWrap.call(pid, {:dump, []})
   end
 
   @spec closed?(t) :: boolean
@@ -105,7 +105,7 @@ defmodule Mediasoup.Consumer do
   Tells whether the given consumer is closed on the local node.
   """
   def closed?(%Consumer{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @spec paused?(t) :: boolean
@@ -114,7 +114,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-paused
   """
   def paused?(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:paused?, []})
+    NifWrap.call(pid, {:paused?, []})
   end
 
   @spec producer_paused?(t) :: boolean
@@ -123,7 +123,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-producerPaused
   """
   def producer_paused?(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:producer_paused?, []})
+    NifWrap.call(pid, {:producer_paused?, []})
   end
 
   @spec priority(t) :: number
@@ -132,7 +132,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-priority
   """
   def priority(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:priority, []})
+    NifWrap.call(pid, {:priority, []})
   end
 
   @spec score(t) :: consumer_score
@@ -140,7 +140,7 @@ defmodule Mediasoup.Consumer do
   The score of the RTP stream being sent, representing its tranmission quality.
   """
   def score(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:score, []})
+    NifWrap.call(pid, {:score, []})
   end
 
   @spec preferred_layers(t) :: consumer_layers | nil
@@ -149,7 +149,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-preferredLayers
   """
   def preferred_layers(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:preferred_layers, []})
+    NifWrap.call(pid, {:preferred_layers, []})
   end
 
   @spec current_layers(t) :: consumer_layers | nil
@@ -159,7 +159,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-currentLayers
   """
   def current_layers(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:current_layers, []})
+    NifWrap.call(pid, {:current_layers, []})
   end
 
   @spec get_stats(t) :: list() | {:error, reason :: term()}
@@ -168,7 +168,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-getStats
   """
   def get_stats(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:get_stats, []})
+    NifWrap.call(pid, {:get_stats, []})
   end
 
   @spec pause(t) :: {:ok} | {:error}
@@ -177,7 +177,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-pause
   """
   def pause(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:pause, []})
+    NifWrap.call(pid, {:pause, []})
   end
 
   @spec resume(t) :: {:ok} | {:error}
@@ -186,7 +186,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-resume
   """
   def resume(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:resume, []})
+    NifWrap.call(pid, {:resume, []})
   end
 
   @spec set_preferred_layers(t, map) :: {:ok} | {:error}
@@ -195,7 +195,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-setPreferredLayers
   """
   def set_preferred_layers(%Consumer{pid: pid}, layer) do
-    GenServer.call(pid, {:set_preferred_layers, [layer]})
+    NifWrap.call(pid, {:set_preferred_layers, [layer]})
   end
 
   @spec set_priority(t, integer) :: {:ok} | {:error}
@@ -204,7 +204,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-setPriority
   """
   def set_priority(%Consumer{pid: pid}, priority) do
-    GenServer.call(pid, {:set_priority, [priority]})
+    NifWrap.call(pid, {:set_priority, [priority]})
   end
 
   @spec unset_priority(t) :: {:ok} | {:error}
@@ -213,7 +213,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-unsetPriority
   """
   def unset_priority(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:unset_priority, []})
+    NifWrap.call(pid, {:unset_priority, []})
   end
 
   @spec request_key_frame(t) :: {:ok} | {:error}
@@ -222,7 +222,7 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-requestKeyFrame
   """
   def request_key_frame(%Consumer{pid: pid}) do
-    GenServer.call(pid, {:request_key_frame, []})
+    NifWrap.call(pid, {:request_key_frame, []})
   end
 
   @type event_type ::
@@ -255,7 +255,7 @@ defmodule Mediasoup.Consumer do
           :on_layers_change
         ]
       ) do
-    GenServer.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   @spec struct_from_pid(pid()) :: Consumer.t()

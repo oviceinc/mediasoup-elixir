@@ -101,7 +101,7 @@ defmodule Mediasoup.PipeTransport do
   Tells whether the given PipeTransport is closed on the local node.
   """
   def closed?(%PipeTransport{pid: pid}) do
-    !Process.alive?(pid) || GenServer.call(pid, {:closed?, []})
+    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::
@@ -111,7 +111,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consume
   """
   def consume(%PipeTransport{pid: pid}, %Consumer.Options{} = option) do
-    GenServer.call(pid, {:consume, [option]})
+    NifWrap.call(pid, {:consume, [option]})
   end
 
   def consume(%PipeTransport{} = transport, option) do
@@ -125,7 +125,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-consumedata
   """
   def consume_data(%PipeTransport{pid: pid}, %DataConsumer.Options{} = option) do
-    GenServer.call(pid, {:consume_data, [option]})
+    NifWrap.call(pid, {:consume_data, [option]})
   end
 
   def consume_data(%PipeTransport{} = transport, option) do
@@ -138,7 +138,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-connect
   """
   def connect(%PipeTransport{pid: pid}, option) do
-    GenServer.call(pid, {:connect, [option]})
+    NifWrap.call(pid, {:connect, [option]})
   end
 
   @spec produce(t, Producer.Options.t() | map()) ::
@@ -148,7 +148,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-produce
   """
   def produce(%PipeTransport{pid: pid}, %Producer.Options{} = option) do
-    GenServer.call(pid, {:produce, [option]})
+    NifWrap.call(pid, {:produce, [option]})
   end
 
   def produce(%PipeTransport{} = transport, %{} = option) do
@@ -162,7 +162,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#transport-producedata
   """
   def produce_data(%PipeTransport{pid: pid}, %DataProducer.Options{} = option) do
-    GenServer.call(pid, {:produce_data, [option]})
+    NifWrap.call(pid, {:produce_data, [option]})
   end
 
   def produce_data(%PipeTransport{} = transport, %{} = option) do
@@ -176,7 +176,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-getStats
   """
   def get_stats(%PipeTransport{pid: pid}) do
-    GenServer.call(pid, {:get_stats, []})
+    NifWrap.call(pid, {:get_stats, []})
   end
 
   @typedoc """
@@ -188,7 +188,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-tuple
   """
   def tuple(%PipeTransport{pid: pid}) do
-    case GenServer.call(pid, {:tuple, []}) do
+    case NifWrap.call(pid, {:tuple, []}) do
       {:error, reason} ->
         {:error, reason}
 
@@ -210,7 +210,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-sctpParameters
   """
   def sctp_parameters(%PipeTransport{pid: pid}) do
-    GenServer.call(pid, {:sctp_parameters, []})
+    NifWrap.call(pid, {:sctp_parameters, []})
   end
 
   @spec srtp_parameters(Mediasoup.PipeTransport.t()) ::
@@ -221,7 +221,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-srtpParameters
   """
   def srtp_parameters(%PipeTransport{pid: pid}) do
-    GenServer.call(pid, {:srtp_parameters, []})
+    NifWrap.call(pid, {:srtp_parameters, []})
   end
 
   @spec sctp_state(Mediasoup.PipeTransport.t()) :: String.t() | {:error, :terminated}
@@ -230,7 +230,7 @@ defmodule Mediasoup.PipeTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#pipeTransport-sctpState
   """
   def sctp_state(%PipeTransport{pid: pid}) do
-    GenServer.call(pid, {:sctp_state, []})
+    NifWrap.call(pid, {:sctp_state, []})
   end
 
   @spec dump(t) :: any | {:error, :terminated}
@@ -238,7 +238,7 @@ defmodule Mediasoup.PipeTransport do
   Dump internal stat for PipeTransport.
   """
   def dump(%PipeTransport{pid: pid}) do
-    GenServer.call(pid, {:dump, []})
+    NifWrap.call(pid, {:dump, []})
   end
 
   @type event_type ::
@@ -261,7 +261,7 @@ defmodule Mediasoup.PipeTransport do
       )
 
   def event(%PipeTransport{pid: pid}, listener, event_types) do
-    GenServer.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, [listener, event_types]})
   end
 
   @spec struct_from_pid(pid()) :: PipeTransport.t()
