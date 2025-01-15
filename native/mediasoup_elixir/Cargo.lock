@@ -718,7 +718,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.4",
 ]
 
 [[package]]
@@ -745,9 +745,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.22"
+version = "0.4.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
+checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
 
 [[package]]
 name = "logos"
@@ -1269,9 +1269,9 @@ dependencies = [
 
 [[package]]
 name = "rustler"
-version = "0.36.0"
+version = "0.35.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f7b219d7473cf473409665a4898d66688b34736e51bb5791098b0d3390e4c98"
+checksum = "5a9f6bb374bf0a1431cff92ee6a89e39b9978fa4dbccc4137605be4ed5118779"
 dependencies = [
  "inventory",
  "libloading",
@@ -1282,9 +1282,9 @@ dependencies = [
 
 [[package]]
 name = "rustler_codegen"
-version = "0.36.0"
+version = "0.35.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "743ec5267bd5f18fd88d89f7e729c0f43b97d9c2539959915fa1f234300bb621"
+checksum = "f7914359a19fff34b2f0e9d4b7d4b02ca5ee597e52804c7472802b25e1ec543e"
 dependencies = [
  "heck 0.5.0",
  "inventory",
