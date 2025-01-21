@@ -74,6 +74,8 @@ jobs:
       matrix:
         rust:
           - stable
+    env:
+      RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD: "true"
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
     - name: Set up Elixir
@@ -104,8 +106,6 @@ jobs:
             _build
         key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
-    - name: Install precompiled nif
-      run: mix rustler_precompiled.download Mediasoup.Nif --only-local
     - name: Run dialyzer
       run: mix dialyzer
     - name: generate docs

@@ -6,6 +6,7 @@ defmodule Mediasoup.Nif do
   version = Mix.Project.config()[:version]
 
   defmodule Build do
+    @moduledoc false
     def prebuild_targets() do
       # Anything that is difficult to prebuilt in cross compile is excluded for now.
       [
@@ -22,7 +23,7 @@ defmodule Mediasoup.Nif do
       ]
     end
 
-    defp is_prebuild_target?() do
+    defp prebuild_target?() do
       case RustlerPrecompiled.target() do
         {:ok, target} -> prebuild_targets() |> Enum.any?(&String.contains?(target, &1))
         _ -> false
@@ -32,7 +33,7 @@ defmodule Mediasoup.Nif do
     def force_build?(),
       do:
         System.get_env("RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD") in ["1", "true"] or
-          not is_prebuild_target?()
+          not prebuild_target?()
   end
 
   use RustlerPrecompiled,
