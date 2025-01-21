@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  MIX_ENV: test
-  RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD: "true"
 
 jobs:
   test:
@@ -20,6 +17,9 @@ jobs:
       matrix:
         rust:
           - stable
+    env:
+      MIX_ENV: test
+      RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD: "true"
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
     - name: Set up Elixir
@@ -64,5 +64,51 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Leak check test
       run: mix test --include leakcheck
+
+  lint:
+    timeout-minutes: 40
+    name: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rust:
+          - stable
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.13.4' # Define the elixir version [required]
+        otp-version: '25.3' # Define the OTP version [required]
+    - name: Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '16'
+    - name: Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target
+            deps
+            _build
+        key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
+    - name: Install precompiled nif
+      run: mix rustler_precompiled.download Mediasoup.Nif --only-local
     - name: Run dialyzer
       run: mix dialyzer
+    - name: generate docs
+      run: mix docs
+    - name: credo
+      run: mix credo

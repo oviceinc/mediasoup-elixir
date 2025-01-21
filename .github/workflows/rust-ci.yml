@@ -42,5 +42,5 @@ jobs:
       - name: run rustfmt
         run: cargo fmt --manifest-path=${{ matrix.manifest }} --all -- --check
 
-#      - name: run clippy
-#        run: cargo clippy --manifest-path=${{ matrix.manifest }}
+      - name: run clippy
+        run: cargo clippy --manifest-path=${{ matrix.manifest }}
