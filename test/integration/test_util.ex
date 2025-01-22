@@ -1,4 +1,7 @@
 defmodule Mediasoup.TestUtil do
+  @moduledoc """
+  Test utilities
+  """
   import ExUnit.Assertions
 
   def worker_leak_setup_all(_context \\ %{}) do

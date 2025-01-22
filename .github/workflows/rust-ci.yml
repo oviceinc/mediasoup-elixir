@@ -2,12 +2,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'native/**'
   pull_request:
-    paths:
-      - 'native/**'
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   lint-rust:
@@ -42,5 +39,5 @@ jobs:
       - name: run rustfmt
         run: cargo fmt --manifest-path=${{ matrix.manifest }} --all -- --check
 
-#      - name: run clippy
-#        run: cargo clippy --manifest-path=${{ matrix.manifest }}
+      - name: run clippy
+        run: cargo clippy --manifest-path=${{ matrix.manifest }}
