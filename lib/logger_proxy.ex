@@ -46,10 +46,9 @@ defmodule Mediasoup.LoggerProxy do
           }
   end
 
-  @type config :: [
-          max_level: :off | :error | :warn | :info | :debug,
-          filter: (Record.t() -> boolean()) | nil
-        ]
+  @type config ::
+          {:max_level, :off | :error | :warn | :info | :debug}
+          | {:filter, (Record.t() -> boolean()) | nil}
 
   @spec start_link([config]) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(config \\ []) do
