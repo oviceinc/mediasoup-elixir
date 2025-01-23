@@ -46,26 +46,34 @@ defmodule Mediasoup.LoggerProxy do
           }
   end
 
-  @type config :: {:max_level, :off | :error | :warn | :info | :debug}
+  @type config ::
+          {:max_level, :off | :error | :warn | :info | :debug}
+          | {:filter, (Record.t() -> boolean()) | nil}
 
   @spec start_link([config]) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(config \\ []) do
     max_level = Keyword.get(config, :max_level, :error)
-    GenServer.start_link(Mediasoup.LoggerProxy, %{max_level: max_level}, name: __MODULE__)
+    filter = Keyword.get(config, :filter, nil)
+
+    GenServer.start_link(Mediasoup.LoggerProxy, %{max_level: max_level, filter: filter},
+      name: __MODULE__
+    )
   end
 
   def init(init_arg) do
     Mediasoup.Nif.set_logger_proxy_process(self(), init_arg[:max_level])
-    {:ok, %{}}
+    {:ok, init_arg}
   end
 
-  def handle_info(%Mediasoup.LoggerProxy.Record{} = msg, state) do
-    Logger.log(msg.level, msg.body, %{
-      line: msg.line,
-      file: msg.file,
-      mfa: msg.target,
-      module_path: msg.module_path
-    })
+  def handle_info(%Mediasoup.LoggerProxy.Record{} = msg, %{filter: filter} = state) do
+    if filter == nil || filter.(msg) do
+      Logger.log(msg.level, msg.body, %{
+        line: msg.line,
+        file: msg.file,
+        mfa: msg.target,
+        module_path: msg.module_path
+      })
+    end
 
     {:noreply, state}
   end
