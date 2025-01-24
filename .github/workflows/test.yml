@@ -106,6 +106,8 @@ jobs:
             _build
         key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
+    - name: Install dependencies
+      run: mix deps.get
     - name: Run dialyzer
       run: mix dialyzer
     - name: generate docs
