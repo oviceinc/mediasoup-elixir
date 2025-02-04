@@ -46,16 +46,17 @@ defmodule Mediasoup.LoggerProxy do
           }
   end
 
+  @type filter_fun :: (Record.t() -> :log | {:log, Record.t()} | :stop | :ignore)
   @type config ::
           {:max_level, :off | :error | :warn | :info | :debug}
-          | {:filter, (Record.t() -> boolean()) | nil}
+          | {:filters, [filter_fun()]}
 
   @spec start_link([config]) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(config \\ []) do
     max_level = Keyword.get(config, :max_level, :error)
-    filter = Keyword.get(config, :filter, nil)
+    filters = Keyword.get(config, :filters, [])
 
-    GenServer.start_link(Mediasoup.LoggerProxy, %{max_level: max_level, filter: filter},
+    GenServer.start_link(Mediasoup.LoggerProxy, %{max_level: max_level, filters: filters},
       name: __MODULE__
     )
   end
@@ -65,8 +66,16 @@ defmodule Mediasoup.LoggerProxy do
     {:ok, init_arg}
   end
 
-  def handle_info(%Mediasoup.LoggerProxy.Record{} = msg, %{filter: filter} = state) do
-    if filter == nil || filter.(msg) do
+  def handle_info(%Mediasoup.LoggerProxy.Record{} = msg, %{filters: filters} = state) do
+    with {:log, msg} <-
+           Enum.reduce_while(filters, {:log, msg}, fn filter, acc ->
+             case filter.(msg) do
+               :log -> {:halt, acc}
+               {:log, changed} -> {:halt, {:log, changed}}
+               :stop -> {:halt, :stop}
+               _ -> {:cont, acc}
+             end
+           end) do
       Logger.log(msg.level, msg.body, %{
         line: msg.line,
         file: msg.file,
