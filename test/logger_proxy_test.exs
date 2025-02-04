@@ -99,17 +99,21 @@ defmodule Mediasoup.LoggerProxyTest do
              end) =~ "test"
     end
 
-    test "filter can_consume error" do
+    test "filter out can_consume error" do
       pattern = ~r/can_consume\(\) \| Producer with id "(?<id>[^"]+)" not found/
-
-      filter_can_consume_error = fn msg ->
-        msg.level === :error && msg.target === "mediasoup::router" &&
-          Regex.match?(pattern, msg.body)
-      end
 
       LoggerProxy.start_link(
         max_level: :warn,
-        filter: filter_can_consume_error
+        filters: [
+          fn record ->
+            if msg.level === :error && msg.target === "mediasoup::router" &&
+                 Regex.match?(pattern, msg.body) do
+              :stop
+            else
+              :ignore
+            end
+          end
+        ]
       )
 
       alias Mediasoup.{Worker, Router}
@@ -120,7 +124,7 @@ defmodule Mediasoup.LoggerProxyTest do
           mediaCodecs: []
         })
 
-      assert capture_log(fn ->
+      refute capture_log(fn ->
                Router.can_consume?(router, "d117b485-7490-4146-812f-d3f744f0a8c7", %{
                  codecs: [],
                  headerExtensions: [],
@@ -129,6 +133,54 @@ defmodule Mediasoup.LoggerProxyTest do
 
                Process.sleep(10)
              end) =~ "can_consume() | Producer with id "
+    end
+
+    test "multiple filters" do
+      LoggerProxy.start_link(
+        max_level: :debug,
+        filters: [
+          fn msg -> msg.level in [:error, :warn] end,
+          fn msg -> String.contains?(msg.body, "important") end
+        ]
+      )
+
+      assert capture_log(fn ->
+               Mediasoup.Nif.debug_logger(:error, "important message")
+               Process.sleep(10)
+             end) =~ "important message"
+
+      refute capture_log(fn ->
+               Mediasoup.Nif.debug_logger(:error, "normal message")
+               Process.sleep(10)
+             end) =~ "normal message"
+
+      refute capture_log(fn ->
+               Mediasoup.Nif.debug_logger(:info, "important message")
+               Process.sleep(10)
+             end) =~ "important message"
+    end
+
+    test "filter by target pattern" do
+      target_pattern = ~r/^mediasoup::worker/
+
+      LoggerProxy.start_link(
+        max_level: :debug,
+        filters: [
+          fn msg ->
+            Regex.match?(target_pattern, msg.target)
+          end
+        ]
+      )
+
+      assert capture_log(fn ->
+               Mediasoup.Nif.debug_logger(:info, "test", "mediasoup::worker")
+               Process.sleep(10)
+             end) =~ "test"
+
+      refute capture_log(fn ->
+               Mediasoup.Nif.debug_logger(:info, "test", "mediasoup::router")
+               Process.sleep(10)
+             end) =~ "test"
     end
   end
 end
