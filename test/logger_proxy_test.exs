@@ -85,8 +85,18 @@ defmodule Mediasoup.LoggerProxyTest do
   end
 
   describe "log filter" do
-    test "filter info only" do
-      LoggerProxy.start_link(max_level: :debug, filter: fn msg -> msg.level == :info end)
+    test "filter debug message" do
+      LoggerProxy.start_link(
+        max_level: :debug,
+        filters: [
+          fn msg ->
+            case msg.level do
+              :debug -> :stop
+              _ -> :ignore
+            end
+          end
+        ]
+      )
 
       assert capture_log(fn ->
                Mediasoup.Nif.debug_logger(:info, "test")
@@ -99,17 +109,21 @@ defmodule Mediasoup.LoggerProxyTest do
              end) =~ "test"
     end
 
-    test "filter can_consume error" do
+    test "can_consume error should be warn" do
       pattern = ~r/can_consume\(\) \| Producer with id "(?<id>[^"]+)" not found/
 
       filter_can_consume_error = fn msg ->
-        msg.level === :error && msg.target === "mediasoup::router" &&
-          Regex.match?(pattern, msg.body)
+        if msg.level === :error && msg.target === "mediasoup::router" &&
+             Regex.match?(pattern, msg.body) do
+          {:log, Map.put(msg, :level, :warn)}
+        else
+          :ignore
+        end
       end
 
       LoggerProxy.start_link(
         max_level: :warn,
-        filter: filter_can_consume_error
+        filters: [filter_can_consume_error]
       )
 
       alias Mediasoup.{Worker, Router}
@@ -120,7 +134,7 @@ defmodule Mediasoup.LoggerProxyTest do
           mediaCodecs: []
         })
 
-      assert capture_log(fn ->
+      assert capture_log([level: :warn], fn ->
                Router.can_consume?(router, "d117b485-7490-4146-812f-d3f744f0a8c7", %{
                  codecs: [],
                  headerExtensions: [],
@@ -129,6 +143,63 @@ defmodule Mediasoup.LoggerProxyTest do
 
                Process.sleep(10)
              end) =~ "can_consume() | Producer with id "
+
+      refute capture_log([level: :error], fn ->
+               Router.can_consume?(router, "d117b485-7490-4146-812f-d3f744f0a8c7", %{
+                 codecs: [],
+                 headerExtensions: [],
+                 fecMechanisms: []
+               })
+
+               Process.sleep(10)
+             end) =~ "can_consume() | Producer with id "
+    end
+
+    test "multiple filters" do
+      LoggerProxy.start_link(
+        max_level: :debug,
+        filters: [
+          fn msg ->
+            if Regex.match?(~r/should be logged/, msg.body) do
+              :log
+            else
+              :ignore
+            end
+          end,
+          fn msg ->
+            if msg.level === :debug && Regex.match?(~r/test/, msg.body) do
+              {:log, Map.put(msg, :level, :info)}
+            else
+              :ignore
+            end
+          end,
+          fn msg ->
+            if msg.level === :warn && Regex.match?(~r/test/, msg.body) do
+              :stop
+            else
+              :ignore
+            end
+          end
+        ]
+      )
+
+      assert capture_log([level: :info], fn ->
+               Mediasoup.Nif.debug_logger(:debug, "debug test")
+               Mediasoup.Nif.debug_logger(:warn, "warn test")
+               Process.sleep(10)
+             end) =~ "debug test"
+
+      refute capture_log(fn ->
+               Mediasoup.Nif.debug_logger(:info, "info test")
+               Mediasoup.Nif.debug_logger(:warn, "warn test")
+               Process.sleep(10)
+             end) =~ "warn test"
+
+      assert capture_log(fn ->
+               Mediasoup.Nif.debug_logger(:warn, "warn test")
+               Mediasoup.Nif.debug_logger(:info, "should be logged")
+               Process.sleep(10)
+             end) =~ "should be logged"
     end
   end
 end
