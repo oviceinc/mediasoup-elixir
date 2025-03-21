@@ -718,7 +718,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.4",
 ]
 
 [[package]]
@@ -780,9 +780,9 @@ checksum = "b6e8aaa3f231bb4bd57b84b2d5dc3ae7f350265df8aa96492e0bc394a1571909"
 
 [[package]]
 name = "mediasoup"
-version = "0.17.1"
+version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0640723cc3a9e468faa0be9054cfe8c77c7f496fc6fbb10364d19c648aebc42"
+checksum = "293c5e1ef7a3927c4091efc3d69427ceabd9e5b9046e3c75b4469e14e16170f1"
 dependencies = [
  "async-channel",
  "async-executor",
