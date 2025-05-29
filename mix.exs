@@ -46,7 +46,7 @@ defmodule MediasoupElixir.MixProject do
   defp deps do
     [
       {:rustler, ">= 0.0.0", optional: true},
-      {:rustler_precompiled, "~> 0.7"},
+      {:rustler_precompiled, "~> 0.8"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18.0", only: :test},
       {:local_cluster, "~> 2.0", only: :test},
