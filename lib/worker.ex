@@ -198,6 +198,7 @@ defmodule Mediasoup.Worker do
   def init(settings) do
     Process.flag(:trap_exit, true)
     {:ok, worker} = create_worker(settings)
+    Nif.worker_event(worker, self(), [:on_close, :on_dead])
 
     if Process.whereis(Mediasoup.Worker.Registry) do
       Registry.register(Mediasoup.Worker.Registry, :id, Nif.worker_id(worker))
@@ -251,6 +252,20 @@ defmodule Mediasoup.Worker do
     {:noreply, state}
   end
 
+  def handle_info(
+        {:on_close},
+        state
+      ) do
+    {:stop, :normal, state}
+  end
+
+  def handle_info(
+        {:on_dead},
+        state
+      ) do
+    {:stop, :kill, state}
+  end
+
   def handle_call(
         {:event, [listener, event_types]},
         _from,
@@ -260,6 +275,15 @@ defmodule Mediasoup.Worker do
       pid when is_pid(pid) -> Nif.worker_event(reference, pid, event_types)
     end
 
+    {:reply, :ok, state}
+  end
+
+  def handle_call(
+        :debug_stop_worker,
+        _from,
+        %{reference: reference} = state
+      ) do
+    Nif.worker_close(reference)
     {:reply, :ok, state}
   end
 
