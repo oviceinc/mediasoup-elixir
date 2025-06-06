@@ -30,19 +30,27 @@ defmodule Mediasoup.Nif do
       end
     end
 
-    def force_build?(),
-      do:
-        System.get_env("RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD") in ["1", "true"] or
-          not prebuild_target?()
+    def force_build() do
+      if not prebuild_target?() do
+        [force_build: true]
+      else
+        if System.get_env("RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD") != nil do
+          [force_build: System.get_env("RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD") in ["1", "true"]]
+        else
+          []
+        end
+      end
+    end
   end
 
   use RustlerPrecompiled,
-    otp_app: :mediasoup_elixir,
-    crate: "mediasoup_elixir",
-    base_url: "https://github.com/oviceinc/mediasoup-elixir/releases/download/v#{version}",
-    force_build: Build.force_build?(),
-    targets: Build.prebuild_targets(),
-    version: version
+      [
+        otp_app: :mediasoup_elixir,
+        crate: "mediasoup_elixir",
+        base_url: "https://github.com/oviceinc/mediasoup-elixir/releases/download/v#{version}",
+        targets: Build.prebuild_targets(),
+        version: version
+      ] ++ Build.force_build()
 
   #  use Rustler, otp_app: :mediasoup_elixir, crate: :mediasoup_elixir
 
