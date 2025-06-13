@@ -2,6 +2,7 @@ defmodule Mediasoup.Router do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Router
   """
+  alias Mediasoup.EventListener
   alias Mediasoup.{Router, WebRtcTransport, PipeTransport, PlainTransport, NifWrap, Nif}
   require NifWrap
   use GenServer, restart: :temporary
@@ -302,7 +303,7 @@ defmodule Mediasoup.Router do
       )
 
   def event(%Router{pid: pid}, listener, event_types) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec struct_from_pid(pid()) :: Router.t()
@@ -325,25 +326,27 @@ defmodule Mediasoup.Router do
   end
 
   @impl true
-  def init(state) do
+  def init(%{reference: reference} = state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
-    {:ok, Map.put(state, :supervisor, supervisor)}
+    Nif.router_event(reference, self(), [
+      :on_close,
+      :on_dead
+    ])
+
+    {:ok, Map.put(state, :supervisor, supervisor) |> Map.put(:listeners, EventListener.new())}
   end
 
   @impl true
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.router_event(reference, pid, event_types)
-      end
+    listeners = EventListener.add(listeners, listener, event_types)
 
-    {:reply, result, state}
+    {:reply, :ok, Map.put(state, :listeners, listeners)}
   end
 
   def handle_call(
@@ -452,7 +455,35 @@ defmodule Mediasoup.Router do
   end
 
   @impl true
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, Map.put(state, :listeners, listeners)}
+  end
+
+  def handle_info(
+        {:nif_internal_event, :on_close},
+        state
+      ) do
+    {:stop, :normal, state}
+  end
+
+  def handle_info(
+        {:nif_internal_event, :on_dead, message},
+        %{listeners: listeners} = state
+      ) do
+    EventListener.send(listeners, :on_dead, {:on_dead, message})
+    {:stop, :shutdown, state}
+  end
+
+  @impl true
+  def terminate(
+        reason,
+        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
+      ) do
+    EventListener.send(listeners, :on_close, {:on_close})
     DynamicSupervisor.stop(supervisor, reason)
     Nif.router_close(reference)
     :ok

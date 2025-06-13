@@ -41,6 +41,10 @@ defmodule WorkerTest do
     IntegrateTest.WorkerTest.close_event()
   end
 
+  test "close_event_with_dead_target" do
+    IntegrateTest.WorkerTest.close_event_with_dead_target()
+  end
+
   test "close_router" do
     IntegrateTest.WorkerTest.close_router()
   end

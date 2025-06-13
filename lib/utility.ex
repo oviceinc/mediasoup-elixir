@@ -53,3 +53,76 @@ defmodule Mediasoup.Utility do
     {:ok, "0.0.0.0"}
   end
 end
+
+defmodule Mediasoup.EventListener do
+  @moduledoc """
+  Event listener module for rustler because rustler(nif) can only use local pid.
+  This module is used to add, remove, and send events to the listener.
+  """
+
+  defstruct [:listeners]
+
+  def new() do
+    %__MODULE__{listeners: %{}}
+  end
+
+  @doc """
+  Add a listener to the event listener.
+  If the listener is already added, the event types will be updated.
+  If the listener is not added, a monitor will be created and the listener will be added.
+  The calling process handles the :DOWN message and calls remove
+  """
+  def add(%__MODULE__{listeners: listeners}, listener, event_types, tag \\ nil) do
+    prev = Map.get(listeners, listener, nil)
+
+    listeners =
+      if prev do
+        Map.put(
+          listeners,
+          listener,
+          Map.put(prev, :event_types, event_types) |> Map.put(:tag, tag)
+        )
+      else
+        monitor_ref = Process.monitor(listener)
+
+        Map.put(listeners, listener, %{
+          event_types: event_types,
+          monitor_ref: monitor_ref,
+          tag: tag
+        })
+      end
+
+    %__MODULE__{listeners: listeners}
+  end
+
+  @doc """
+  Remove a listener from the event listener.
+  If the listener is not added, do nothing.
+  If the listener is added, the monitor will be removed and the listener will be removed.
+  The calling process handles the :DOWN message and calls remove
+  """
+  def remove(%__MODULE__{listeners: listeners}, listener) do
+    case Map.pop(listeners, listener) do
+      {nil, listeners} ->
+        %__MODULE__{listeners: listeners}
+
+      {%{monitor_ref: ref}, listeners} ->
+        Process.demonitor(ref, [:flush])
+        %__MODULE__{listeners: listeners}
+    end
+  end
+
+  def send(%__MODULE__{listeners: listeners}, event_name, message) do
+    for {listener, %{event_types: event_types, tag: tag}} <- listeners,
+        event_name in event_types,
+        do:
+          if(tag == nil,
+            do: send(listener, message),
+            else:
+              send(
+                listener,
+                if(is_tuple(message), do: Tuple.append(message, tag), else: {message, tag})
+              )
+          )
+  end
+end

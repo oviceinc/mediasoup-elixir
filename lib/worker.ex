@@ -2,7 +2,7 @@ defmodule Mediasoup.Worker do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Worker
   """
-  alias Mediasoup.{Worker, Router, NifWrap, Nif, WebRtcServer}
+  alias Mediasoup.{Worker, Router, NifWrap, Nif, WebRtcServer, EventListener}
   require Mediasoup.NifWrap
   use GenServer
 
@@ -178,7 +178,7 @@ defmodule Mediasoup.Worker do
           :on_dead
         ]
       ) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec worker_count :: non_neg_integer()
@@ -203,8 +203,10 @@ defmodule Mediasoup.Worker do
       Registry.register(Mediasoup.Worker.Registry, :id, Nif.worker_id(worker))
     end
 
+    Nif.worker_event(worker, self(), [:on_close, :on_dead])
+
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
-    {:ok, %{reference: worker, supervisor: supervisor}}
+    {:ok, %{reference: worker, supervisor: supervisor, listeners: EventListener.new()}}
   end
 
   NifWrap.def_handle_call_nif(%{
@@ -251,19 +253,45 @@ defmodule Mediasoup.Worker do
     {:noreply, state}
   end
 
-  def handle_call(
-        {:event, [listener, event_types]},
-        _from,
-        %{reference: reference} = state
+  def handle_info(
+        {:nif_internal_event, :on_close},
+        state
       ) do
-    case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-      pid when is_pid(pid) -> Nif.worker_event(reference, pid, event_types)
-    end
-
-    {:reply, :ok, state}
+    {:stop, :normal, state}
   end
 
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
+  def handle_info(
+        {:nif_internal_event, :on_dead, message},
+        %{listeners: listeners} = state
+      ) do
+    EventListener.send(listeners, :on_dead, {:on_dead, message})
+    {:stop, :shutdown, state}
+  end
+
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, Map.put(state, :listeners, listeners)}
+  end
+
+  def handle_call(
+        {:event, listener, event_types},
+        _from,
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.add(listeners, listener, event_types)
+
+    {:reply, :ok, Map.put(state, :listeners, listeners)}
+  end
+
+  def terminate(
+        reason,
+        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
+      ) do
+    EventListener.send(listeners, :on_close, {:on_close})
+
     DynamicSupervisor.stop(supervisor, reason)
     Nif.worker_close(reference)
     :ok

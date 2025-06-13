@@ -175,4 +175,8 @@ defmodule MediasoupElixirWebRtcTransportTest do
   test "create_with_webrtc_server_succeeds", %{worker: worker} do
     IntegrateTest.WebRtcTransportTest.create_with_webrtc_server_succeeds(worker)
   end
+
+  test "event_notifications", %{worker: worker} do
+    IntegrateTest.WebRtcTransportTest.event_notifications(worker)
+  end
 end

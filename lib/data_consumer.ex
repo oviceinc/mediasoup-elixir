@@ -2,7 +2,7 @@ defmodule Mediasoup.DataConsumer do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#DataConsumer
   """
-  alias Mediasoup.{DataConsumer, NifWrap, Nif}
+  alias Mediasoup.{DataConsumer, NifWrap, Nif, EventListener}
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -73,7 +73,7 @@ defmodule Mediasoup.DataConsumer do
   @type event_type :: :on_close
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(%DataConsumer{pid: pid}, listener, event_types \\ [:on_close]) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec struct_from_pid(pid()) :: DataConsumer.t()
@@ -103,27 +103,26 @@ defmodule Mediasoup.DataConsumer do
   @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
-    {:ok, state}
+    {:ok, Map.merge(state, %{listeners: EventListener.new()})}
   end
 
   @impl true
-  def handle_call({:event, [listener, event_types]}, _from, %{reference: reference} = state) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.data_consumer_event(reference, pid, event_types)
-      end
-
-    {:reply, result, state}
+  def handle_call(
+        {:event, listener, event_types},
+        _from,
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, %{state | listeners: listeners}}
   end
 
   @impl true
-  def handle_call({:struct_from_pid, _arg}, _from, %{reference: reference} = state) do
+  def handle_call(
+        {:struct_from_pid, _arg},
+        _from,
+        %{reference: reference} = state
+      ) do
     {:reply, struct_from_pid_and_ref(self(), reference), state}
-  end
-
-  @impl true
-  def handle_info({:on_close}, state) do
-    {:stop, :normal, state}
   end
 
   NifWrap.def_handle_call_nif(%{
@@ -131,7 +130,28 @@ defmodule Mediasoup.DataConsumer do
   })
 
   @impl true
-  def terminate(_reason, %{reference: reference} = _state) do
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, %{state | listeners: listeners}}
+  end
+
+  @impl true
+  def handle_info({:on_close}, state) do
+    # piped event
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
+    EventListener.send(listeners, :on_close, {:on_close})
     Nif.data_consumer_close(reference)
     :ok
   end

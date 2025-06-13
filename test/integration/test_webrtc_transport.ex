@@ -535,4 +535,82 @@ defmodule IntegrateTest.WebRtcTransportTest do
              ice_candidates
            )
   end
+
+  # イベント通知テスト
+  def event_notifications(worker) do
+    {_worker, router} = init(worker)
+
+    {:ok, transport} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1"
+          }
+        ]
+      })
+
+    # すべてのイベントを購読
+    Mediasoup.WebRtcTransport.event(transport, self(), [
+      :on_close,
+      :on_sctp_state_change,
+      :on_ice_state_change,
+      :on_dtls_state_change,
+      :on_ice_selected_tuple_change
+    ])
+
+    # 各イベントを発生させる操作を行い、通知を受信することを確認
+    # on_close
+    Mediasoup.Transport.close(transport)
+    assert_receive {:on_close}
+
+    # 再度作成して他のイベントをテスト
+    {:ok, transport2} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1"
+          }
+        ],
+        enableSctp: true
+      })
+
+    Mediasoup.WebRtcTransport.event(transport2, self(), [
+      :on_sctp_state_change,
+      :on_ice_state_change,
+      :on_dtls_state_change,
+      :on_ice_selected_tuple_change
+    ])
+
+    # on_sctp_state_change
+    send(transport2.pid, {:nif_internal_event, :on_sctp_state_change})
+    assert_receive {:on_sctp_state_change}
+
+    # on_ice_state_change
+    send(transport2.pid, {:nif_internal_event, :on_ice_state_change})
+    assert_receive {:on_ice_state_change}
+
+    # on_dtls_state_change
+    send(transport2.pid, {:nif_internal_event, :on_dtls_state_change})
+    assert_receive {:on_dtls_state_change}
+
+    # on_ice_selected_tuple_change
+    send(
+      transport2.pid,
+      {:nif_internal_event, :on_ice_selected_tuple_change,
+       %{
+         "localAddress" => "127.0.0.1",
+         "localPort" => 12345,
+         "protocol" => "udp"
+       }}
+    )
+
+    assert_receive {:on_ice_selected_tuple_change,
+                    %{
+                      "localAddress" => "127.0.0.1",
+                      "localPort" => 12345,
+                      "protocol" => "udp"
+                    }}
+  end
 end

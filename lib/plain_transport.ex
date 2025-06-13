@@ -3,7 +3,16 @@ defmodule Mediasoup.PlainTransport do
   https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransport
   """
 
-  alias Mediasoup.{TransportListenInfo, PlainTransport, Consumer, Producer, NifWrap, Nif}
+  alias Mediasoup.{
+    TransportListenInfo,
+    PlainTransport,
+    Consumer,
+    Producer,
+    NifWrap,
+    Nif,
+    EventListener
+  }
+
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -209,8 +218,117 @@ defmodule Mediasoup.PlainTransport do
     consume(transport, Consumer.Options.from_map(option))
   end
 
+  # GenServer callbacks
+
+  def start_link(opt) do
+    reference = Keyword.fetch!(opt, :reference)
+    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
+  end
+
   @impl true
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
+  def init(state) do
+    Process.flag(:trap_exit, true)
+    {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
+    {:ok, Map.merge(state, %{supervisor: supervisor, listeners: EventListener.new()})}
+  end
+
+  @spec struct_from_pid(pid()) :: PlainTransport.t()
+  def struct_from_pid(pid) do
+    GenServer.call(pid, {:struct_from_pid, []})
+  end
+
+  def struct_from_pid_and_ref(pid, reference) do
+    %PlainTransport{
+      pid: pid,
+      id: Nif.plain_transport_id(reference)
+    }
+  end
+
+  @impl true
+  def handle_call(
+        {:event, listener, event_types},
+        _from,
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, %{state | listeners: listeners}}
+  end
+
+  @impl true
+  def handle_call(
+        {:struct_from_pid, _arg},
+        _from,
+        %{reference: reference} = state
+      ) do
+    {:reply, struct_from_pid_and_ref(self(), reference), state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {message_tag, from}, result},
+        %{supervisor: supervisor} = state
+      )
+      when message_tag in [:produce, :consume] do
+    module =
+      case message_tag do
+        :produce -> Producer
+        :consume -> Consumer
+      end
+
+    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:mediasoup_async_nif_result, {_, from}, result},
+        state
+      ) do
+    GenServer.reply(from, result |> Nif.unwrap_ok())
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, Map.put(state, :listeners, listeners)}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
+    {:stop, :normal, state}
+  end
+
+  @simple_events [
+    :on_sctp_state_change
+  ]
+
+  @payload_events [
+    :on_tuple
+  ]
+  @impl true
+  def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
+      when event in @simple_events do
+    EventListener.send(listeners, event, {event})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
+      when event in @payload_events do
+    EventListener.send(listeners, event, {event, payload})
+    {:noreply, state}
+  end
+
+  @impl true
+  def terminate(
+        reason,
+        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
+      ) do
+    EventListener.send(listeners, :on_close, {:on_close})
     DynamicSupervisor.stop(supervisor, reason)
     Nif.plain_transport_close(reference)
     :ok
@@ -261,65 +379,6 @@ defmodule Mediasoup.PlainTransport do
       )
 
   def event(%PlainTransport{pid: pid}, listener, event_types) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
-  end
-
-  # GenServer callbacks
-
-  def start_link(opt) do
-    reference = Keyword.fetch!(opt, :reference)
-    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
-  end
-
-  @impl true
-  def init(state) do
-    Process.flag(:trap_exit, true)
-    {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
-
-    {:ok, Map.put(state, :supervisor, supervisor)}
-  end
-
-  @spec struct_from_pid(pid()) :: PlainTransport.t()
-  def struct_from_pid(pid) do
-    GenServer.call(pid, {:struct_from_pid, []})
-  end
-
-  def struct_from_pid_and_ref(pid, reference) do
-    %PlainTransport{
-      pid: pid,
-      id: Nif.plain_transport_id(reference)
-    }
-  end
-
-  def handle_call(
-        {:struct_from_pid, _arg},
-        _from,
-        %{reference: reference} = state
-      ) do
-    {:reply, struct_from_pid_and_ref(self(), reference), state}
-  end
-
-  def handle_info(
-        {:mediasoup_async_nif_result, {message_tag, from}, result},
-        %{supervisor: supervisor} = state
-      )
-      when message_tag in [:produce, :consume] do
-    module =
-      case message_tag do
-        :produce -> Producer
-        :consume -> Consumer
-      end
-
-    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {_, from}, result},
-        state
-      ) do
-    GenServer.reply(from, result |> Nif.unwrap_ok())
-    {:noreply, state}
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 end
