@@ -1,10 +1,12 @@
 defmodule IntegrateTest.PlainTransportTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for PlainTransport with dialyzer check
   """
 
   import ExUnit.Assertions
-  alias Mediasoup.{PlainTransport, Router}
+  alias Mediasoup.{PlainTransport, Router, Worker}
 
   defp init(worker) do
     alias Mediasoup.{Worker, Router}

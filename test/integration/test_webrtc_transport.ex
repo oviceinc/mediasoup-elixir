@@ -1,4 +1,6 @@
 defmodule IntegrateTest.WebRtcTransportTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for WebRtcTransport with dializer check
   """
@@ -536,7 +538,6 @@ defmodule IntegrateTest.WebRtcTransportTest do
            )
   end
 
-  # イベント通知テスト
   def event_notifications(worker) do
     {_worker, router} = init(worker)
 
@@ -550,7 +551,6 @@ defmodule IntegrateTest.WebRtcTransportTest do
         ]
       })
 
-    # すべてのイベントを購読
     Mediasoup.WebRtcTransport.event(transport, self(), [
       :on_close,
       :on_sctp_state_change,
@@ -559,12 +559,9 @@ defmodule IntegrateTest.WebRtcTransportTest do
       :on_ice_selected_tuple_change
     ])
 
-    # 各イベントを発生させる操作を行い、通知を受信することを確認
-    # on_close
     Mediasoup.Transport.close(transport)
     assert_receive {:on_close}
 
-    # 再度作成して他のイベントをテスト
     {:ok, transport2} =
       Router.create_webrtc_transport(router, %{
         listenIps: [
@@ -612,5 +609,33 @@ defmodule IntegrateTest.WebRtcTransportTest do
                       "localPort" => 12345,
                       "protocol" => "udp"
                     }}
+  end
+
+  test "webrtc transport event" do
+    {:ok, worker} = Worker.start_link()
+    {:ok, router} = Worker.create_router(worker, %{mediaCodecs: media_codecs()})
+
+    {:ok, transport_1} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ]
+      })
+
+    # Register event handler
+    assert {:ok} = WebRtcTransport.event(transport_1, self(), [:on_ice_state_change])
+
+    # Send internal event directly to test the handler
+    send(transport_1.pid, {:nif_internal_event, :on_ice_state_change})
+
+    # Verify event received
+    assert_receive {:on_ice_state_change, :on_ice_state_change}, 5000
+
+    # Cleanup
+    WebRtcTransport.close(transport_1)
+    Router.close(router)
+    Worker.close(worker)
   end
 end

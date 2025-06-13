@@ -121,4 +121,41 @@ defmodule PipeTransportTest do
   } do
     IntegrateTest.PipeTransportTest.no_crash_when_exited_pipe_to_router(worker)
   end
+
+  test "id/1 returns the correct id", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_pipe_transport(router, %Mediasoup.PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    assert Mediasoup.PipeTransport.id(transport) == transport.id
+    Mediasoup.PipeTransport.close(transport)
+  end
+
+  test "tuple/1 returns the correct tuple", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_pipe_transport(router, %Mediasoup.PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    assert is_struct(Mediasoup.PipeTransport.tuple(transport), TransportTuple)
+    Mediasoup.PipeTransport.close(transport)
+  end
+
+  test "struct_from_pid/1 returns the correct struct", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_pipe_transport(router, %Mediasoup.PipeTransport.Options{
+        listen_ip: %{ip: "127.0.0.1"}
+      })
+
+    struct = Mediasoup.PipeTransport.struct_from_pid(transport.pid)
+    assert struct.id == transport.id
+    Mediasoup.PipeTransport.close(transport)
+  end
 end
