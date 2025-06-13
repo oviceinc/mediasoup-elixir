@@ -2,55 +2,6 @@ defmodule Mediasoup.NifWrap do
   @moduledoc false
   # Utilities for wrap Nif
 
-  defmodule EventProxy do
-    @moduledoc false
-    # Event proxy module for rustler because rustler(nif) can only use local pid.
-    use GenServer
-
-    def start(opt) do
-      pid = Keyword.fetch!(opt, :pid)
-      GenServer.start(__MODULE__, %{pid: pid}, [])
-    end
-
-    def init(%{pid: pid} = init_arg) do
-      Process.monitor(pid)
-      {:ok, init_arg}
-    end
-
-    def handle_info(
-          {:EXIT, _pid, reason},
-          state
-        ) do
-      {:stop, reason, state}
-    end
-
-    def handle_info(
-          {:DOWN, _ref, :process, _shutdownpid, reason},
-          state
-        ) do
-      {:stop, reason, state}
-    end
-
-    def handle_info(message, %{pid: pid} = state) do
-      send(pid, message)
-      {:noreply, state}
-    end
-
-    def wrap_if_remote_node(pid) do
-      try do
-        if Process.alive?(pid) do
-          pid
-        else
-          nil
-        end
-      rescue
-        _e in ArgumentError ->
-          {:ok, wrapped} = EventProxy.start(pid: pid)
-          wrapped
-      end
-    end
-  end
-
   @spec def_handle_call_nif(any) ::
           {:__block__, [], [{:@, [...], [...]} | {:def, [...], [...]}, ...]}
   defmacro def_handle_call_nif(nif_call_map) do

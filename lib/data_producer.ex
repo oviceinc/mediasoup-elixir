@@ -3,7 +3,7 @@ defmodule Mediasoup.DataProducer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#DataProducer
   """
 
-  alias Mediasoup.{DataProducer, NifWrap, Nif}
+  alias Mediasoup.{DataProducer, NifWrap, Nif, EventListener}
   require NifWrap
   use GenServer, restart: :temporary
 
@@ -53,7 +53,7 @@ defmodule Mediasoup.DataProducer do
   @type event_type :: :on_close
   @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
   def event(%DataProducer{pid: pid}, listener, event_types \\ [:on_close]) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec struct_from_pid(pid()) :: DataProducer.t()
@@ -76,25 +76,48 @@ defmodule Mediasoup.DataProducer do
     GenServer.start_link(__MODULE__, %{reference: reference}, opt)
   end
 
+  @impl true
   def init(state) do
     Process.flag(:trap_exit, true)
-    {:ok, state}
+    {:ok, Map.merge(state, %{listeners: EventListener.new()})}
   end
 
-  def handle_call({:event, [listener, event_types]}, _from, %{reference: reference} = state) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.data_producer_event(reference, pid, event_types)
-      end
-
-    {:reply, result, state}
+  @impl true
+  def handle_call(
+        {:event, listener, event_types},
+        _from,
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, %{state | listeners: listeners}}
   end
 
-  def handle_call({:struct_from_pid, _arg}, _from, %{reference: reference} = state) do
+  @impl true
+  def handle_call(
+        {:struct_from_pid, _arg},
+        _from,
+        %{reference: reference} = state
+      ) do
     {:reply, struct_from_pid_and_ref(self(), reference), state}
   end
 
+  @impl true
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, %{state | listeners: listeners}}
+  end
+
+  @impl true
   def handle_info({:on_close}, state) do
+    # piped event
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
     {:stop, :normal, state}
   end
 
@@ -102,7 +125,9 @@ defmodule Mediasoup.DataProducer do
     closed?: &Nif.data_producer_closed/1
   })
 
-  def terminate(_reason, %{reference: reference} = _state) do
+  @impl true
+  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
+    EventListener.send(listeners, :on_close, {:on_close})
     Nif.data_producer_close(reference)
     :ok
   end

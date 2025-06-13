@@ -253,7 +253,11 @@ pub fn consumer_event(
             .on_layers_change(move |layer| {
                 send_msg_from_other_thread(
                     pid,
-                    (atoms::on_layers_change(), JsonSerdeWrap::new(*layer)),
+                    (
+                        atoms::nif_internal_event(),
+                        atoms::on_layers_change(),
+                        JsonSerdeWrap::new(*layer),
+                    ),
                 );
             })
             .detach();
@@ -264,7 +268,11 @@ pub fn consumer_event(
             .on_score(move |score| {
                 send_msg_from_other_thread(
                     pid,
-                    (atoms::on_score(), JsonSerdeWrap::new(score.clone())),
+                    (
+                        atoms::nif_internal_event(),
+                        atoms::on_score(),
+                        JsonSerdeWrap::new(score.clone()),
+                    ),
                 );
             })
             .detach();
