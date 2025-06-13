@@ -1,10 +1,12 @@
 defmodule IntegrateTest.PlainTransportTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for PlainTransport with dialyzer check
   """
 
   import ExUnit.Assertions
-  alias Mediasoup.{PlainTransport, Router}
+  alias Mediasoup.{PlainTransport, Router, Worker}
 
   defp init(worker) do
     alias Mediasoup.{Worker, Router}
@@ -488,5 +490,25 @@ defmodule IntegrateTest.PlainTransportTest do
                rtpCapabilities: consumer_device_capabilities()
              })
            )
+  end
+
+  test "plain transport event" do
+    {:ok, worker} = Worker.start_link()
+    {:ok, router} = Worker.create_router(worker, %{mediaCodecs: media_codecs()})
+    {:ok, transport_1} = Router.create_plain_transport(router, %{})
+
+    # Register event handler
+    assert {:ok} = PlainTransport.event(transport_1, self(), [:on_tuple])
+
+    # Send internal event directly to test the handler
+    send(transport_1.pid, {:nif_internal_event, :on_tuple, %{"localPort" => 1234}})
+
+    # Verify event received
+    assert_receive {:on_tuple, :on_tuple, %{"localPort" => 1234}}, 5000
+
+    # Cleanup
+    PlainTransport.close(transport_1)
+    Router.close(router)
+    Worker.close(worker)
   end
 end

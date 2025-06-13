@@ -1,13 +1,14 @@
 defmodule WorkerTest do
   use ExUnit.Case
-  import Mediasoup.TestUtil
-  setup_all :worker_leak_setup_all
-  setup :verify_worker_leak_on_exit!
 
   setup do
     Mediasoup.LoggerProxy.start_link(max_level: :info)
-    :ok
+    %{}
   end
+
+  import Mediasoup.TestUtil
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
 
   test "create_worker_with_default_settings" do
     IntegrateTest.WorkerTest.create_worker_with_default_settings()
@@ -39,6 +40,10 @@ defmodule WorkerTest do
 
   test "close_event" do
     IntegrateTest.WorkerTest.close_event()
+  end
+
+  test "close_event_with_dead_target" do
+    IntegrateTest.WorkerTest.close_event_with_dead_target()
   end
 
   test "close_router" do
@@ -81,5 +86,37 @@ defmodule WorkerTest do
     assert 1 <= Registry.lookup(Mediasoup.Worker.Registry, :id) |> Enum.count()
 
     Mediasoup.Worker.close(worker)
+  end
+
+  test "id/1 returns the correct id" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    id = Mediasoup.Worker.id(worker)
+    assert is_binary(id)
+    assert String.length(id) > 0
+    Mediasoup.Worker.close(worker)
+  end
+
+  test "closed?/1 returns correct status" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    assert Mediasoup.Worker.closed?(worker) == false
+    Mediasoup.Worker.close(worker)
+    assert Mediasoup.Worker.closed?(worker) == true
+  end
+
+  test "worker_count/0 returns count" do
+    initial_count = Mediasoup.Worker.worker_count()
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    assert Mediasoup.Worker.worker_count() == initial_count + 1
+    Mediasoup.Worker.close(worker)
+    # Wait for worker to close
+    Process.sleep(10)
+    assert Mediasoup.Worker.worker_count() == initial_count
+  end
+
+  test "event/3 registers event listener" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    assert :ok = Mediasoup.Worker.event(worker, self(), [:on_close])
+    Mediasoup.Worker.close(worker)
+    assert_receive {:on_close}
   end
 end
