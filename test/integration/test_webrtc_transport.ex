@@ -1,4 +1,6 @@
 defmodule IntegrateTest.WebRtcTransportTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for WebRtcTransport with dializer check
   """
@@ -534,5 +536,106 @@ defmodule IntegrateTest.WebRtcTransportTest do
              ],
              ice_candidates
            )
+  end
+
+  def event_notifications(worker) do
+    {_worker, router} = init(worker)
+
+    {:ok, transport} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1"
+          }
+        ]
+      })
+
+    Mediasoup.WebRtcTransport.event(transport, self(), [
+      :on_close,
+      :on_sctp_state_change,
+      :on_ice_state_change,
+      :on_dtls_state_change,
+      :on_ice_selected_tuple_change
+    ])
+
+    Mediasoup.Transport.close(transport)
+    assert_receive {:on_close}
+
+    {:ok, transport2} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1",
+            announcedIp: "9.9.9.1"
+          }
+        ],
+        enableSctp: true
+      })
+
+    Mediasoup.WebRtcTransport.event(transport2, self(), [
+      :on_sctp_state_change,
+      :on_ice_state_change,
+      :on_dtls_state_change,
+      :on_ice_selected_tuple_change
+    ])
+
+    # on_sctp_state_change
+    send(transport2.pid, {:nif_internal_event, :on_sctp_state_change, "new"})
+    assert_receive {:on_sctp_state_change, "new"}
+
+    # on_ice_state_change
+    send(transport2.pid, {:nif_internal_event, :on_ice_state_change, "new"})
+    assert_receive {:on_ice_state_change, "new"}
+
+    # on_dtls_state_change
+    send(transport2.pid, {:nif_internal_event, :on_dtls_state_change, "new"})
+    assert_receive {:on_dtls_state_change, "new"}
+
+    # on_ice_selected_tuple_change
+    send(
+      transport2.pid,
+      {:nif_internal_event, :on_ice_selected_tuple_change,
+       %{
+         "localAddress" => "127.0.0.1",
+         "localPort" => 12345,
+         "protocol" => "udp"
+       }}
+    )
+
+    assert_receive {:on_ice_selected_tuple_change,
+                    %{
+                      "localAddress" => "127.0.0.1",
+                      "localPort" => 12345,
+                      "protocol" => "udp"
+                    }}
+  end
+
+  test "webrtc transport event" do
+    {:ok, worker} = Worker.start_link()
+    {:ok, router} = Worker.create_router(worker, %{mediaCodecs: media_codecs()})
+
+    {:ok, transport_1} =
+      Router.create_webrtc_transport(router, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ]
+      })
+
+    # Register event handler
+    assert {:ok} = WebRtcTransport.event(transport_1, self(), [:on_ice_state_change])
+
+    # Send internal event directly to test the handler
+    send(transport_1.pid, {:nif_internal_event, :on_ice_state_change})
+
+    # Verify event received
+    assert_receive {:on_ice_state_change, :on_ice_state_change}, 5000
+
+    # Cleanup
+    WebRtcTransport.close(transport_1)
+    Router.close(router)
+    Worker.close(worker)
   end
 end

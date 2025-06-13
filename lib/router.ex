@@ -2,9 +2,10 @@ defmodule Mediasoup.Router do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Router
   """
+  alias Mediasoup.EventListener
   alias Mediasoup.{Router, WebRtcTransport, PipeTransport, PlainTransport, NifWrap, Nif}
   require NifWrap
-  use GenServer, restart: :temporary
+  use GenServer, restart: :temporary, shutdown: 1000
 
   @enforce_keys [:id]
   defstruct [:id, :pid]
@@ -192,10 +193,7 @@ defmodule Mediasoup.Router do
              rtp_parameters: Consumer.rtp_parameters(pipe_consumer),
              paused: Consumer.producer_paused?(pipe_consumer)
            }) do
-      # Pipe events from the pipe Consumer to the pipe Producer.
-      Consumer.event(pipe_consumer, pipe_producer.pid, [:on_close, :on_pause, :on_resume])
-      # Pipe events from the pipe Producer to the pipe Consumer.
-      Producer.event(pipe_producer, pipe_consumer.pid, [:on_close])
+      Consumer.link_pipe_producer(pipe_consumer, pipe_producer)
 
       {:ok, %{pipe_producer: pipe_producer, pipe_consumer: pipe_consumer}}
     end
@@ -237,10 +235,7 @@ defmodule Mediasoup.Router do
            Transport.produce_data(remote_pipe_transport, %DataProducer.Options{
              sctp_stream_parameters: DataConsumer.sctp_stream_parameters(pipe_consumer)
            }) do
-      # Pipe events from the pipe DataConsumer to the pipe Producer.
-      DataConsumer.event(pipe_consumer, pipe_producer.pid, [:on_close])
-      # Pipe events from the pipe DataProducer to the pipe Consumer.
-      DataProducer.event(pipe_producer, pipe_consumer.pid, [:on_close])
+      DataConsumer.link_pipe_producer(pipe_consumer, pipe_producer)
 
       {:ok, %{pipe_data_producer: pipe_producer, pipe_data_consumer: pipe_consumer}}
     end
@@ -302,7 +297,7 @@ defmodule Mediasoup.Router do
       )
 
   def event(%Router{pid: pid}, listener, event_types) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec struct_from_pid(pid()) :: Router.t()
@@ -325,25 +320,26 @@ defmodule Mediasoup.Router do
   end
 
   @impl true
-  def init(state) do
-    Process.flag(:trap_exit, true)
+  def init(%{reference: reference} = state) do
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
-    {:ok, Map.put(state, :supervisor, supervisor)}
+    Nif.router_event(reference, self(), [
+      :on_close,
+      :on_dead
+    ])
+
+    {:ok, Map.put(state, :supervisor, supervisor) |> Map.put(:listeners, EventListener.new())}
   end
 
   @impl true
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.router_event(reference, pid, event_types)
-      end
+    listeners = EventListener.add(listeners, listener, event_types)
 
-    {:reply, result, state}
+    {:reply, :ok, Map.put(state, :listeners, listeners)}
   end
 
   def handle_call(
@@ -452,8 +448,37 @@ defmodule Mediasoup.Router do
   end
 
   @impl true
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    DynamicSupervisor.stop(supervisor, reason)
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, Map.put(state, :listeners, listeners)}
+  end
+
+  def handle_info(
+        {:nif_internal_event, :on_close},
+        state
+      ) do
+    {:stop, :normal, state}
+  end
+
+  def handle_info(
+        {:nif_internal_event, :on_dead, message},
+        %{listeners: listeners} = state
+      ) do
+    EventListener.send(listeners, :on_dead, {:on_dead, message})
+    {:stop, :shutdown, state}
+  end
+
+  @impl true
+  def terminate(
+        reason,
+        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
+      ) do
+    EventListener.send(listeners, :on_close, {:on_close})
+    Mediasoup.Utility.supervisor_clean_stop(supervisor, reason)
+
     Nif.router_close(reference)
     :ok
   end
