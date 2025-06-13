@@ -2,6 +2,8 @@ defmodule IntegrateTest.SmokeTest do
   @moduledoc """
   Smoke test with dializer check
   """
+  import ExUnit.Assertions
+
   def smoke() do
     Mediasoup.LoggerProxy.start_link(max_level: :info)
     {:ok, worker} = Mediasoup.Worker.start_link()
@@ -72,5 +74,9 @@ defmodule IntegrateTest.SmokeTest do
     Mediasoup.WebRtcTransport.close(transport)
     Mediasoup.Router.close(router)
     Mediasoup.Worker.close(worker)
+  end
+
+  def version() do
+    assert is_binary(Mediasoup.version())
   end
 end

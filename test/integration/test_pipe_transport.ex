@@ -1,4 +1,6 @@
 defmodule IntegrateTest.PipeTransportTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for Consumer with dializer check
   """
