@@ -193,10 +193,7 @@ defmodule Mediasoup.Router do
              rtp_parameters: Consumer.rtp_parameters(pipe_consumer),
              paused: Consumer.producer_paused?(pipe_consumer)
            }) do
-      # Pipe events from the pipe Consumer to the pipe Producer.
-      Consumer.event(pipe_consumer, pipe_producer.pid, [:on_close, :on_pause, :on_resume])
-      # Pipe events from the pipe Producer to the pipe Consumer.
-      Producer.event(pipe_producer, pipe_consumer.pid, [:on_close])
+      Consumer.link_pipe_producer(pipe_consumer, pipe_producer)
 
       {:ok, %{pipe_producer: pipe_producer, pipe_consumer: pipe_consumer}}
     end
@@ -238,10 +235,7 @@ defmodule Mediasoup.Router do
            Transport.produce_data(remote_pipe_transport, %DataProducer.Options{
              sctp_stream_parameters: DataConsumer.sctp_stream_parameters(pipe_consumer)
            }) do
-      # Pipe events from the pipe DataConsumer to the pipe Producer.
-      DataConsumer.event(pipe_consumer, pipe_producer.pid, [:on_close])
-      # Pipe events from the pipe DataProducer to the pipe Consumer.
-      DataProducer.event(pipe_producer, pipe_consumer.pid, [:on_close])
+      DataConsumer.link_pipe_producer(pipe_consumer, pipe_producer)
 
       {:ok, %{pipe_data_producer: pipe_producer, pipe_data_consumer: pipe_consumer}}
     end

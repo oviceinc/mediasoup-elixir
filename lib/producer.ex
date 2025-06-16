@@ -153,7 +153,6 @@ defmodule Mediasoup.Producer do
           :on_close,
           :on_pause,
           :on_resume,
-          :on_video_orientation_change,
           :on_score
         ]
       ) do
@@ -194,7 +193,24 @@ defmodule Mediasoup.Producer do
       :on_score
     ])
 
-    {:ok, Map.merge(state, %{listeners: EventListener.new()})}
+    {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_consumer: nil})}
+  end
+
+  @impl true
+  def handle_cast(
+        {:link_pipe_consumer, consumer_pid},
+        %{listeners: listeners, linked_consumer: nil} = state
+      ) do
+    # Pipe events from the Consumer to Producer.
+    consumer_pid_ref = Process.monitor(consumer_pid)
+
+    new_state =
+      Map.merge(state, %{
+        listeners: listeners,
+        linked_consumer: %{pid: consumer_pid, monitor_ref: consumer_pid_ref}
+      })
+
+    {:noreply, new_state}
   end
 
   @impl true
@@ -248,11 +264,16 @@ defmodule Mediasoup.Producer do
 
   @impl true
   def handle_info(
-        {:DOWN, _monitor_ref, :process, listener, _reason},
-        %{listeners: listeners} = state
+        {:DOWN, monitor_ref, :process, pid, reason},
+        %{listeners: listeners, linked_consumer: linked_consumer} = state
       ) do
-    listeners = EventListener.remove(listeners, listener)
-    {:noreply, %{state | listeners: listeners}}
+    if linked_consumer != nil and linked_consumer.pid == pid and
+         linked_consumer.monitor_ref == monitor_ref do
+      {:stop, reason, state}
+    else
+      listeners = EventListener.remove(listeners, pid)
+      {:noreply, %{state | listeners: listeners}}
+    end
   end
 
   @impl true
@@ -273,6 +294,12 @@ defmodule Mediasoup.Producer do
   def handle_info({:on_close}, state) do
     # piped event
     {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe consumer
+    {:stop, reason, state}
   end
 
   @impl true

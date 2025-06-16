@@ -76,6 +76,11 @@ defmodule Mediasoup.DataConsumer do
     NifWrap.call(pid, {:event, listener, event_types})
   end
 
+  def link_pipe_producer(%DataConsumer{pid: pid}, %Mediasoup.DataProducer{pid: producer_pid}) do
+    GenServer.cast(pid, {:link_pipe_producer, producer_pid})
+    GenServer.cast(producer_pid, {:link_pipe_consumer, pid})
+  end
+
   @spec struct_from_pid(pid()) :: DataConsumer.t()
   def struct_from_pid(pid) when is_pid(pid) do
     GenServer.call(pid, {:struct_from_pid, []})
@@ -101,9 +106,32 @@ defmodule Mediasoup.DataConsumer do
   end
 
   @impl true
-  def init(state) do
+  def init(%{reference: reference} = state) do
     Process.flag(:trap_exit, true)
-    {:ok, Map.merge(state, %{listeners: EventListener.new()})}
+
+    Nif.data_consumer_event(reference, self(), [
+      :on_close
+    ])
+
+    {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_producer: nil})}
+  end
+
+  @impl true
+  def handle_cast(
+        {:link_pipe_producer, producer_pid},
+        %{listeners: listeners, linked_producer: nil} = state
+      ) do
+    # Pipe events from the pipe Producer to the pipe Consumer.
+    listeners = EventListener.add(listeners, producer_pid, [:on_pause, :on_resume])
+    producer_monitor_ref = Process.monitor(producer_pid)
+
+    new_state =
+      Map.merge(state, %{
+        listeners: listeners,
+        linked_producer: %{pid: producer_pid, monitor_ref: producer_monitor_ref}
+      })
+
+    {:noreply, new_state}
   end
 
   @impl true
@@ -131,17 +159,28 @@ defmodule Mediasoup.DataConsumer do
 
   @impl true
   def handle_info(
-        {:DOWN, _monitor_ref, :process, listener, _reason},
-        %{listeners: listeners} = state
+        {:DOWN, monitor_ref, :process, pid, reason},
+        %{listeners: listeners, linked_producer: linked_producer} = state
       ) do
-    listeners = EventListener.remove(listeners, listener)
-    {:noreply, %{state | listeners: listeners}}
+    if linked_producer != nil and linked_producer.pid == pid and
+         linked_producer.monitor_ref == monitor_ref do
+      {:stop, reason, state}
+    else
+      listeners = EventListener.remove(listeners, pid)
+      {:noreply, %{state | listeners: listeners}}
+    end
   end
 
   @impl true
   def handle_info({:on_close}, state) do
     # piped event
     {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe producer
+    {:stop, reason, state}
   end
 
   @impl true
