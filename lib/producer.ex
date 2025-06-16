@@ -276,6 +276,12 @@ defmodule Mediasoup.Producer do
   end
 
   @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe consumer
+    {:stop, reason, state}
+  end
+
+  @impl true
   def handle_info({:nif_internal_event, :on_close}, state) do
     {:stop, :normal, state}
   end

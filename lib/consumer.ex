@@ -258,6 +258,10 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:event, listener, event_types})
   end
 
+  def link_pipe_producer(%Consumer{pid: pid}, %Mediasoup.Producer{pid: producer_pid}) do
+    GenServer.cast(pid, {:link_pipe_producer, [producer_pid]})
+  end
+
   @spec struct_from_pid(pid()) :: Consumer.t()
   def struct_from_pid(pid) when is_pid(pid) do
     GenServer.call(pid, {:struct_from_pid, []})
@@ -298,6 +302,14 @@ defmodule Mediasoup.Consumer do
     ])
 
     {:ok, Map.merge(state, %{listeners: EventListener.new()})}
+  end
+
+  @impl true
+  def handle_cast({:link_pipe_producer, [producer_pid]}, %{listeners: listeners} = state) do
+    # Pipe events from the pipe Producer to the pipe Consumer.
+    Process.link(producer_pid)
+    listeners = EventListener.add(listeners, producer_pid, [:on_pause, :on_resume])
+    {:noreply, Map.put(state, :listeners, listeners)}
   end
 
   @impl true
@@ -371,6 +383,12 @@ defmodule Mediasoup.Consumer do
   def handle_info({:on_close}, state) do
     # piped event
     {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe producer
+    {:stop, reason, state}
   end
 
   @simple_events [

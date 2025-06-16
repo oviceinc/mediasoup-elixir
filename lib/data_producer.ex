@@ -3,6 +3,7 @@ defmodule Mediasoup.DataProducer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#DataProducer
   """
 
+  require Logger
   alias Mediasoup.{DataProducer, NifWrap, Nif, EventListener}
   require NifWrap
   use GenServer, restart: :temporary
@@ -113,7 +114,15 @@ defmodule Mediasoup.DataProducer do
   @impl true
   def handle_info({:on_close}, state) do
     # piped event
+    # Terminating a piped Producer/Consumer using on_close message sending is discouraged. Instead, use link_pipe_producer to link the processes.
+    Logger.warning("deprecated: on_close")
     {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe consumer
+    {:stop, reason, state}
   end
 
   @impl true
