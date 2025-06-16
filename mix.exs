@@ -1,7 +1,7 @@
 defmodule MediasoupElixir.MixProject do
   use Mix.Project
 
-  @version "0.14.4"
+  @version "0.15.0"
   @repo "https://github.com/oviceinc/mediasoup-elixir"
   @description """
   Elixir wrapper for mediasoup
