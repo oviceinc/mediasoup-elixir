@@ -10,7 +10,8 @@ defmodule Mediasoup.PipeTransport do
     Producer,
     DataProducer,
     NifWrap,
-    Nif
+    Nif,
+    EventListener
   }
 
   require NifWrap
@@ -261,7 +262,7 @@ defmodule Mediasoup.PipeTransport do
       )
 
   def event(%PipeTransport{pid: pid}, listener, event_types) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec struct_from_pid(pid()) :: PipeTransport.t()
@@ -287,24 +288,20 @@ defmodule Mediasoup.PipeTransport do
   def init(state) do
     Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
-
-    {:ok, Map.put(state, :supervisor, supervisor)}
+    {:ok, Map.merge(state, %{supervisor: supervisor, listeners: EventListener.new()})}
   end
 
   @impl true
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.pipe_transport_event(reference, pid, event_types)
-      end
-
-    {:reply, result, state}
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, %{state | listeners: listeners}}
   end
 
+  @impl true
   def handle_call(
         {:struct_from_pid, _arg},
         _from,
@@ -332,6 +329,7 @@ defmodule Mediasoup.PipeTransport do
     consume_data: &Nif.pipe_transport_consume_data_async/3
   })
 
+  @impl true
   def handle_info(
         {:mediasoup_async_nif_result, {message_tag, from}, result},
         %{supervisor: supervisor} = state
@@ -359,7 +357,46 @@ defmodule Mediasoup.PipeTransport do
   end
 
   @impl true
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, %{state | listeners: listeners}}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
+    {:stop, :normal, state}
+  end
+
+  @simple_events [
+    :on_sctp_state_change
+  ]
+
+  @payload_events [
+    :on_tuple
+  ]
+  @impl true
+  def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
+      when event in @simple_events do
+    EventListener.send(listeners, event, {event})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
+      when event in @payload_events do
+    EventListener.send(listeners, event, {event, payload})
+    {:noreply, state}
+  end
+
+  @impl true
+  def terminate(
+        reason,
+        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
+      ) do
+    EventListener.send(listeners, :on_close, {:on_close})
     DynamicSupervisor.stop(supervisor, reason)
     Nif.pipe_transport_close(reference)
     :ok

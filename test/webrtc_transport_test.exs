@@ -1,15 +1,16 @@
-defmodule MediasoupElixirWebRtcTransportTest do
+defmodule WebRtcTransportTest do
   use ExUnit.Case
-
-  import Mediasoup.TestUtil
-  setup_all :worker_leak_setup_all
-  setup :verify_worker_leak_on_exit!
 
   setup do
     Mediasoup.LoggerProxy.start_link(max_level: :info)
     {:ok, worker} = Mediasoup.Worker.start_link()
+
     %{worker: worker}
   end
+
+  import Mediasoup.TestUtil
+  setup_all :worker_leak_setup_all
+  setup :verify_worker_leak_on_exit!
 
   test "normalize option" do
     alias Mediasoup.WebRtcTransport.Options
@@ -144,15 +145,11 @@ defmodule MediasoupElixirWebRtcTransportTest do
     IntegrateTest.WebRtcTransportTest.connect_succeeds(worker)
   end
 
-  test "set_max_incoming_bitrate_succeeds", %{
-    worker: worker
-  } do
+  test "set_max_incoming_bitrate_succeeds", %{worker: worker} do
     IntegrateTest.WebRtcTransportTest.set_max_incoming_bitrate_succeeds(worker)
   end
 
-  test "set_max_outgoing_bitrate_succeeds", %{
-    worker: worker
-  } do
+  test "set_max_outgoing_bitrate_succeeds", %{worker: worker} do
     IntegrateTest.WebRtcTransportTest.set_max_outgoing_bitrate_succeeds(worker)
   end
 
@@ -174,5 +171,153 @@ defmodule MediasoupElixirWebRtcTransportTest do
 
   test "create_with_webrtc_server_succeeds", %{worker: worker} do
     IntegrateTest.WebRtcTransportTest.create_with_webrtc_server_succeeds(worker)
+  end
+
+  test "event_notifications", %{worker: worker} do
+    IntegrateTest.WebRtcTransportTest.event_notifications(worker)
+  end
+
+  test "struct_from_pid/1 returns the correct struct", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    struct = Mediasoup.WebRtcTransport.struct_from_pid(transport.pid)
+    assert struct.id == transport.id
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "id/1 returns the correct id", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    assert Mediasoup.WebRtcTransport.id(transport) == transport.id
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "ice_state/1 returns the current ICE state", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    assert Mediasoup.WebRtcTransport.ice_state(transport) == "new"
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "ice_selected_tuple/1 returns the selected tuple", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    assert Mediasoup.WebRtcTransport.ice_selected_tuple(transport) == nil
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "dtls_parameters/1 returns the DTLS parameters", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    params = Mediasoup.WebRtcTransport.dtls_parameters(transport)
+    assert is_map(params)
+    assert Map.has_key?(params, "fingerprints")
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "dtls_state/1 returns the current DTLS state", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    assert Mediasoup.WebRtcTransport.dtls_state(transport) == "new"
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "sctp_state/1 returns the current SCTP state", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}],
+        enable_sctp: true
+      })
+
+    assert Mediasoup.WebRtcTransport.sctp_state(transport) == "new"
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "sctp_parameters/1 returns the SCTP parameters", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}],
+        enable_sctp: true
+      })
+
+    params = Mediasoup.WebRtcTransport.sctp_parameters(transport)
+    assert is_map(params)
+    assert Map.has_key?(params, "port")
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "ice_parameters/1 returns the ICE parameters", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    params = Mediasoup.WebRtcTransport.ice_parameters(transport)
+    assert is_map(params)
+    assert Map.has_key?(params, "usernameFragment")
+    assert Map.has_key?(params, "password")
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "ice_candidates/1 returns the ICE candidates", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    candidates = Mediasoup.WebRtcTransport.ice_candidates(transport)
+    assert is_list(candidates)
+    assert length(candidates) > 0
+    Mediasoup.WebRtcTransport.close(transport)
+  end
+
+  test "ice_role/1 returns the ICE role", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_webrtc_transport(router, %Mediasoup.WebRtcTransport.Options{
+        listen_ips: [%{ip: "127.0.0.1"}]
+      })
+
+    assert Mediasoup.WebRtcTransport.ice_role(transport) == "controlled"
+    Mediasoup.WebRtcTransport.close(transport)
   end
 end
