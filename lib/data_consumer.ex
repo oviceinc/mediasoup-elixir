@@ -105,8 +105,13 @@ defmodule Mediasoup.DataConsumer do
   end
 
   @impl true
-  def init(state) do
+  def init(%{reference: reference} = state) do
     Process.flag(:trap_exit, true)
+
+    Nif.data_consumer_event(reference, self(), [
+      :on_close
+    ])
+
     {:ok, Map.merge(state, %{listeners: EventListener.new()})}
   end
 
