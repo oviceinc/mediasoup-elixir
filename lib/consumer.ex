@@ -290,7 +290,7 @@ defmodule Mediasoup.Consumer do
   @spec init(%{:reference => reference(), optional(any()) => any()}) ::
           {:ok,
            %{
-             :listeners => %Mediasoup.EventListener{listeners: map()},
+             :listeners => Mediasoup.EventListener.t(),
              :reference => reference(),
              optional(any()) => any()
            }}
