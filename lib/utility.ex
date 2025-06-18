@@ -66,7 +66,9 @@ defmodule Mediasoup.EventListener do
     %__MODULE__{listeners: %{}}
   end
 
-  @type t() :: %__MODULE__{listeners: %{pid() => %{event_types: [atom()], monitor_ref: reference(), tag: any()}}}
+  @type t() :: %__MODULE__{
+          listeners: %{pid() => %{event_types: [atom()], monitor_ref: reference(), tag: any()}}
+        }
 
   @doc """
   Add a listener to the event listener.
