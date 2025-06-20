@@ -9,6 +9,15 @@ defmodule WorkerTest do
     :ok
   end
 
+  test "worker_closed_test" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    Mediasoup.Worker.event(worker, self(), [:on_close, :on_dead])
+    GenServer.call(worker, :debug_stop_worker)
+    ref = Process.monitor(worker)
+    assert_receive {:DOWN, ^ref, :process, ^worker, :normal}
+    assert Mediasoup.Worker.closed?(worker) === true
+  end
+
   test "create_worker_with_default_settings" do
     IntegrateTest.WorkerTest.create_worker_with_default_settings()
   end
