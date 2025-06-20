@@ -79,9 +79,10 @@ defmodule Mediasoup.DataProducer do
 
   @impl true
   def init(%{reference: reference} = state) do
-    Nif.data_producer_event(reference, self(), [
-      :on_close
-    ])
+    {:ok} =
+      Nif.data_producer_event(reference, self(), [
+        :on_close
+      ])
 
     {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_consumer: nil})}
   end

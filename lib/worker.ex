@@ -202,7 +202,7 @@ defmodule Mediasoup.Worker do
       Registry.register(Mediasoup.Worker.Registry, :id, Nif.worker_id(worker))
     end
 
-    Nif.worker_event(worker, self(), [:on_close, :on_dead])
+    {:ok} = Nif.worker_event(worker, self(), [:on_close, :on_dead])
 
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
     {:ok, %{reference: worker, supervisor: supervisor, listeners: EventListener.new()}}

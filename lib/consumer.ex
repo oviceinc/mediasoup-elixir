@@ -295,17 +295,18 @@ defmodule Mediasoup.Consumer do
              optional(any()) => any()
            }}
   def init(%{reference: reference} = state) do
-    Nif.consumer_event(reference, self(), [
-      :on_close,
-      :on_pause,
-      :on_resume,
-      :on_producer_resume,
-      :on_producer_pause,
-      :on_producer_close,
-      :on_transport_close,
-      :on_score,
-      :on_layers_change
-    ])
+    {:ok} =
+      Nif.consumer_event(reference, self(), [
+        :on_close,
+        :on_pause,
+        :on_resume,
+        :on_producer_resume,
+        :on_producer_pause,
+        :on_producer_close,
+        :on_transport_close,
+        :on_score,
+        :on_layers_change
+      ])
 
     {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_producer: nil})}
   end

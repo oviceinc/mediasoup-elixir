@@ -11,7 +11,6 @@ defmodule WorkerTest do
   setup_all :worker_leak_setup_all
   setup :verify_worker_leak_on_exit!
 
-
   test "worker_closed_test" do
     {:ok, worker} = Mediasoup.Worker.start_link()
     Mediasoup.Worker.event(worker, self(), [:on_close, :on_dead])

@@ -323,10 +323,11 @@ defmodule Mediasoup.Router do
   def init(%{reference: reference} = state) do
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
-    Nif.router_event(reference, self(), [
-      :on_close,
-      :on_dead
-    ])
+    {:ok} =
+      Nif.router_event(reference, self(), [
+        :on_close,
+        :on_dead
+      ])
 
     {:ok, Map.put(state, :supervisor, supervisor) |> Map.put(:listeners, EventListener.new())}
   end

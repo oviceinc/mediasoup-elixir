@@ -183,13 +183,14 @@ defmodule Mediasoup.Producer do
 
   @impl true
   def init(%{reference: reference} = state) do
-    Nif.producer_event(reference, self(), [
-      :on_close,
-      :on_pause,
-      :on_resume,
-      :on_video_orientation_change,
-      :on_score
-    ])
+    {:ok} =
+      Nif.producer_event(reference, self(), [
+        :on_close,
+        :on_pause,
+        :on_resume,
+        :on_video_orientation_change,
+        :on_score
+      ])
 
     {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_consumer: nil})}
   end
