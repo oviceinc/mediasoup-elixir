@@ -1,9 +1,11 @@
 defmodule IntegrateTest.ProducerTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for Producer with dializer check
   """
   import ExUnit.Assertions
-  alias Mediasoup.{Producer, WebRtcTransport, Router}
+  alias Mediasoup.{Producer, WebRtcTransport, Router, Worker}
 
   defp media_codecs() do
     {
@@ -663,5 +665,24 @@ defmodule IntegrateTest.ProducerTest do
     transport_1_dump = WebRtcTransport.dump(transport_1)
     assert transport_1_dump["producerIds"] == []
     assert transport_1_dump["consumerIds"] == []
+  end
+
+  def producer_event(worker) do
+    {_worker, _router, transport_1, _transport_2} = init(worker)
+
+    {:ok, audio_producer} = WebRtcTransport.produce(transport_1, audio_producer_options())
+
+    # Register event handler
+    assert {:ok} = Producer.event(audio_producer, self(), [:on_score])
+
+    # Send internal event directly to test the handler
+    send(audio_producer.pid, {:nif_internal_event, :on_score, [%{"score" => 10}]})
+
+    # Verify event received
+    assert_receive {:on_score, [%{"score" => 10}]}, 5000
+
+    # Cleanup
+    Producer.close(audio_producer)
+    WebRtcTransport.close(transport_1)
   end
 end

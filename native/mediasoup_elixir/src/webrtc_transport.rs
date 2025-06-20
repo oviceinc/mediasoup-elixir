@@ -334,6 +334,7 @@ pub fn webrtc_transport_event(
                 send_msg_from_other_thread(
                     pid,
                     (
+                        atoms::nif_internal_event(),
                         atoms::on_ice_selected_tuple_change(),
                         JsonSerdeWrap::new(arg.clone()),
                     ),

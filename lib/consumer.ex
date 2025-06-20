@@ -2,9 +2,9 @@ defmodule Mediasoup.Consumer do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Consumer
   """
-  alias Mediasoup.{Consumer, NifWrap, Nif}
+  alias Mediasoup.{Consumer, NifWrap, Nif, EventListener}
   require NifWrap
-  use GenServer, restart: :temporary
+  use GenServer, restart: :temporary, shutdown: 1000
 
   @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters]
   defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :pid]
@@ -255,7 +255,12 @@ defmodule Mediasoup.Consumer do
           :on_layers_change
         ]
       ) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
+  end
+
+  def link_pipe_producer(%Consumer{pid: pid}, %Mediasoup.Producer{pid: producer_pid}) do
+    GenServer.cast(pid, {:link_pipe_producer, producer_pid})
+    GenServer.cast(producer_pid, {:link_pipe_consumer, pid})
   end
 
   @spec struct_from_pid(pid()) :: Consumer.t()
@@ -282,23 +287,56 @@ defmodule Mediasoup.Consumer do
   end
 
   @impl true
-  def init(state) do
-    Process.flag(:trap_exit, true)
-    {:ok, state}
+  @spec init(%{:reference => reference(), optional(any()) => any()}) ::
+          {:ok,
+           %{
+             :listeners => Mediasoup.EventListener.t(),
+             :reference => reference(),
+             optional(any()) => any()
+           }}
+  def init(%{reference: reference} = state) do
+    {:ok} =
+      Nif.consumer_event(reference, self(), [
+        :on_close,
+        :on_pause,
+        :on_resume,
+        :on_producer_resume,
+        :on_producer_pause,
+        :on_producer_close,
+        :on_transport_close,
+        :on_score,
+        :on_layers_change
+      ])
+
+    {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_producer: nil})}
+  end
+
+  @impl true
+  def handle_cast(
+        {:link_pipe_producer, producer_pid},
+        %{listeners: listeners, linked_producer: nil} = state
+      ) do
+    # Pipe events from the pipe Producer to the pipe Consumer.
+    listeners = EventListener.add(listeners, producer_pid, [:on_pause, :on_resume])
+    producer_monitor_ref = Process.monitor(producer_pid)
+
+    new_state =
+      Map.merge(state, %{
+        listeners: listeners,
+        linked_producer: %{pid: producer_pid, monitor_ref: producer_monitor_ref}
+      })
+
+    {:noreply, new_state}
   end
 
   @impl true
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.consumer_event(reference, pid, event_types)
-      end
-
-    {:reply, result, state}
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, Map.put(state, :listeners, listeners)}
   end
 
   @impl true
@@ -345,12 +383,66 @@ defmodule Mediasoup.Consumer do
   end
 
   @impl true
-  def handle_info({:on_close}, state) do
+  def handle_info(
+        {:DOWN, monitor_ref, :process, pid, _reason},
+        %{listeners: listeners, linked_producer: linked_producer} = state
+      ) do
+    if linked_producer != nil and linked_producer.pid == pid and
+         linked_producer.monitor_ref == monitor_ref do
+      {:stop, :normal, state}
+    else
+      listeners = EventListener.remove(listeners, pid)
+      {:noreply, %{state | listeners: listeners}}
+    end
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
     {:stop, :normal, state}
   end
 
   @impl true
-  def terminate(_reason, %{reference: reference} = _state) do
+  def handle_info({:on_close}, state) do
+    # piped event
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe producer
+    {:stop, reason, state}
+  end
+
+  @simple_events [
+    :on_pause,
+    :on_resume,
+    :on_producer_resume,
+    :on_producer_pause,
+    :on_producer_close,
+    :on_transport_close
+  ]
+
+  @payload_events [
+    :on_score,
+    :on_layers_change
+  ]
+  @impl true
+  def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
+      when event in @simple_events do
+    EventListener.send(listeners, event, {event})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
+      when event in @payload_events do
+    EventListener.send(listeners, event, {event, payload})
+    {:noreply, state}
+  end
+
+  @impl true
+  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
+    EventListener.send(listeners, :on_close, {:on_close})
     Nif.consumer_close(reference)
     :ok
   end

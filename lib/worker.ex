@@ -2,7 +2,7 @@ defmodule Mediasoup.Worker do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Worker
   """
-  alias Mediasoup.{Worker, Router, NifWrap, Nif, WebRtcServer}
+  alias Mediasoup.{Worker, Router, NifWrap, Nif, WebRtcServer, EventListener}
   require Mediasoup.NifWrap
   use GenServer
 
@@ -178,7 +178,7 @@ defmodule Mediasoup.Worker do
           :on_dead
         ]
       ) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec worker_count :: non_neg_integer()
@@ -196,16 +196,16 @@ defmodule Mediasoup.Worker do
 
   # GenServer callbacks
   def init(settings) do
-    Process.flag(:trap_exit, true)
     {:ok, worker} = create_worker(settings)
-    Nif.worker_event(worker, self(), [:on_close, :on_dead])
 
     if Process.whereis(Mediasoup.Worker.Registry) do
       Registry.register(Mediasoup.Worker.Registry, :id, Nif.worker_id(worker))
     end
 
+    {:ok} = Nif.worker_event(worker, self(), [:on_close, :on_dead])
+
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
-    {:ok, %{reference: worker, supervisor: supervisor}}
+    {:ok, %{reference: worker, supervisor: supervisor, listeners: EventListener.new()}}
   end
 
   NifWrap.def_handle_call_nif(%{
@@ -253,29 +253,36 @@ defmodule Mediasoup.Worker do
   end
 
   def handle_info(
-        {:on_close},
+        {:nif_internal_event, :on_close},
         state
       ) do
     {:stop, :normal, state}
   end
 
   def handle_info(
-        {:on_dead},
-        state
+        {:nif_internal_event, :on_dead, message},
+        %{listeners: listeners} = state
       ) do
-    {:stop, :kill, state}
+    EventListener.send(listeners, :on_dead, {:on_dead, message})
+    {:stop, :shutdown, state}
+  end
+
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, Map.put(state, :listeners, listeners)}
   end
 
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-      pid when is_pid(pid) -> Nif.worker_event(reference, pid, event_types)
-    end
+    listeners = EventListener.add(listeners, listener, event_types)
 
-    {:reply, :ok, state}
+    {:reply, :ok, Map.put(state, :listeners, listeners)}
   end
 
   def handle_call(
@@ -287,8 +294,13 @@ defmodule Mediasoup.Worker do
     {:reply, :ok, state}
   end
 
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    DynamicSupervisor.stop(supervisor, reason)
+  def terminate(
+        reason,
+        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
+      ) do
+    EventListener.send(listeners, :on_close, {:on_close})
+
+    Mediasoup.Utility.supervisor_clean_stop(supervisor, reason)
     Nif.worker_close(reference)
     :ok
   end

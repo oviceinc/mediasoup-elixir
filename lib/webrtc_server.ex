@@ -5,7 +5,7 @@ defmodule Mediasoup.WebRtcServer do
 
   alias Mediasoup.{WebRtcServer, NifWrap, Nif}
   require NifWrap
-  use GenServer, restart: :temporary
+  use GenServer, restart: :temporary, shutdown: 1000
 
   @enforce_keys [:id]
   defstruct [:id, :pid]
@@ -114,7 +114,6 @@ defmodule Mediasoup.WebRtcServer do
 
   @impl true
   def init(state) do
-    Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
     {:ok, Map.put(state, :supervisor, supervisor)}

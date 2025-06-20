@@ -2,9 +2,9 @@ defmodule Mediasoup.Producer do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Producer
   """
-  alias Mediasoup.{Producer, NifWrap, Nif}
+  alias Mediasoup.{Producer, NifWrap, Nif, EventListener}
   require NifWrap
-  use GenServer, restart: :temporary
+  use GenServer, restart: :temporary, shutdown: 1000
 
   @enforce_keys [:id, :kind, :type, :rtp_parameters, :pid]
   defstruct [:id, :kind, :type, :rtp_parameters, :pid]
@@ -26,7 +26,7 @@ defmodule Mediasoup.Producer do
   @type mediaKind :: String.t()
   @typedoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#ProducerType
-    “simple” or “simulcast” or “svc”
+    "simple" or "simulcast" or "svc"
   """
   @type producerType :: String.t()
 
@@ -66,7 +66,7 @@ defmodule Mediasoup.Producer do
 
   @spec close(t) :: :ok
   @doc """
-    Closes the producer. Triggers a “producerclose” event in all its associated consumers.
+    Closes the producer. Triggers a "producerclose" event in all its associated consumers.
     https://mediasoup.org/documentation/v3/mediasoup/api/#producer-close
   """
   def close(%Producer{pid: pid}) do
@@ -83,7 +83,7 @@ defmodule Mediasoup.Producer do
 
   @spec pause(t) :: {:ok} | {:error}
   @doc """
-  Pauses the producer (no RTP is sent to its associated consumers). Triggers a “producerpause” event in all its associated consumers.
+  Pauses the producer (no RTP is sent to its associated consumers). Triggers a "producerpause" event in all its associated consumers.
   https://mediasoup.org/documentation/v3/mediasoup/api/#producer-pause
   """
   def pause(%Producer{pid: pid}) do
@@ -92,7 +92,7 @@ defmodule Mediasoup.Producer do
 
   @spec resume(t) :: {:ok} | {:error}
   @doc """
-  Resumes the producer (RTP is sent again to its associated consumers). Triggers a “producerresume” event in all its associated consumers.
+  Resumes the producer (RTP is sent again to its associated consumers). Triggers a "producerresume" event in all its associated consumers.
   https://mediasoup.org/documentation/v3/mediasoup/api/#producer-resume
   """
   def resume(%Producer{pid: pid}) do
@@ -153,11 +153,10 @@ defmodule Mediasoup.Producer do
           :on_close,
           :on_pause,
           :on_resume,
-          :on_video_orientation_change,
           :on_score
         ]
       ) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec struct_from_pid(pid()) :: Producer.t()
@@ -183,23 +182,44 @@ defmodule Mediasoup.Producer do
   end
 
   @impl true
-  def init(state) do
-    Process.flag(:trap_exit, true)
-    {:ok, state}
+  def init(%{reference: reference} = state) do
+    {:ok} =
+      Nif.producer_event(reference, self(), [
+        :on_close,
+        :on_pause,
+        :on_resume,
+        :on_video_orientation_change,
+        :on_score
+      ])
+
+    {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_consumer: nil})}
+  end
+
+  @impl true
+  def handle_cast(
+        {:link_pipe_consumer, consumer_pid},
+        %{listeners: listeners, linked_consumer: nil} = state
+      ) do
+    # Pipe events from the Consumer to Producer.
+    consumer_pid_ref = Process.monitor(consumer_pid)
+
+    new_state =
+      Map.merge(state, %{
+        listeners: listeners,
+        linked_consumer: %{pid: consumer_pid, monitor_ref: consumer_pid_ref}
+      })
+
+    {:noreply, new_state}
   end
 
   @impl true
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.producer_event(reference, pid, event_types)
-      end
-
-    {:reply, result, state}
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, %{state | listeners: listeners}}
   end
 
   @impl true
@@ -242,24 +262,76 @@ defmodule Mediasoup.Producer do
   end
 
   @impl true
+  def handle_info(
+        {:DOWN, monitor_ref, :process, pid, _reason},
+        %{listeners: listeners, linked_consumer: linked_consumer} = state
+      ) do
+    if linked_consumer != nil and linked_consumer.pid == pid and
+         linked_consumer.monitor_ref == monitor_ref do
+      {:stop, :normal, state}
+    else
+      listeners = EventListener.remove(listeners, pid)
+      {:noreply, %{state | listeners: listeners}}
+    end
+  end
+
+  @impl true
   def handle_info({:on_resume}, %{reference: reference} = state) do
+    # piped event
     Nif.producer_resume_async(reference, nil)
     {:noreply, state}
   end
 
   @impl true
   def handle_info({:on_pause}, %{reference: reference} = state) do
+    # piped event
     Nif.producer_pause_async(reference, nil)
     {:noreply, state}
   end
 
   @impl true
   def handle_info({:on_close}, state) do
+    # piped event
     {:stop, :normal, state}
   end
 
   @impl true
-  def terminate(_reason, %{reference: reference} = _state) do
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe consumer
+    {:stop, reason, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
+    {:stop, :normal, state}
+  end
+
+  @simple_events [
+    :on_resume,
+    :on_pause
+  ]
+
+  @payload_events [
+    :on_video_orientation_change,
+    :on_score
+  ]
+  @impl true
+  def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
+      when event in @simple_events do
+    EventListener.send(listeners, event, {event})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
+      when event in @payload_events do
+    EventListener.send(listeners, event, {event, payload})
+    {:noreply, state}
+  end
+
+  @impl true
+  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
+    EventListener.send(listeners, :on_close, {:on_close})
     Nif.producer_close(reference)
     :ok
   end
