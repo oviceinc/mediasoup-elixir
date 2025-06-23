@@ -80,7 +80,11 @@ defmodule Mediasoup.WebRtcServer do
   Tells whether the given WebRtcServer is closed on the local node.
   """
   def closed?(%WebRtcServer{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec dump(t) :: any | {:error, :terminated}

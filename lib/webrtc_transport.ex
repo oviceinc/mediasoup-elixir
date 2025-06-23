@@ -217,7 +217,11 @@ defmodule Mediasoup.WebRtcTransport do
   Tells whether the given WebRtcTransport is closed on the local node.
   """
   def closed?(%WebRtcTransport{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::

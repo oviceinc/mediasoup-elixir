@@ -114,7 +114,11 @@ defmodule Mediasoup.Router do
   Tells whether the given router is closed on the local node.
   """
   def closed?(%Router{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec create_webrtc_transport(t, WebRtcTransport.create_option()) ::

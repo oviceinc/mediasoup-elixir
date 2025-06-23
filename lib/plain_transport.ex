@@ -187,7 +187,11 @@ defmodule Mediasoup.PlainTransport do
   Tells whether the given PlainTransport is closed on the local node.
   """
   def closed?(%PlainTransport{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec produce(t, Producer.Options.t() | map()) ::

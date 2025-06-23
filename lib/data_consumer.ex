@@ -67,7 +67,11 @@ defmodule Mediasoup.DataConsumer do
 
   @spec closed?(t) :: boolean
   def closed?(%DataConsumer{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @type event_type :: :on_close

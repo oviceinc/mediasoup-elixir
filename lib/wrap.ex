@@ -1,5 +1,8 @@
 defmodule Mediasoup.NifWrap do
-  @moduledoc false
+  @moduledoc """
+  Wrapper for calling GenServer that hosts NIF resource.
+  """
+
   # Utilities for wrap Nif
 
   @spec def_handle_call_nif(any) ::
@@ -50,9 +53,14 @@ defmodule Mediasoup.NifWrap do
 
   defmacro call(pid, args) do
     quote do
-      case GenServer.call(unquote(pid), unquote(args)) do
-        {:raise_error, e} -> raise e
-        result -> result
+      try do
+        case GenServer.call(unquote(pid), unquote(args)) do
+          {:raise_error, e} -> raise e
+          {:error} -> :error
+          result -> result
+        end
+      catch
+        :exit, e -> {:error, :terminated}
       end
     end
   end

@@ -92,7 +92,7 @@ defmodule Mediasoup.Consumer do
     GenServer.stop(pid)
   end
 
-  @spec dump(t) :: map | {:error}
+  @spec dump(t) :: map | {:error, :terminated} | {:error, String.t()}
   @doc """
   Dump internal stat for Consumer.
   """
@@ -105,7 +105,11 @@ defmodule Mediasoup.Consumer do
   Tells whether the given consumer is closed on the local node.
   """
   def closed?(%Consumer{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec paused?(t) :: boolean
@@ -114,7 +118,10 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-paused
   """
   def paused?(%Consumer{pid: pid}) do
-    NifWrap.call(pid, {:paused?, []})
+    case NifWrap.call(pid, {:paused?, []}) do
+      {:error, :terminated} -> false
+      result -> result
+    end
   end
 
   @spec producer_paused?(t) :: boolean
@@ -123,10 +130,13 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-producerPaused
   """
   def producer_paused?(%Consumer{pid: pid}) do
-    NifWrap.call(pid, {:producer_paused?, []})
+    case NifWrap.call(pid, {:producer_paused?, []}) do
+      {:error, :terminated} -> false
+      result -> result
+    end
   end
 
-  @spec priority(t) :: number
+  @spec priority(t) :: number | {:error, :terminated}
   @doc """
   Consumer priority (see set_priority/2).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-priority
@@ -135,7 +145,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:priority, []})
   end
 
-  @spec score(t) :: consumer_score
+  @spec score(t) :: consumer_score | {:error, :terminated}
   @doc """
   The score of the RTP stream being sent, representing its tranmission quality.
   """
@@ -143,7 +153,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:score, []})
   end
 
-  @spec preferred_layers(t) :: consumer_layers | nil
+  @spec preferred_layers(t) :: consumer_layers | nil | {:error, :terminated}
   @doc """
   Preferred spatial and temporal layers (see set_preferred_layers/2 method). For simulcast and SVC consumers, nil otherwise.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-preferredLayers
@@ -152,7 +162,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:preferred_layers, []})
   end
 
-  @spec current_layers(t) :: consumer_layers | nil
+  @spec current_layers(t) :: consumer_layers | nil | {:error, :terminated}
   @doc """
   Currently active spatial and temporal layers (for simulcast and SVC consumers only).
   It's nil if no layers are being sent to the consuming endpoint at this time (or if the consumer is consuming from a simulcast or svc producer).
@@ -162,7 +172,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:current_layers, []})
   end
 
-  @spec get_stats(t) :: list() | {:error, reason :: term()}
+  @spec get_stats(t) :: list() | {:error, :terminated} | {:error, reason :: term()}
   @doc """
   Returns current RTC statistics of the consumer.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-getStats
@@ -171,7 +181,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:get_stats, []})
   end
 
-  @spec pause(t) :: {:ok} | {:error}
+  @spec pause(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Pauses the consumer (no RTP is sent to the consuming endpoint).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-pause
@@ -180,7 +190,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:pause, []})
   end
 
-  @spec resume(t) :: {:ok} | {:error}
+  @spec resume(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Resumes the consumer (RTP is sent again to the consuming endpoint).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-resume
@@ -189,7 +199,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:resume, []})
   end
 
-  @spec set_preferred_layers(t, map) :: {:ok} | {:error}
+  @spec set_preferred_layers(t, map) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Sets the preferred (highest) spatial and temporal layers to be sent to the consuming endpoint. Just valid for simulcast and SVC consumers.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-setPreferredLayers
@@ -198,7 +208,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:set_preferred_layers, [layer]})
   end
 
-  @spec set_priority(t, integer) :: {:ok} | {:error}
+  @spec set_priority(t, integer) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Sets the priority for this consumer. It affects how the estimated outgoing bitrate in the transport (obtained via transport-cc or REMB) is distributed among all video consumers, by priorizing those with higher priority.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-setPriority
@@ -207,7 +217,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:set_priority, [priority]})
   end
 
-  @spec unset_priority(t) :: {:ok} | {:error}
+  @spec unset_priority(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Unsets the priority for this consumer (it sets it to its default value 1).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-unsetPriority
@@ -216,7 +226,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:unset_priority, []})
   end
 
-  @spec request_key_frame(t) :: {:ok} | {:error}
+  @spec request_key_frame(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Request a key frame to the associated producer. Just valid for video consumers.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-requestKeyFrame
@@ -236,7 +246,8 @@ defmodule Mediasoup.Consumer do
           | :on_score
           | :on_layers_change
 
-  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t, pid, event_types :: [event_type]) ::
+          {:ok} | {:error, :terminated}
   @doc """
   Starts observing event.
   """
