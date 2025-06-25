@@ -392,10 +392,6 @@ defmodule Mediasoup.Router do
     end
   end
 
-  def handle_call({:get_node}, _from, state) do
-    {:reply, Node.self(), state}
-  end
-
   def handle_call(
         {:get_pipe_transport_pair, id},
         _from,
@@ -489,7 +485,7 @@ defmodule Mediasoup.Router do
   end
 
   defp get_node(%Router{pid: pid}) do
-    NifWrap.call(pid, {:get_node})
+    node(pid)
   end
 
   defp get_pipe_transport_pair(
