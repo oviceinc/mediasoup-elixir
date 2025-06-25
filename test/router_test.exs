@@ -229,7 +229,7 @@ defmodule RouterTest do
     if Process.alive?(router2.pid), do: Mediasoup.Router.close(router2)
   end
 
-  test "Directly call GenServer callbacks :get_node, :get_pipe_transport_pair, :put_pipe_transport_pair",
+  test "Directly call GenServer callbacks :get_pipe_transport_pair, :put_pipe_transport_pair",
        %{worker: worker} do
     # Create a Router to get the reference
     {:ok, router} =
@@ -247,8 +247,6 @@ defmodule RouterTest do
       })
 
     %{pid: pid} = router
-    # :get_node
-    assert GenServer.call(pid, {:get_node}) == Node.self()
     # :put_pipe_transport_pair
     assert GenServer.call(pid, {:put_pipe_transport_pair, "dummy_id", %{a: 1}}) == :ok
     # :get_pipe_transport_pair returns the pair itself

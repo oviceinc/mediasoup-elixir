@@ -102,6 +102,7 @@ defmodule Mediasoup.Worker do
   @doc """
   Worker identifier.
   """
+  @spec id(t) :: String.t() | {:error, :terminated}
   def id(pid) do
     NifWrap.call(pid, {:id, []})
   end
@@ -113,7 +114,8 @@ defmodule Mediasoup.Worker do
     GenServer.stop(pid)
   end
 
-  @spec create_router(t, Router.create_option()) :: {:ok, Router.t()} | {:error}
+  @spec create_router(t, Router.create_option()) ::
+          {:ok, Router.t()} | {:error} | {:error, :terminated}
   @doc """
     Creates a new router.
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createRouter
@@ -126,6 +128,8 @@ defmodule Mediasoup.Worker do
     create_router(worker, Router.Options.from_map(option))
   end
 
+  @spec create_webrtc_server(t(), Mediasoup.WebRtcServer.Options.t()) ::
+          {:ok, WebRtcServer.t()} | {:error, :terminated}
   @doc """
     Creates a new WebRTC server.
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createWebRtcServer
@@ -134,7 +138,7 @@ defmodule Mediasoup.Worker do
     NifWrap.call(pid, {:create_webrtc_server, [WebRtcServer.Options.normalize(option)]})
   end
 
-  @spec update_settings(t, update_option) :: {:ok} | {:error}
+  @spec update_settings(t, update_option) :: {:ok} | {:error} | {:error, :terminated}
   @doc """
     Updates the worker settings in runtime. Just a subset of the worker settings can be updated.
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-updateSettings
@@ -155,7 +159,7 @@ defmodule Mediasoup.Worker do
     !Process.alive?(pid)
   end
 
-  @spec dump(t) :: map
+  @spec dump(t) :: map | {:error, :terminated}
   @doc """
   Dump internal stat for Worker.
   """

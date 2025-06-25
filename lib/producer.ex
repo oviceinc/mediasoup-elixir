@@ -123,7 +123,11 @@ defmodule Mediasoup.Producer do
   Tells whether the given producer is closed on the local node.
   """
   def closed?(%Producer{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec paused?(t) :: boolean() | {:error}
