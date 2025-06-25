@@ -15,7 +15,8 @@ defmodule Mediasoup.WebRtcServer do
           :protocol => :udp | :tcp,
           :ip => String.t(),
           optional(:announcedAddress) => String.t() | nil,
-          port: integer() | nil
+          optional(:announcedIp) => String.t() | nil,
+          optional(:port) => integer() | nil
         }
 
   defmodule Options do

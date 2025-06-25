@@ -128,8 +128,8 @@ defmodule Mediasoup.Worker do
     create_router(worker, Router.Options.from_map(option))
   end
 
-  @spec create_webrtc_server(any(), Mediasoup.WebRtcServer.Options.t()) ::
-          any() | {:error, :terminated}
+  @spec create_webrtc_server(t(), Mediasoup.WebRtcServer.Options.t()) ::
+          {:ok, WebRtcServer.t()} | {:error, :terminated}
   @doc """
     Creates a new WebRTC server.
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-createWebRtcServer
