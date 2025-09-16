@@ -14,6 +14,7 @@ defmodule Mediasoup.WebRtcServer do
   @type webrtc_server_listen_info :: %{
           :protocol => :udp | :tcp,
           :ip => String.t(),
+          :exposeInternalIp => boolean(),
           optional(:announcedAddress) => String.t() | nil,
           optional(:announcedIp) => String.t() | nil,
           optional(:port) => integer() | nil

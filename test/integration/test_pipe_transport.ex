@@ -402,12 +402,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_consumer.rtp_parameters["codecs"]
 
     assert [
-             %{
-               "encrypt" => false,
-               "id" => 6,
-               "uri" => "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07"
-             },
-             %{"encrypt" => false, "id" => 7, "uri" => "urn:ietf:params:rtp-hdrext:framemarking"},
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
              %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
@@ -451,12 +445,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_producer.rtp_parameters["codecs"]
 
     assert [
-             %{
-               "encrypt" => false,
-               "id" => 6,
-               "uri" => "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07"
-             },
-             %{"encrypt" => false, "id" => 7, "uri" => "urn:ietf:params:rtp-hdrext:framemarking"},
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
              %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
@@ -565,16 +553,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_consumer.rtp_parameters["codecs"]
 
     assert [
-             %{
-               "encrypt" => false,
-               "id" => 6,
-               "uri" => "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07"
-             },
-             %{
-               "encrypt" => false,
-               "id" => 7,
-               "uri" => "urn:ietf:params:rtp-hdrext:framemarking"
-             },
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
              %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{

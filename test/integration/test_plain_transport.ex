@@ -217,7 +217,10 @@ defmodule IntegrateTest.PlainTransportTest do
     {_worker, router} = init(worker)
 
     {:ok, transport} =
-      Router.create_plain_transport(router, %{listenIp: %{ip: "127.0.0.1"}, comedia: false})
+      Router.create_plain_transport(router, %{
+        listenIp: %{ip: "127.0.0.1"},
+        comedia: false
+      })
 
     assert transport.id == PlainTransport.id(transport)
 
