@@ -135,7 +135,8 @@ defmodule Mediasoup.WebRtcTransport do
               protocol: protocol,
               ip: listen_ip.ip,
               announcedAddress: listen_ip[:announcedAddress],
-              port: port
+              port: port,
+              exposeInternalIp: listen_ip[:exposeInternalIp] || false
             }
           end)
         end)

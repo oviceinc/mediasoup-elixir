@@ -541,7 +541,7 @@ checksum = "45d0dbf6a9847b64c9b06938660891f983434dcc009b5ae6a58f5e34af74a649"
 dependencies = [
  "bitpattern",
  "log",
- "thiserror",
+ "thiserror 1.0.57",
 ]
 
 [[package]]
@@ -719,7 +719,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.4",
 ]
 
 [[package]]
@@ -781,9 +781,9 @@ checksum = "b6e8aaa3f231bb4bd57b84b2d5dc3ae7f350265df8aa96492e0bc394a1571909"
 
 [[package]]
 name = "mediasoup"
-version = "0.18.2"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e52735784e505a199137d1678cb3b045607413179628b950e51ae7a0ebef526a"
+checksum = "8d5a1ac2d0c7a0bc3ff20225c5ee0fa8498ddd3a7f04cf4b2aed4d4f3bdfb2bb"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -799,6 +799,7 @@ dependencies = [
  "log",
  "lru",
  "mediasoup-sys",
+ "mediasoup-types",
  "nohash-hasher",
  "once_cell",
  "parking_lot 0.12.1",
@@ -807,15 +808,15 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "thiserror",
+ "thiserror 1.0.57",
  "uuid",
 ]
 
 [[package]]
 name = "mediasoup-sys"
-version = "0.9.3"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b865b9f888e55c7c814d0c15f0c0e010f1ce32f39b0b8147249600c1b3e7c142"
+checksum = "ca610ebc75215b7530027e3f1a171bb35337eff96b9e9df5ad19f189136df61f"
 dependencies = [
  "planus",
  "planus-codegen",
@@ -824,8 +825,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "mediasoup-types"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53ec9d899d198e0a9e992daef34a49f0031f1a2b44079e6a0ef6e91781b5b5bd"
+dependencies = [
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.16",
+]
+
+[[package]]
 name = "mediasoup_elixir"
-version = "3.14.2"
+version = "3.18.1"
 dependencies = [
  "async-executor",
  "env_logger",
@@ -1046,7 +1060,7 @@ dependencies = [
  "heck 0.4.1",
  "planus-types",
  "random_color",
- "thiserror",
+ "thiserror 1.0.57",
  "vec_map",
 ]
 
@@ -1215,7 +1229,7 @@ checksum = "a18479200779601e498ada4e8c1e1f50e3ee19deb0259c25825a98b5603b2cb4"
 dependencies = [
  "getrandom 0.2.12",
  "libredox",
- "thiserror",
+ "thiserror 1.0.57",
 ]
 
 [[package]]
@@ -1472,7 +1486,16 @@ version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e45bcbe8ed29775f228095caf2cd67af7a4ccf756ebff23a306bf3e8b47b24b"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 1.0.57",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3467d614147380f2e4e374161426ff399c91084acd2363eaf549172b3d5e60c0"
+dependencies = [
+ "thiserror-impl 2.0.16",
 ]
 
 [[package]]
@@ -1480,6 +1503,17 @@ name = "thiserror-impl"
 version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a953cb265bef375dae3de6663da4d3804eee9682ea80d8e2542529b73c531c81"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.87",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c5e1be1c48b9172ee610da68fd9cd2770e7a4056cb3fc98710ee6906f0c7960"
 dependencies = [
  "proc-macro2",
  "quote",

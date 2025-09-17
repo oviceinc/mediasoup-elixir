@@ -459,25 +459,29 @@ defmodule IntegrateTest.WebRtcTransportTest do
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1",
             port: 10111,
-            protocol: :tcp
+            protocol: :tcp,
+            exposeInternalIp: false
           },
           %{
             ip: "0.0.0.0",
             announcedIp: "9.9.9.2",
             port: 10112,
-            protocol: :tcp
+            protocol: :tcp,
+            exposeInternalIp: false
           },
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1",
             port: 10111,
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           },
           %{
             ip: "0.0.0.0",
             announcedIp: "9.9.9.2",
             port: 10112,
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           }
         ]
       })

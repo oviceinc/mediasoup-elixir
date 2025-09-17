@@ -79,7 +79,8 @@ defmodule Mediasoup.PlainTransport do
         | listen_ip: nil,
           port: nil,
           listen_info:
-            Map.get(option, :listen_info) || TransportListenInfo.create(listen_ip, "udp", port),
+            Map.get(option, :listen_info) ||
+              TransportListenInfo.create(listen_ip, "udp", port),
           rtcp_listen_info:
             Map.get(option, :rtcp_listen_info) ||
               TransportListenInfo.create(listen_ip, "udp", nil)
