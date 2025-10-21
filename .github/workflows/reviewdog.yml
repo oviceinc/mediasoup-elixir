@@ -12,47 +12,47 @@ jobs:
           - stable
 
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-    - name: Set up Elixir
-      uses: erlef/setup-beam@v1
-      with:
-        elixir-version: '1.15.8' # Define the elixir version [required]
-        otp-version: '25.3' # Define the OTP version [required]
-    - name: Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16.3" # Define the elixir version [required]
+          otp-version: "25.3" # Define the OTP version [required]
+      - name: Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
           toolchain: ${{ matrix.rust }}
           override: true
           components: rustfmt, clippy
-    - name: Restore dependencies cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target
-          deps
-          _build
-        key: lint-${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
-        restore-keys: |
-          lint-${{ runner.os }}-mix-
-    - name: Install dependencies
-      run: mix deps.get
-    - uses: reviewdog/action-setup@v1
-    - name: reviewdog(credo)
-      env:
-        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        mix credo list --format flycheck | reviewdog -efm="%f:%l:%c: %m" -name="mix credo" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
-    - name: reviewdog(cargo check)
-      env:
-        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        cargo check -q --message-format=short 2>&1 | reviewdog -f=cargo-check -name="cargo check" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
-    - name: reviewdog(clippy)
-      env:
-        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        cargo clippy -q --message-format=short 2>&1 | reviewdog -f=clippy -name="cargo clippy" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target
+            deps
+            _build
+          key: lint-${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            lint-${{ runner.os }}-mix-
+      - name: Install dependencies
+        run: mix deps.get
+      - uses: reviewdog/action-setup@v1
+      - name: reviewdog(credo)
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mix credo list --format flycheck | reviewdog -efm="%f:%l:%c: %m" -name="mix credo" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
+      - name: reviewdog(cargo check)
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cargo check -q --message-format=short 2>&1 | reviewdog -f=cargo-check -name="cargo check" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
+      - name: reviewdog(clippy)
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cargo clippy -q --message-format=short 2>&1 | reviewdog -f=clippy -name="cargo clippy" -diff="git diff FETCH_HEAD" -reporter=github-pr-review
