@@ -1,11 +1,10 @@
-name:  test
+name: test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-
+    branches: [main]
 
 jobs:
   test:
@@ -17,30 +16,27 @@ jobs:
       matrix:
         rust:
           - stable
-    env:
-      MIX_ENV: test
-      RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD: "true"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-    - name: Set up Elixir
-      uses: erlef/setup-beam@v1
-      with:
-        elixir-version: '1.15.8' # Define the elixir version [required]
-        otp-version: '25.3' # Define the OTP version [required]
-    - name: Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-    - name: Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16.3" # Define the elixir version [required]
+          otp-version: "25.3" # Define the OTP version [required]
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
           toolchain: ${{ matrix.rust }}
           override: true
           components: rustfmt, clippy
-    - name: Restore dependencies cache
-      uses: actions/cache@v4
-      with:
-        path: |
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
@@ -48,22 +44,22 @@ jobs:
             target
             deps
             _build
-        key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
-        restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
-    - name: Install dependencies
-      run: mix deps.get
-    - name: Run check formatted on elixir
-      run: mix format --check-formatted
-    - name: start epmd daemon for cluster tests
-      run: epmd -daemon
-    - name: Run tests
-      run: mix test
-    - name: Run tests with coverage
-      run: mix coveralls.github
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Leak check test
-      run: mix test --include leakcheck
+          key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Run check formatted on elixir
+        run: mix format --check-formatted
+      - name: start epmd daemon for cluster tests
+        run: epmd -daemon
+      - name: Run tests
+        run: mix test
+      - name: Run tests with coverage
+        run: mix coveralls.github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Leak check test
+        run: mix test --include leakcheck
 
   lint:
     timeout-minutes: 40
@@ -74,29 +70,27 @@ jobs:
       matrix:
         rust:
           - stable
-    env:
-      RUSTLER_PRECOMPILATION_MEDIASOUP_BUILD: "true"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-    - name: Set up Elixir
-      uses: erlef/setup-beam@v1
-      with:
-        elixir-version: '1.15.8' # Define the elixir version [required]
-        otp-version: '25.3' # Define the OTP version [required]
-    - name: Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-    - name: Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16.3" # Define the elixir version [required]
+          otp-version: "25.3" # Define the OTP version [required]
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
           toolchain: ${{ matrix.rust }}
           override: true
           components: rustfmt, clippy
-    - name: Restore dependencies cache
-      uses: actions/cache@v4
-      with:
-        path: |
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
@@ -104,13 +98,13 @@ jobs:
             target
             deps
             _build
-        key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
-        restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
-    - name: Install dependencies
-      run: mix deps.get
-    - name: Run dialyzer
-      run: mix dialyzer
-    - name: generate docs
-      run: mix docs
-    - name: credo
-      run: mix credo
+          key: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-rust-${{ matrix.rust }}-mix-
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Run dialyzer
+        run: mix dialyzer
+      - name: generate docs
+        run: mix docs
+      - name: credo
+        run: mix credo

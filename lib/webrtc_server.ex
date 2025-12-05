@@ -5,7 +5,7 @@ defmodule Mediasoup.WebRtcServer do
 
   alias Mediasoup.{WebRtcServer, NifWrap, Nif}
   require NifWrap
-  use GenServer, restart: :temporary
+  use GenServer, restart: :temporary, shutdown: 1000
 
   @enforce_keys [:id]
   defstruct [:id, :pid]
@@ -14,8 +14,10 @@ defmodule Mediasoup.WebRtcServer do
   @type webrtc_server_listen_info :: %{
           :protocol => :udp | :tcp,
           :ip => String.t(),
+          :exposeInternalIp => boolean(),
           optional(:announcedAddress) => String.t() | nil,
-          port: integer() | nil
+          optional(:announcedIp) => String.t() | nil,
+          optional(:port) => integer() | nil
         }
 
   defmodule Options do
@@ -80,7 +82,11 @@ defmodule Mediasoup.WebRtcServer do
   Tells whether the given WebRtcServer is closed on the local node.
   """
   def closed?(%WebRtcServer{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec dump(t) :: any | {:error, :terminated}
@@ -114,7 +120,6 @@ defmodule Mediasoup.WebRtcServer do
 
   @impl true
   def init(state) do
-    Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
 
     {:ok, Map.put(state, :supervisor, supervisor)}

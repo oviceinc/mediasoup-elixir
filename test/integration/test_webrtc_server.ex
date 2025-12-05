@@ -60,25 +60,29 @@ defmodule IntegrateTest.WebRtcServerTest do
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1",
             port: 10111,
-            protocol: :tcp
+            protocol: :tcp,
+            exposeInternalIp: false
           },
           %{
             ip: "0.0.0.0",
             announcedIp: "9.9.9.2",
             port: 10112,
-            protocol: :tcp
+            protocol: :tcp,
+            exposeInternalIp: false
           },
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1",
             port: 10111,
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           },
           %{
             ip: "0.0.0.0",
             announcedIp: "9.9.9.2",
             port: 10112,
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           }
         ]
       })
@@ -147,25 +151,29 @@ defmodule IntegrateTest.WebRtcServerTest do
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1",
             port: 10111,
-            protocol: :tcp
+            protocol: :tcp,
+            exposeInternalIp: false
           },
           %{
             ip: "0.0.0.0",
             announcedIp: "9.9.9.2",
             port: 10112,
-            protocol: :tcp
+            protocol: :tcp,
+            exposeInternalIp: false
           },
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1",
             port: 10111,
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           },
           %{
             ip: "0.0.0.0",
             announcedIp: "9.9.9.2",
             port: 10112,
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           }
         ]
       })
@@ -184,12 +192,14 @@ defmodule IntegrateTest.WebRtcServerTest do
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.1",
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           },
           %{
             ip: "127.0.0.1",
             announcedIp: "9.9.9.2",
-            protocol: :tcp
+            protocol: :tcp,
+            exposeInternalIp: false
           }
         ]
       })
@@ -217,7 +227,8 @@ defmodule IntegrateTest.WebRtcServerTest do
         listen_infos: [
           %{
             ip: "1.2.3.4",
-            protocol: :udp
+            protocol: :udp,
+            exposeInternalIp: false
           }
         ]
       })
@@ -229,12 +240,14 @@ defmodule IntegrateTest.WebRtcServerTest do
           %{
             ip: "127.0.0.1",
             protocol: :udp,
-            port: 10111
+            port: 10111,
+            exposeInternalIp: false
           },
           %{
             ip: "127.0.0.1",
             protocol: :udp,
-            port: 10111
+            port: 10111,
+            exposeInternalIp: false
           }
         ]
       })
@@ -246,7 +259,8 @@ defmodule IntegrateTest.WebRtcServerTest do
           %{
             ip: "127.0.0.1",
             protocol: :udp,
-            port: 12348
+            port: 12348,
+            exposeInternalIp: false
           }
         ]
       })
@@ -257,7 +271,8 @@ defmodule IntegrateTest.WebRtcServerTest do
           %{
             ip: "127.0.0.1",
             protocol: :udp,
-            port: 12348
+            port: 12348,
+            exposeInternalIp: false
           }
         ]
       })

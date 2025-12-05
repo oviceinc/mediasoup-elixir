@@ -110,6 +110,20 @@ defmodule IntegrateTest.WorkerTest do
     assert_receive {:on_close}
   end
 
+  def close_event_with_dead_target() do
+    {:ok, worker} = Worker.start_link()
+
+    # Spawn a process and let it exit immediately
+    dead_pid = spawn(fn -> :ok end)
+    # Wait for the process to die
+    Worker.event(worker, dead_pid)
+
+    ref = Process.monitor(dead_pid)
+    assert_receive {:DOWN, ^ref, :process, ^dead_pid, _}, 100
+
+    Worker.close(worker)
+  end
+
   def close_router() do
     {:ok, worker} = Worker.start_link()
 

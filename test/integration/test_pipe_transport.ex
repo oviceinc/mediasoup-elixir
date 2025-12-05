@@ -1,4 +1,6 @@
 defmodule IntegrateTest.PipeTransportTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for Consumer with dializer check
   """
@@ -400,12 +402,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_consumer.rtp_parameters["codecs"]
 
     assert [
-             %{
-               "encrypt" => false,
-               "id" => 6,
-               "uri" => "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07"
-             },
-             %{"encrypt" => false, "id" => 7, "uri" => "urn:ietf:params:rtp-hdrext:framemarking"},
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
              %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
@@ -449,12 +445,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_producer.rtp_parameters["codecs"]
 
     assert [
-             %{
-               "encrypt" => false,
-               "id" => 6,
-               "uri" => "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07"
-             },
-             %{"encrypt" => false, "id" => 7, "uri" => "urn:ietf:params:rtp-hdrext:framemarking"},
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
              %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
@@ -563,16 +553,6 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_consumer.rtp_parameters["codecs"]
 
     assert [
-             %{
-               "encrypt" => false,
-               "id" => 6,
-               "uri" => "http://tools.ietf.org/html/draft-ietf-avtext-framemarking-07"
-             },
-             %{
-               "encrypt" => false,
-               "id" => 7,
-               "uri" => "urn:ietf:params:rtp-hdrext:framemarking"
-             },
              %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
              %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
@@ -1093,9 +1073,16 @@ defmodule IntegrateTest.PipeTransportTest do
         router: router2
       })
 
+    pipe_consumer_pid = pipe_consumer.pid
+    pipe_producer_pid = pipe_producer.pid
+
+    ref1 = Process.monitor(pipe_consumer_pid)
+    ref2 = Process.monitor(pipe_producer_pid)
+
     Mediasoup.Consumer.close(pipe_consumer)
 
-    Process.sleep(100)
+    assert_receive {:DOWN, ^ref1, :process, ^pipe_consumer_pid, _reason}
+    assert_receive {:DOWN, ^ref2, :process, ^pipe_producer_pid, _reason}
     assert Mediasoup.Consumer.closed?(pipe_consumer)
     assert Mediasoup.Producer.closed?(pipe_producer)
   end
@@ -1121,9 +1108,16 @@ defmodule IntegrateTest.PipeTransportTest do
 
     {:ok, pipe_producer} = Mediasoup.PipedProducer.into_producer(pipe_producer)
 
+    pipe_consumer_pid = pipe_consumer.pid
+    pipe_producer_pid = pipe_producer.pid
+
+    ref1 = Process.monitor(pipe_consumer_pid)
+    ref2 = Process.monitor(pipe_producer_pid)
+
     Mediasoup.Producer.close(pipe_producer)
 
-    Process.sleep(100)
+    assert_receive {:DOWN, ^ref1, :process, ^pipe_consumer_pid, _reason}
+    assert_receive {:DOWN, ^ref2, :process, ^pipe_producer_pid, _reason}
     assert Mediasoup.Consumer.closed?(pipe_consumer)
     assert Mediasoup.Producer.closed?(pipe_producer)
   end

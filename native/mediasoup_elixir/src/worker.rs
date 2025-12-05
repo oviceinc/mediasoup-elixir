@@ -146,8 +146,22 @@ pub fn worker_event(
     if event_types.contains(&atoms::on_dead()) {
         worker
             .on_dead(move |reason| match reason {
-                Ok(_) => send_msg_from_other_thread(pid, (atoms::on_dead(),)),
-                Err(err) => send_msg_from_other_thread(pid, (atoms::on_dead(), err.to_string())),
+                Ok(_) => send_msg_from_other_thread(
+                    pid,
+                    (
+                        atoms::nif_internal_event(),
+                        atoms::on_dead(),
+                        "exit".to_string(),
+                    ),
+                ),
+                Err(err) => send_msg_from_other_thread(
+                    pid,
+                    (
+                        atoms::nif_internal_event(),
+                        atoms::on_dead(),
+                        err.to_string(),
+                    ),
+                ),
             })
             .detach();
     }

@@ -11,11 +11,12 @@ defmodule Mediasoup.WebRtcTransport do
     NifWrap,
     Nif,
     DataConsumer,
-    DataProducer
+    DataProducer,
+    EventListener
   }
 
   require NifWrap
-  use GenServer, restart: :temporary
+  use GenServer, restart: :temporary, shutdown: 1000
 
   @enforce_keys [:id]
   defstruct [:id, :pid]
@@ -134,7 +135,8 @@ defmodule Mediasoup.WebRtcTransport do
               protocol: protocol,
               ip: listen_ip.ip,
               announcedAddress: listen_ip[:announcedAddress],
-              port: port
+              port: port,
+              exposeInternalIp: listen_ip[:exposeInternalIp] || false
             }
           end)
         end)
@@ -216,7 +218,11 @@ defmodule Mediasoup.WebRtcTransport do
   Tells whether the given WebRtcTransport is closed on the local node.
   """
   def closed?(%WebRtcTransport{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec consume(t, Consumer.Options.t() | map()) ::
@@ -315,7 +321,7 @@ defmodule Mediasoup.WebRtcTransport do
   @spec ice_role(t) :: String.t() | {:error, :terminated}
 
   @doc """
-  Local ICE role. Due to the mediasoup ICE Lite design, this is always “controlled”.
+  Local ICE role. Due to the mediasoup ICE Lite design, this is always "controlled".
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceRole
   """
   def ice_role(%WebRtcTransport{pid: pid}) do
@@ -354,7 +360,7 @@ defmodule Mediasoup.WebRtcTransport do
 
   @spec ice_selected_tuple(t) :: String.t() | nil | {:error, :terminated}
   @doc """
-  The selected transport tuple if ICE is in “connected” or “completed” state. It is undefined if ICE is not established (no working candidate pair was found).
+  The selected transport tuple if ICE is in "connected" or "completed" state. It is undefined if ICE is not established (no working candidate pair was found).
   https://mediasoup.org/documentation/v3/mediasoup/api/#webRtcTransport-iceSelectedTuple
   """
   def ice_selected_tuple(%WebRtcTransport{pid: pid}) do
@@ -430,7 +436,7 @@ defmodule Mediasoup.WebRtcTransport do
       )
 
   def event(%WebRtcTransport{pid: pid}, listener, event_types) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
   end
 
   @spec struct_from_pid(pid()) :: WebRtcTransport.t()
@@ -454,24 +460,18 @@ defmodule Mediasoup.WebRtcTransport do
 
   @impl true
   def init(state) do
-    Process.flag(:trap_exit, true)
     {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
-
-    {:ok, Map.put(state, :supervisor, supervisor)}
+    {:ok, Map.merge(state, %{supervisor: supervisor, listeners: EventListener.new()})}
   end
 
   @impl true
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.webrtc_transport_event(reference, pid, event_types)
-      end
-
-    {:reply, result, state}
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, %{state | listeners: listeners}}
   end
 
   @impl true
@@ -553,8 +553,42 @@ defmodule Mediasoup.WebRtcTransport do
   end
 
   @impl true
-  def terminate(reason, %{reference: reference, supervisor: supervisor} = _state) do
-    DynamicSupervisor.stop(supervisor, reason)
+  def handle_info(
+        {:DOWN, _monitor_ref, :process, listener, _reason},
+        %{listeners: listeners} = state
+      ) do
+    listeners = EventListener.remove(listeners, listener)
+    {:noreply, %{state | listeners: listeners}}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
+    {:stop, :normal, state}
+  end
+
+  @payload_events [
+    :on_dtls_state_change,
+    :on_ice_state_change,
+    :on_sctp_state_change,
+    :on_ice_selected_tuple_change
+  ]
+
+  @impl true
+  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
+      when event in @payload_events do
+    EventListener.send(listeners, event, {event, payload})
+    {:noreply, state}
+  end
+
+  @impl true
+  def terminate(
+        reason,
+        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
+      ) do
+    EventListener.send(listeners, :on_close, {:on_close})
+
+    Mediasoup.Utility.supervisor_clean_stop(supervisor, reason)
+
     Nif.webrtc_transport_close(reference)
     :ok
   end

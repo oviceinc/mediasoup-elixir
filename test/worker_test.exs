@@ -1,12 +1,23 @@
 defmodule WorkerTest do
   use ExUnit.Case
+  import ExUnit.CaptureLog
+
+  setup do
+    Mediasoup.LoggerProxy.start_link(max_level: :info)
+    %{}
+  end
+
   import Mediasoup.TestUtil
   setup_all :worker_leak_setup_all
   setup :verify_worker_leak_on_exit!
 
-  setup do
-    Mediasoup.LoggerProxy.start_link(max_level: :info)
-    :ok
+  test "worker_closed_test" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    Mediasoup.Worker.event(worker, self(), [:on_close, :on_dead])
+    GenServer.call(worker, :debug_stop_worker)
+    ref = Process.monitor(worker)
+    assert_receive {:DOWN, ^ref, :process, ^worker, :normal}
+    assert Mediasoup.Worker.closed?(worker) === true
   end
 
   test "create_worker_with_default_settings" do
@@ -39,6 +50,10 @@ defmodule WorkerTest do
 
   test "close_event" do
     IntegrateTest.WorkerTest.close_event()
+  end
+
+  test "close_event_with_dead_target" do
+    IntegrateTest.WorkerTest.close_event_with_dead_target()
   end
 
   test "close_router" do
@@ -81,5 +96,65 @@ defmodule WorkerTest do
     assert 1 <= Registry.lookup(Mediasoup.Worker.Registry, :id) |> Enum.count()
 
     Mediasoup.Worker.close(worker)
+  end
+
+  test "id/1 returns the correct id" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    id = Mediasoup.Worker.id(worker)
+    assert is_binary(id)
+    assert String.length(id) > 0
+    Mediasoup.Worker.close(worker)
+  end
+
+  test "closed?/1 returns correct status" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    assert Mediasoup.Worker.closed?(worker) == false
+    Mediasoup.Worker.close(worker)
+    assert Mediasoup.Worker.closed?(worker) == true
+  end
+
+  test "worker_count/0 returns count" do
+    initial_count = Mediasoup.Worker.worker_count()
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    assert Mediasoup.Worker.worker_count() == initial_count + 1
+    Mediasoup.Worker.close(worker)
+    # Wait for worker to close
+    Process.sleep(10)
+    assert Mediasoup.Worker.worker_count() == initial_count
+  end
+
+  test "event/3 registers event listener" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    assert :ok = Mediasoup.Worker.event(worker, self(), [:on_close])
+    Mediasoup.Worker.close(worker)
+    assert_receive {:on_close}
+  end
+
+  test "Cover Worker terminate/2 (including on_dead event)" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    Process.unlink(worker)
+    ref = Process.monitor(worker)
+    # Send on_dead event directly
+    capture_log(fn ->
+      send(worker, {:nif_internal_event, :on_dead, "test_message"})
+      # Wait for the process to stop and receive the DOWN message
+      assert_receive {:DOWN, ^ref, :process, ^worker, :shutdown}, 1000
+      # Do not call GenServer.stop(pid) here, as the process is already dead
+      # Also cover normal terminate
+    end)
+  end
+
+  test "Cover Worker terminate/2 (including on_close event)" do
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    Process.unlink(worker)
+    ref = Process.monitor(worker)
+    # Send on_dead event directly
+    capture_log(fn ->
+      send(worker, {:nif_internal_event, :on_close})
+      # Wait for the process to stop and receive the DOWN message
+      assert_receive {:DOWN, ^ref, :process, ^worker, :normal}, 1000
+      # Do not call GenServer.stop(pid) here, as the process is already dead
+      # Also cover normal terminate
+    end)
   end
 end

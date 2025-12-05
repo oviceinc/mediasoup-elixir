@@ -134,7 +134,7 @@ defmodule Mediasoup.LoggerProxyTest do
           mediaCodecs: []
         })
 
-      assert capture_log([level: :warn], fn ->
+      assert capture_log([level: :warning], fn ->
                Router.can_consume?(router, "d117b485-7490-4146-812f-d3f744f0a8c7", %{
                  codecs: [],
                  headerExtensions: [],

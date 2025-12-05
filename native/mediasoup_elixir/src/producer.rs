@@ -140,6 +140,7 @@ pub fn producer_event(
                 send_msg_from_other_thread(
                     pid,
                     (
+                        atoms::nif_internal_event(),
                         atoms::on_video_orientation_change(),
                         JsonSerdeWrap::new(orientation),
                     ),
@@ -153,7 +154,11 @@ pub fn producer_event(
             .on_score(move |score| {
                 send_msg_from_other_thread(
                     pid,
-                    (atoms::on_score(), JsonSerdeWrap::new(score.to_vec())),
+                    (
+                        atoms::nif_internal_event(),
+                        atoms::on_score(),
+                        JsonSerdeWrap::new(score.to_vec()),
+                    ),
                 );
             })
             .detach();

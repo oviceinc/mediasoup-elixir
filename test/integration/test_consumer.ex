@@ -813,4 +813,53 @@ defmodule IntegrateTest.ConsumerTest do
     assert transport_1_dump["producerIds"] == [audio_producer.id]
     assert transport_1_dump["consumerIds"] == []
   end
+
+  def payload_events(worker) do
+    {_worker, _router, transport_1, transport_2} = init(worker)
+    {:ok, video_producer} = WebRtcTransport.produce(transport_1, video_producer_options())
+
+    # Register event handler before creating consumer
+    {:ok, video_consumer} =
+      WebRtcTransport.consume(transport_2, %{
+        producerId: video_producer.id,
+        rtpCapabilities: consumer_device_capabilities()
+      })
+
+    # Register event handler
+    assert {:ok} = Consumer.event(video_consumer, self(), [:on_score, :on_layers_change])
+
+    # Send internal event directly to test the handler
+    send(
+      video_consumer.pid,
+      {:nif_internal_event, :on_score,
+       %{
+         "score" => 10,
+         "producerScore" => 0,
+         "producerScores" => [0, 0, 0, 0]
+       }}
+    )
+
+    # Wait for score event
+    assert_receive {:on_score, score}, 1000
+    assert is_map(score)
+    assert Map.has_key?(score, "score")
+    assert Map.has_key?(score, "producerScore")
+    assert Map.has_key?(score, "producerScores")
+
+    # Send internal event directly to test the handler
+    send(
+      video_consumer.pid,
+      {:nif_internal_event, :on_layers_change,
+       %{
+         "spatialLayer" => 2,
+         "temporalLayer" => 0
+       }}
+    )
+
+    # Wait for layers change event
+    assert_receive {:on_layers_change, layers}, 1000
+    assert is_map(layers)
+    assert Map.has_key?(layers, "spatialLayer")
+    assert Map.has_key?(layers, "temporalLayer")
+  end
 end

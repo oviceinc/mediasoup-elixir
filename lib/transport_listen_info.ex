@@ -10,15 +10,28 @@ defmodule Mediasoup.TransportListenInfo do
   @type t :: %{
           :ip => String.t(),
           :protocol => :tcp | :udp,
+          :exposeInternalIp => boolean(),
           optional(:announcedAddress) => String.t() | nil,
           optional(:port) => integer(),
+          optional(:portRange) => map(),
+          optional(:flags) => map(),
           optional(:sendBufferSize) => integer(),
           optional(:recvBufferSize) => integer()
         }
 
   @enforce_keys [:ip, :protocol]
 
-  defstruct [:ip, :protocol, :announcedAddress, :port, :sendBufferSize, :recvBufferSize]
+  defstruct [
+    :ip,
+    :protocol,
+    :announcedAddress,
+    :exposeInternalIp,
+    :port,
+    :portRange,
+    :flags,
+    :sendBufferSize,
+    :recvBufferSize
+  ]
 
   def normalize_listen_ip(ip) when is_binary(ip) do
     %{:ip => ip}
@@ -43,7 +56,11 @@ defmodule Mediasoup.TransportListenInfo do
   @spec create(binary() | %{:ip => any(), optional(any()) => any()}, any()) :: struct()
   def create(ip, protocol) do
     listen_ip = normalize_listen_ip(ip)
-    struct(__MODULE__, Map.merge(listen_ip, %{:protocol => protocol}))
+
+    struct(
+      __MODULE__,
+      Map.merge(listen_ip, %{:protocol => protocol, :exposeInternalIp => false})
+    )
   end
 
   def create(ip, protocol, port) do
@@ -53,7 +70,8 @@ defmodule Mediasoup.TransportListenInfo do
       __MODULE__,
       Map.merge(listen_ip, %{
         :protocol => protocol,
-        :port => port
+        :port => port,
+        :exposeInternalIp => false
       })
     )
   end

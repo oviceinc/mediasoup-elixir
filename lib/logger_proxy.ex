@@ -76,7 +76,7 @@ defmodule Mediasoup.LoggerProxy do
                _ -> {:cont, acc}
              end
            end) do
-      Logger.log(msg.level, msg.body, %{
+      Logger.log(to_logger_level(msg.level), msg.body, %{
         line: msg.line,
         file: msg.file,
         mfa: msg.target,
@@ -86,6 +86,12 @@ defmodule Mediasoup.LoggerProxy do
 
     {:noreply, state}
   end
+
+  defp to_logger_level(:error), do: :error
+  defp to_logger_level(:warn), do: :warning
+  defp to_logger_level(:info), do: :info
+  defp to_logger_level(:debug), do: :debug
+  defp to_logger_level(_), do: :error
 
   def child_spec(opts) do
     %{

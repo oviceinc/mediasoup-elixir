@@ -1,10 +1,12 @@
 defmodule IntegrateTest.PlainTransportTest do
+  use ExUnit.Case
+
   @moduledoc """
   test for PlainTransport with dialyzer check
   """
 
   import ExUnit.Assertions
-  alias Mediasoup.{PlainTransport, Router}
+  alias Mediasoup.{PlainTransport, Router, Worker}
 
   defp init(worker) do
     alias Mediasoup.{Worker, Router}
@@ -215,7 +217,10 @@ defmodule IntegrateTest.PlainTransportTest do
     {_worker, router} = init(worker)
 
     {:ok, transport} =
-      Router.create_plain_transport(router, %{listenIp: %{ip: "127.0.0.1"}, comedia: false})
+      Router.create_plain_transport(router, %{
+        listenIp: %{ip: "127.0.0.1"},
+        comedia: false
+      })
 
     assert transport.id == PlainTransport.id(transport)
 

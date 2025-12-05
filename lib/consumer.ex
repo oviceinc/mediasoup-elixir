@@ -2,9 +2,9 @@ defmodule Mediasoup.Consumer do
   @moduledoc """
   https://mediasoup.org/documentation/v3/mediasoup/api/#Consumer
   """
-  alias Mediasoup.{Consumer, NifWrap, Nif}
+  alias Mediasoup.{Consumer, NifWrap, Nif, EventListener}
   require NifWrap
-  use GenServer, restart: :temporary
+  use GenServer, restart: :temporary, shutdown: 1000
 
   @enforce_keys [:id, :producer_id, :kind, :type, :rtp_parameters]
   defstruct [:id, :producer_id, :kind, :type, :rtp_parameters, :pid]
@@ -92,7 +92,7 @@ defmodule Mediasoup.Consumer do
     GenServer.stop(pid)
   end
 
-  @spec dump(t) :: map | {:error}
+  @spec dump(t) :: map | {:error, :terminated} | {:error, String.t()}
   @doc """
   Dump internal stat for Consumer.
   """
@@ -105,7 +105,11 @@ defmodule Mediasoup.Consumer do
   Tells whether the given consumer is closed on the local node.
   """
   def closed?(%Consumer{pid: pid}) do
-    !Process.alive?(pid) || NifWrap.call(pid, {:closed?, []})
+    !Process.alive?(pid) ||
+      case NifWrap.call(pid, {:closed?, []}) do
+        {:error, :terminated} -> true
+        result -> result
+      end
   end
 
   @spec paused?(t) :: boolean
@@ -114,7 +118,10 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-paused
   """
   def paused?(%Consumer{pid: pid}) do
-    NifWrap.call(pid, {:paused?, []})
+    case NifWrap.call(pid, {:paused?, []}) do
+      {:error, :terminated} -> false
+      result -> result
+    end
   end
 
   @spec producer_paused?(t) :: boolean
@@ -123,10 +130,13 @@ defmodule Mediasoup.Consumer do
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-producerPaused
   """
   def producer_paused?(%Consumer{pid: pid}) do
-    NifWrap.call(pid, {:producer_paused?, []})
+    case NifWrap.call(pid, {:producer_paused?, []}) do
+      {:error, :terminated} -> false
+      result -> result
+    end
   end
 
-  @spec priority(t) :: number
+  @spec priority(t) :: number | {:error, :terminated}
   @doc """
   Consumer priority (see set_priority/2).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-priority
@@ -135,7 +145,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:priority, []})
   end
 
-  @spec score(t) :: consumer_score
+  @spec score(t) :: consumer_score | {:error, :terminated}
   @doc """
   The score of the RTP stream being sent, representing its tranmission quality.
   """
@@ -143,7 +153,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:score, []})
   end
 
-  @spec preferred_layers(t) :: consumer_layers | nil
+  @spec preferred_layers(t) :: consumer_layers | nil | {:error, :terminated}
   @doc """
   Preferred spatial and temporal layers (see set_preferred_layers/2 method). For simulcast and SVC consumers, nil otherwise.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-preferredLayers
@@ -152,7 +162,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:preferred_layers, []})
   end
 
-  @spec current_layers(t) :: consumer_layers | nil
+  @spec current_layers(t) :: consumer_layers | nil | {:error, :terminated}
   @doc """
   Currently active spatial and temporal layers (for simulcast and SVC consumers only).
   It's nil if no layers are being sent to the consuming endpoint at this time (or if the consumer is consuming from a simulcast or svc producer).
@@ -162,7 +172,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:current_layers, []})
   end
 
-  @spec get_stats(t) :: list() | {:error, reason :: term()}
+  @spec get_stats(t) :: list() | {:error, :terminated} | {:error, reason :: term()}
   @doc """
   Returns current RTC statistics of the consumer.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-getStats
@@ -171,7 +181,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:get_stats, []})
   end
 
-  @spec pause(t) :: {:ok} | {:error}
+  @spec pause(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Pauses the consumer (no RTP is sent to the consuming endpoint).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-pause
@@ -180,7 +190,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:pause, []})
   end
 
-  @spec resume(t) :: {:ok} | {:error}
+  @spec resume(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Resumes the consumer (RTP is sent again to the consuming endpoint).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-resume
@@ -189,7 +199,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:resume, []})
   end
 
-  @spec set_preferred_layers(t, map) :: {:ok} | {:error}
+  @spec set_preferred_layers(t, map) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Sets the preferred (highest) spatial and temporal layers to be sent to the consuming endpoint. Just valid for simulcast and SVC consumers.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-setPreferredLayers
@@ -198,7 +208,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:set_preferred_layers, [layer]})
   end
 
-  @spec set_priority(t, integer) :: {:ok} | {:error}
+  @spec set_priority(t, integer) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Sets the priority for this consumer. It affects how the estimated outgoing bitrate in the transport (obtained via transport-cc or REMB) is distributed among all video consumers, by priorizing those with higher priority.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-setPriority
@@ -207,7 +217,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:set_priority, [priority]})
   end
 
-  @spec unset_priority(t) :: {:ok} | {:error}
+  @spec unset_priority(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Unsets the priority for this consumer (it sets it to its default value 1).
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-unsetPriority
@@ -216,7 +226,7 @@ defmodule Mediasoup.Consumer do
     NifWrap.call(pid, {:unset_priority, []})
   end
 
-  @spec request_key_frame(t) :: {:ok} | {:error}
+  @spec request_key_frame(t) :: {:ok} | {:error, :terminated} | {:error}
   @doc """
   Request a key frame to the associated producer. Just valid for video consumers.
   https://mediasoup.org/documentation/v3/mediasoup/api/#consumer-requestKeyFrame
@@ -236,7 +246,8 @@ defmodule Mediasoup.Consumer do
           | :on_score
           | :on_layers_change
 
-  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t, pid, event_types :: [event_type]) ::
+          {:ok} | {:error, :terminated}
   @doc """
   Starts observing event.
   """
@@ -255,7 +266,12 @@ defmodule Mediasoup.Consumer do
           :on_layers_change
         ]
       ) do
-    NifWrap.call(pid, {:event, [listener, event_types]})
+    NifWrap.call(pid, {:event, listener, event_types})
+  end
+
+  def link_pipe_producer(%Consumer{pid: pid}, %Mediasoup.Producer{pid: producer_pid}) do
+    GenServer.cast(pid, {:link_pipe_producer, producer_pid})
+    GenServer.cast(producer_pid, {:link_pipe_consumer, pid})
   end
 
   @spec struct_from_pid(pid()) :: Consumer.t()
@@ -282,23 +298,56 @@ defmodule Mediasoup.Consumer do
   end
 
   @impl true
-  def init(state) do
-    Process.flag(:trap_exit, true)
-    {:ok, state}
+  @spec init(%{:reference => reference(), optional(any()) => any()}) ::
+          {:ok,
+           %{
+             :listeners => Mediasoup.EventListener.t(),
+             :reference => reference(),
+             optional(any()) => any()
+           }}
+  def init(%{reference: reference} = state) do
+    {:ok} =
+      Nif.consumer_event(reference, self(), [
+        :on_close,
+        :on_pause,
+        :on_resume,
+        :on_producer_resume,
+        :on_producer_pause,
+        :on_producer_close,
+        :on_transport_close,
+        :on_score,
+        :on_layers_change
+      ])
+
+    {:ok, Map.merge(state, %{listeners: EventListener.new(), linked_producer: nil})}
+  end
+
+  @impl true
+  def handle_cast(
+        {:link_pipe_producer, producer_pid},
+        %{listeners: listeners, linked_producer: nil} = state
+      ) do
+    # Pipe events from the pipe Producer to the pipe Consumer.
+    listeners = EventListener.add(listeners, producer_pid, [:on_pause, :on_resume])
+    producer_monitor_ref = Process.monitor(producer_pid)
+
+    new_state =
+      Map.merge(state, %{
+        listeners: listeners,
+        linked_producer: %{pid: producer_pid, monitor_ref: producer_monitor_ref}
+      })
+
+    {:noreply, new_state}
   end
 
   @impl true
   def handle_call(
-        {:event, [listener, event_types]},
+        {:event, listener, event_types},
         _from,
-        %{reference: reference} = state
+        %{listeners: listeners} = state
       ) do
-    result =
-      case NifWrap.EventProxy.wrap_if_remote_node(listener) do
-        pid when is_pid(pid) -> Nif.consumer_event(reference, pid, event_types)
-      end
-
-    {:reply, result, state}
+    listeners = EventListener.add(listeners, listener, event_types)
+    {:reply, {:ok}, Map.put(state, :listeners, listeners)}
   end
 
   @impl true
@@ -345,12 +394,66 @@ defmodule Mediasoup.Consumer do
   end
 
   @impl true
-  def handle_info({:on_close}, state) do
+  def handle_info(
+        {:DOWN, monitor_ref, :process, pid, _reason},
+        %{listeners: listeners, linked_producer: linked_producer} = state
+      ) do
+    if linked_producer != nil and linked_producer.pid == pid and
+         linked_producer.monitor_ref == monitor_ref do
+      {:stop, :normal, state}
+    else
+      listeners = EventListener.remove(listeners, pid)
+      {:noreply, %{state | listeners: listeners}}
+    end
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, :on_close}, state) do
     {:stop, :normal, state}
   end
 
   @impl true
-  def terminate(_reason, %{reference: reference} = _state) do
+  def handle_info({:on_close}, state) do
+    # piped event
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info({:EXIT, _pid, reason}, state) do
+    # shutdown linked pipe producer
+    {:stop, reason, state}
+  end
+
+  @simple_events [
+    :on_pause,
+    :on_resume,
+    :on_producer_resume,
+    :on_producer_pause,
+    :on_producer_close,
+    :on_transport_close
+  ]
+
+  @payload_events [
+    :on_score,
+    :on_layers_change
+  ]
+  @impl true
+  def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
+      when event in @simple_events do
+    EventListener.send(listeners, event, {event})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
+      when event in @payload_events do
+    EventListener.send(listeners, event, {event, payload})
+    {:noreply, state}
+  end
+
+  @impl true
+  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
+    EventListener.send(listeners, :on_close, {:on_close})
     Nif.consumer_close(reference)
     :ok
   end
