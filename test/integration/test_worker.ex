@@ -51,6 +51,8 @@ defmodule IntegrateTest.WorkerTest do
   end
 
   def worker_with_wrong_settings_cert() do
+    Process.flag(:trap_exit, true)
+
     assert match?(
              {:error, _},
              Worker.start_link(
@@ -64,6 +66,8 @@ defmodule IntegrateTest.WorkerTest do
   end
 
   def worker_with_wrong_settings_port() do
+    Process.flag(:trap_exit, true)
+
     assert match?(
              {:error, _},
              Worker.start_link(

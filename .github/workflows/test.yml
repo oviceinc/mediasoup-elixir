@@ -23,6 +23,9 @@ jobs:
         with:
           version-file: .tool-versions
           version-type: strict
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .tool-versions
       - name: Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
