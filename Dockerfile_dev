@@ -1,4 +1,4 @@
-FROM elixir:1.17.3-otp-25
+FROM elixir:1.17.3-otp-26
 
 ENV RUST_VERSION=stable
 
