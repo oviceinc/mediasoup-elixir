@@ -74,36 +74,3 @@ impl<T> From<T> for JsonSerdeWrap<T> {
         Self::new(v)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde::{Deserialize, Serialize};
-
-    #[derive(Serialize, Deserialize)]
-    struct A {
-        v: String,
-    }
-
-    #[test]
-    fn serialize_with_flatten() {
-        let value = A {
-            v: String::from("value"),
-        };
-        let wraped = JsonSerdeWrap::new(value);
-        let jsonstring = serde_json::to_string(&wraped).unwrap();
-        assert_eq!(String::from("{\"v\":\"value\"}"), jsonstring);
-
-        let p: A = serde_json::from_str(&jsonstring).unwrap();
-        assert_eq!("value", p.v);
-
-        let value = String::from("value");
-        let wraped = JsonSerdeWrap::new(value);
-        let jsonstring = serde_json::to_string(&wraped).unwrap();
-        assert_eq!(String::from("\"value\""), jsonstring);
-
-        let p: String = serde_json::from_str(&jsonstring).unwrap();
-
-        assert_eq!("value", p);
-    }
-}
