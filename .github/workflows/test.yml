@@ -21,12 +21,11 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.17.3" # Define the elixir version [required]
-          otp-version: "25.3" # Define the OTP version [required]
-      - name: Node.js
-        uses: actions/setup-node@v4
+          version-file: .tool-versions
+          version-type: strict
+      - uses: actions/setup-python@v6
         with:
-          node-version: "22"
+          python-version-file: .tool-versions
       - name: Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -75,12 +74,8 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.17.3" # Define the elixir version [required]
-          otp-version: "25.3" # Define the OTP version [required]
-      - name: Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+          version-file: .tool-versions
+          version-type: strict
       - name: Rust toolchain
         uses: actions-rs/toolchain@v1
         with:

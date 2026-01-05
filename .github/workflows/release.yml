@@ -62,6 +62,10 @@ jobs:
           # Get the project version from mix.exs
           echo "PROJECT_VERSION=$(sed -n 's/^  @version "\(.*\)"/\1/p' mix.exs | head -n1)" >> $GITHUB_ENV
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .tool-versions
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -107,8 +111,8 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.17.3" # Define the elixir version [required]
-          otp-version: "25.3" # Define the OTP version [required]
+          version-file: .tool-versions
+          version-type: strict
       - name: Install dependencies
         run: |
           mix deps.get
