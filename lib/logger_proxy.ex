@@ -67,24 +67,29 @@ defmodule Mediasoup.LoggerProxy do
   end
 
   def handle_info(%Mediasoup.LoggerProxy.Record{} = msg, %{filters: filters} = state) do
-    with {:log, msg} <-
-           Enum.reduce_while(filters, {:log, msg}, fn filter, acc ->
-             case filter.(msg) do
-               :log -> {:halt, acc}
-               {:log, changed} -> {:halt, {:log, changed}}
-               :stop -> {:halt, :stop}
-               _ -> {:cont, acc}
-             end
-           end) do
-      Logger.log(to_logger_level(msg.level), msg.body, %{
-        line: msg.line,
-        file: msg.file,
-        mfa: msg.target,
-        module_path: msg.module_path
-      })
+    case apply_filters(filters, msg) do
+      {:log, filtered_msg} ->
+        Logger.log(to_logger_level(filtered_msg.level), filtered_msg.body, %{
+          line: filtered_msg.line,
+          file: filtered_msg.file,
+          mfa: filtered_msg.target,
+          module_path: filtered_msg.module_path
+        })
+      :stop -> :ok
     end
 
     {:noreply, state}
+  end
+
+  defp apply_filters(filters, msg) do
+    Enum.reduce_while(filters, {:log, msg}, fn filter, acc ->
+      case filter.(msg) do
+        :log -> {:halt, acc}
+        {:log, changed} -> {:halt, {:log, changed}}
+        :stop -> {:halt, :stop}
+        _ -> {:cont, acc}
+      end
+    end)
   end
 
   defp to_logger_level(:error), do: :error

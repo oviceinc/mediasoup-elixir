@@ -305,7 +305,7 @@ defmodule WebRtcTransportTest do
 
     candidates = Mediasoup.WebRtcTransport.ice_candidates(transport)
     assert is_list(candidates)
-    assert length(candidates) > 0
+    assert candidates != []
     Mediasoup.WebRtcTransport.close(transport)
   end
 

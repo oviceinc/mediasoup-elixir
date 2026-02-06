@@ -25,17 +25,19 @@ defmodule Mediasoup.TestUtil do
       ExUnit.configuration() |> Keyword.fetch!(:include) |> Enum.member?(:leakcheck)
 
     if with_leakcheck do
-      ExUnit.Callbacks.on_exit(fn ->
-        for {pid, _value} <- Registry.lookup(Mediasoup.Worker.Registry, :id) do
-          ref = Process.monitor(pid)
-          assert_receive {:DOWN, ^ref, _, _, _}, 1000
-        end
-
-        Process.sleep(1)
-        assert Mediasoup.Worker.worker_count() === 0
-      end)
+      ExUnit.Callbacks.on_exit(&verify_worker_leak_callback/0)
     end
 
     :ok
+  end
+
+  defp verify_worker_leak_callback do
+    for {pid, _value} <- Registry.lookup(Mediasoup.Worker.Registry, :id) do
+      ref = Process.monitor(pid)
+      assert_receive {:DOWN, ^ref, _, _, _}, 1000
+    end
+
+    Process.sleep(1)
+    assert Mediasoup.Worker.worker_count() === 0
   end
 end
