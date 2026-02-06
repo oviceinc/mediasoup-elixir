@@ -11,6 +11,7 @@ mod plain_transport;
 mod producer;
 mod resource;
 mod router;
+mod supported_rtp_capabilities;
 mod task;
 mod term_box;
 mod webrtc_server;

@@ -391,6 +391,9 @@ defmodule Mediasoup.Nif do
 
   def init_env_logger(), do: :erlang.nif_error(:nif_not_loaded)
 
+  @spec get_supported_rtp_capabilities() :: map()
+  def get_supported_rtp_capabilities(), do: :erlang.nif_error(:nif_not_loaded)
+
   defp handle_async_nif_result(result) do
     case result do
       {:ok, result_key} ->
