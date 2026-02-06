@@ -1,8 +1,8 @@
 use crate::json_serde::JsonSerdeWrap;
 use crate::{atoms, send_async_nif_result_with_from};
 use crate::{send_msg_from_other_thread, DisposableResourceWrapper};
+use mediasoup::prelude::{MediaKind, RtpParameters};
 use mediasoup::producer::{Producer, ProducerId, ProducerOptions, ProducerScore, ProducerType};
-use mediasoup::rtp_parameters::{MediaKind, RtpParameters};
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type ProducerRef = DisposableResourceWrapper<Producer>;

@@ -2,8 +2,8 @@ use crate::json_serde::JsonSerdeWrap;
 use crate::{atoms, DisposableResourceWrapper};
 use mediasoup::data_consumer::DataConsumerType;
 use mediasoup::data_producer::DataProducerId;
+use mediasoup::prelude::SctpStreamParameters;
 use mediasoup::prelude::{DataConsumer, DataConsumerId, DataConsumerOptions};
-use mediasoup::sctp_parameters::SctpStreamParameters;
 use rustler::{Atom, NifResult, NifStruct, ResourceArc};
 
 pub type DataConsumerRef = DisposableResourceWrapper<DataConsumer>;

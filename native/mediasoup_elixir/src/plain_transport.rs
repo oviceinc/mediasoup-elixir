@@ -4,14 +4,14 @@ use crate::json_serde::JsonSerdeWrap;
 use crate::producer::{ProducerOptionsStruct, ProducerRef};
 use crate::{atoms, send_async_nif_result_with_from, DisposableResourceWrapper};
 use mediasoup::consumer::ConsumerOptions;
-use mediasoup::data_structures::{ListenInfo, SctpState, TransportTuple};
 use mediasoup::prelude::{
-    PlainTransport, PlainTransportOptions, PlainTransportRemoteParameters, Transport,
+    ListenInfo, PlainTransport, PlainTransportOptions, PlainTransportRemoteParameters, Transport,
     TransportGeneric, TransportId,
 };
 use mediasoup::producer::ProducerOptions;
-use mediasoup::sctp_parameters::SctpParameters;
-use mediasoup::srtp_parameters::SrtpParameters;
+use mediasoup::types::data_structures::{SctpState, TransportTuple};
+use mediasoup::types::sctp_parameters::SctpParameters;
+use mediasoup::types::srtp_parameters::SrtpParameters;
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type PlainTransportRef = DisposableResourceWrapper<PlainTransport>;

@@ -3,9 +3,9 @@ use crate::pipe_transport::{PipeTransportOptionsStruct, PipeTransportRef};
 use crate::plain_transport::{PlainTransportOptionsStruct, PlainTransportRef};
 use crate::webrtc_transport::{WebRtcTransportOptionsStruct, WebRtcTransportRef};
 use crate::{atoms, send_async_nif_result_with_from, DisposableResourceWrapper};
+use mediasoup::prelude::{RtpCapabilities, RtpCapabilitiesFinalized, RtpCodecCapability};
 use mediasoup::producer::ProducerId;
 use mediasoup::router::{Router, RouterId, RouterOptions};
-use mediasoup::rtp_parameters::{RtpCapabilities, RtpCapabilitiesFinalized, RtpCodecCapability};
 use rustler::{Env, Error, NifResult, NifStruct, ResourceArc, Term};
 
 pub type RouterRef = DisposableResourceWrapper<Router>;
