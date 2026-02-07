@@ -5,8 +5,8 @@ use crate::{
 use mediasoup::consumer::{
     Consumer, ConsumerId, ConsumerLayers, ConsumerOptions, ConsumerScore, ConsumerType,
 };
+use mediasoup::prelude::{MediaKind, RtpCapabilities, RtpParameters};
 use mediasoup::producer::ProducerId;
-use mediasoup::rtp_parameters::{MediaKind, RtpCapabilities, RtpParameters};
 use rustler::{Atom, Env, NifResult, NifStruct, ResourceArc, Term};
 
 pub type ConsumerRef = DisposableResourceWrapper<Consumer>;

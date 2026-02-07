@@ -8,17 +8,14 @@ use crate::webrtc_server::WebRtcServerRef;
 use crate::{
     atoms, send_async_nif_result_with_from, send_msg_from_other_thread, DisposableResourceWrapper,
 };
-use mediasoup::data_structures::{
-    DtlsParameters, DtlsState, IceParameters, IceRole, IceState, ListenInfo, SctpState,
-    TransportTuple,
-};
 use mediasoup::prelude::{
-    ConsumerOptions, DataConsumerOptions, DataProducerOptions, Transport, TransportGeneric,
-    WebRtcTransport,
+    ConsumerOptions, DataConsumerOptions, DataProducerOptions, DtlsParameters, IceParameters,
+    ListenInfo, Transport, TransportGeneric, WebRtcTransport,
 };
 use mediasoup::producer::ProducerOptions;
-use mediasoup::sctp_parameters::SctpParameters;
 use mediasoup::transport::TransportId;
+use mediasoup::types::data_structures::{DtlsState, IceRole, IceState, SctpState, TransportTuple};
+use mediasoup::types::sctp_parameters::SctpParameters;
 use mediasoup::webrtc_transport::{
     WebRtcTransportListenInfos, WebRtcTransportOptions, WebRtcTransportRemoteParameters,
 };
@@ -170,7 +167,7 @@ pub fn webrtc_transport_sctp_parameters(
 #[rustler::nif]
 pub fn webrtc_transport_ice_candidates(
     transport: ResourceArc<WebRtcTransportRef>,
-) -> NifResult<JsonSerdeWrap<std::vec::Vec<mediasoup::data_structures::IceCandidate>>> {
+) -> NifResult<JsonSerdeWrap<std::vec::Vec<mediasoup::prelude::IceCandidate>>> {
     let transport = transport.get_resource()?;
     Ok(JsonSerdeWrap::new(transport.ice_candidates().clone()))
 }

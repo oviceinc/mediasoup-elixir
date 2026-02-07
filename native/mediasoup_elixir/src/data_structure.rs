@@ -1,4 +1,4 @@
-use mediasoup::sctp_parameters::NumSctpStreams;
+use mediasoup::types::sctp_parameters::NumSctpStreams;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]

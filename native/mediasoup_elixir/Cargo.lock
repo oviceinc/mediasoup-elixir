@@ -781,9 +781,9 @@ checksum = "b6e8aaa3f231bb4bd57b84b2d5dc3ae7f350265df8aa96492e0bc394a1571909"
 
 [[package]]
 name = "mediasoup"
-version = "0.19.1"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d5a1ac2d0c7a0bc3ff20225c5ee0fa8498ddd3a7f04cf4b2aed4d4f3bdfb2bb"
+checksum = "6e98865ad6bd08f48bf380cf11fd06d9d78638c11cae1f78f8dfa7dfbfead39e"
 dependencies = [
  "async-channel",
  "async-executor",
