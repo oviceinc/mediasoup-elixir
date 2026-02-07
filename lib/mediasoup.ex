@@ -25,4 +25,21 @@ defmodule Mediasoup do
   https://docs.rs/env_logger/latest/env_logger/
   """
   def init_env_logger(), do: Mediasoup.Nif.init_env_logger()
+
+  @doc """
+  Returns the RTP capabilities supported by the mediasoup library.
+
+  See: https://mediasoup.org/documentation/v3/mediasoup/api/#mediasoup-getSupportedRtpCapabilities
+
+  Note: These are NOT the RTP capabilities needed by mediasoup-client's `device.load()`.
+  For that you must use `Router.rtp_capabilities/1` instead.
+
+  ## Examples
+
+      iex> caps = Mediasoup.get_supported_rtp_capabilities()
+      iex> assert is_map(caps)
+      iex> assert Map.has_key?(caps, "codecs")
+  """
+  @spec get_supported_rtp_capabilities() :: Mediasoup.Router.rtpCapabilities()
+  def get_supported_rtp_capabilities(), do: Mediasoup.Nif.get_supported_rtp_capabilities()
 end
