@@ -1,4 +1,4 @@
 elixir 1.17.3-otp-26
 erlang 26.2.5.16
-rust stable
+rust 1.93.0
 python 3.11.5
