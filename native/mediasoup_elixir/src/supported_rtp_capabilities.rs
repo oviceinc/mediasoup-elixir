@@ -2,8 +2,8 @@
 //! Returns the RTP capabilities supported by the mediasoup library.
 
 use crate::json_serde::JsonSerdeWrap;
-use mediasoup::rtp_parameters::RtpCapabilities;
 use mediasoup::supported_rtp_capabilities;
+use mediasoup::types::rtp_parameters::RtpCapabilities;
 use rustler::NifResult;
 
 #[rustler::nif]
