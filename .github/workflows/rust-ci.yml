@@ -16,7 +16,7 @@ jobs:
           - native/mediasoup_elixir/Cargo.toml
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/cache@v4
         with:
