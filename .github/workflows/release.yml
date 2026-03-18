@@ -18,26 +18,26 @@ jobs:
         job:
           - {
               target: arm-unknown-linux-gnueabihf,
-              os: ubuntu-22.04,
+              os: ubuntu-24.04,
               use-cross: true,
               cross-version: "from-source",
             }
           - {
               target: aarch64-unknown-linux-gnu,
-              os: ubuntu-22.04,
+              os: ubuntu-24.04,
               use-cross: true,
               cross-version: "from-source",
             }
           - {
               target: aarch64-unknown-linux-musl,
-              os: ubuntu-22.04,
+              os: ubuntu-24.04,
               use-cross: true,
               cross-version: "from-source",
             }
           - { target: aarch64-apple-darwin, os: macos-15 }
           - {
               target: riscv64gc-unknown-linux-gnu,
-              os: ubuntu-22.04,
+              os: ubuntu-24.04,
               use-cross: true,
               cross-version: "from-source",
             }
@@ -45,7 +45,7 @@ jobs:
           - { target: x86_64-unknown-linux-gnu, os: ubuntu-22.04 }
           - {
               target: x86_64-unknown-linux-musl,
-              os: ubuntu-22.04,
+              os: ubuntu-24.04,
               use-cross: true,
               cross-version: "from-source",
             }
