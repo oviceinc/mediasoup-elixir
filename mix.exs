@@ -66,6 +66,7 @@ defmodule MediasoupElixir.MixProject do
       files: [
         "lib",
         "native/mediasoup_elixir/src",
+        "native/mediasoup_elixir/.cargo/config.toml",
         "native/mediasoup_elixir/Cargo.toml",
         "native/mediasoup_elixir/Cargo.lock",
         "native/mediasoup_elixir/Cross.toml",
