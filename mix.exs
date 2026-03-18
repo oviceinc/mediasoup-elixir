@@ -65,7 +65,11 @@ defmodule MediasoupElixir.MixProject do
       links: %{"Github" => @repo},
       files: [
         "lib",
-        "native",
+        "native/mediasoup_elixir/src",
+        "native/mediasoup_elixir/Cargo.toml",
+        "native/mediasoup_elixir/Cargo.lock",
+        "native/mediasoup_elixir/Cross.toml",
+        "native/mediasoup_elixir/README.md",
         "README.md",
         "checksum-*.exs",
         "mix.exs"
