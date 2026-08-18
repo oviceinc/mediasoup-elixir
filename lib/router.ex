@@ -53,13 +53,12 @@ defmodule Mediasoup.Router do
     without producerId.
     producerId is the argument of the function
     """
-    @type num_sctp_streams :: %{OS: integer(), MIS: integer()}
-
     @enforce_keys [:router]
     defstruct [
       :router,
       enable_sctp: nil,
-      num_sctp_streams: nil,
+      max_send_message_size: nil,
+      max_receive_message_size: nil,
       enable_rtx: nil,
       enable_srtp: nil,
       get_remote_node_ip: &Mediasoup.Utility.get_remote_node_ip/2,
@@ -69,7 +68,8 @@ defmodule Mediasoup.Router do
     @type t :: %PipeToRouterOptions{
             router: Mediasoup.Router.t(),
             enable_sctp: boolean() | nil,
-            num_sctp_streams: num_sctp_streams() | nil,
+            max_send_message_size: integer() | nil,
+            max_receive_message_size: integer() | nil,
             enable_rtx: boolean() | nil,
             enable_srtp: boolean() | nil,
             get_remote_node_ip: (node, node ->
@@ -521,7 +521,8 @@ defmodule Mediasoup.Router do
          %PipeToRouterOptions{
            router: %Router{pid: _pid2} = remote_router,
            enable_sctp: enable_sctp,
-           num_sctp_streams: num_sctp_streams,
+           max_send_message_size: max_send_message_size,
+           max_receive_message_size: max_receive_message_size,
            enable_rtx: enable_rtx,
            enable_srtp: enable_srtp,
            get_remote_node_ip: get_remote_node_ip,
@@ -539,7 +540,8 @@ defmodule Mediasoup.Router do
            Router.create_pipe_transport(router, %PipeTransport.Options{
              listen_ip: %{ip: local_listen_ip},
              enable_sctp: enable_sctp,
-             num_sctp_streams: num_sctp_streams,
+             max_send_message_size: max_send_message_size,
+             max_receive_message_size: max_receive_message_size,
              enable_rtx: enable_rtx,
              enable_srtp: enable_srtp
            }),
@@ -547,7 +549,8 @@ defmodule Mediasoup.Router do
            Router.create_pipe_transport(remote_router, %PipeTransport.Options{
              listen_ip: %{ip: remote_listen_ip},
              enable_sctp: enable_sctp,
-             num_sctp_streams: num_sctp_streams,
+             max_send_message_size: max_send_message_size,
+             max_receive_message_size: max_receive_message_size,
              enable_rtx: enable_rtx,
              enable_srtp: enable_srtp
            }) do

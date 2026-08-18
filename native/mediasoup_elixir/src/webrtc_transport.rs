@@ -1,7 +1,6 @@
 use crate::consumer::{ConsumerOptionsStruct, ConsumerRef};
 use crate::data_consumer::{DataConsumerOptionsStruct, DataConsumerRef};
 use crate::data_producer::{DataProducerOptionsStruct, DataProducerRef};
-use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::{ProducerOptionsStruct, ProducerRef};
 use crate::webrtc_server::WebRtcServerRef;
@@ -354,9 +353,12 @@ pub struct WebRtcTransportOptionsStruct {
     prefer_tcp: Option<bool>,
     initial_available_outgoing_bitrate: Option<u32>,
     enable_sctp: Option<bool>,
-    num_sctp_streams: Option<JsonSerdeWrap<SerNumSctpStreams>>,
-    max_sctp_message_size: Option<u32>,
+    max_send_message_size: Option<u32>,
+    max_receive_message_size: Option<u32>,
     sctp_send_buffer_size: Option<u32>,
+    sctp_per_stream_send_queue_limit: Option<u32>,
+    sctp_max_receiver_window_buffer_size: Option<u32>,
+    sctp_default_stream_buffered_amount_low_threshold: Option<u32>,
 }
 impl WebRtcTransportOptionsStruct {
     pub fn try_to_option(&self) -> NifResult<WebRtcTransportOptions> {
@@ -398,14 +400,28 @@ impl WebRtcTransportOptionsStruct {
         if let Some(enable_sctp) = self.enable_sctp {
             option.enable_sctp = enable_sctp;
         }
-        if let Some(num_sctp_streams) = &self.num_sctp_streams {
-            option.num_sctp_streams = num_sctp_streams.as_streams();
+        if let Some(max_send_message_size) = self.max_send_message_size {
+            option.max_send_message_size = max_send_message_size;
         }
-        if let Some(max_sctp_message_size) = self.max_sctp_message_size {
-            option.max_sctp_message_size = max_sctp_message_size;
+        if let Some(max_receive_message_size) = self.max_receive_message_size {
+            option.max_receive_message_size = max_receive_message_size;
         }
         if let Some(sctp_send_buffer_size) = self.sctp_send_buffer_size {
             option.sctp_send_buffer_size = sctp_send_buffer_size;
+        }
+        if let Some(sctp_per_stream_send_queue_limit) = self.sctp_per_stream_send_queue_limit {
+            option.sctp_per_stream_send_queue_limit = sctp_per_stream_send_queue_limit;
+        }
+        if let Some(sctp_max_receiver_window_buffer_size) =
+            self.sctp_max_receiver_window_buffer_size
+        {
+            option.sctp_max_receiver_window_buffer_size = sctp_max_receiver_window_buffer_size;
+        }
+        if let Some(sctp_default_stream_buffered_amount_low_threshold) =
+            self.sctp_default_stream_buffered_amount_low_threshold
+        {
+            option.sctp_default_stream_buffered_amount_low_threshold =
+                sctp_default_stream_buffered_amount_low_threshold;
         }
         Ok(option)
     }

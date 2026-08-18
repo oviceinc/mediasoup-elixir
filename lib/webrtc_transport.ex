@@ -39,9 +39,12 @@ defmodule Mediasoup.WebRtcTransport do
               prefer_tcp: false,
               initial_available_outgoing_bitrate: nil,
               enable_sctp: nil,
-              num_sctp_streams: nil,
-              max_sctp_message_size: nil,
-              sctp_send_buffer_size: nil
+              max_send_message_size: nil,
+              max_receive_message_size: nil,
+              sctp_send_buffer_size: nil,
+              sctp_per_stream_send_queue_limit: nil,
+              sctp_max_receiver_window_buffer_size: nil,
+              sctp_default_stream_buffered_amount_low_threshold: nil
 
     @type t :: %Options{
             # deprecated use listen instead
@@ -61,9 +64,12 @@ defmodule Mediasoup.WebRtcTransport do
             prefer_tcp: boolean,
             initial_available_outgoing_bitrate: integer() | nil,
             enable_sctp: boolean | nil,
-            num_sctp_streams: Mediasoup.num_sctp_streams() | nil,
-            max_sctp_message_size: integer() | nil,
-            sctp_send_buffer_size: integer() | nil
+            max_send_message_size: integer() | nil,
+            max_receive_message_size: integer() | nil,
+            sctp_send_buffer_size: integer() | nil,
+            sctp_per_stream_send_queue_limit: integer() | nil,
+            sctp_max_receiver_window_buffer_size: integer() | nil,
+            sctp_default_stream_buffered_amount_low_threshold: integer() | nil
           }
 
     def from_map(%{} = map) do
@@ -80,9 +86,13 @@ defmodule Mediasoup.WebRtcTransport do
         prefer_tcp: Map.get(map, "preferTcp", false),
         initial_available_outgoing_bitrate: map["initialAvailableOutgoingBitrate"],
         enable_sctp: map["enableSctp"],
-        num_sctp_streams: map["numSctpStreams"],
-        max_sctp_message_size: map["maxSctpMessageSize"],
-        sctp_send_buffer_size: map["sctpSendBufferSize"]
+        max_send_message_size: map["maxSendMessageSize"],
+        max_receive_message_size: map["maxReceiveMessageSize"],
+        sctp_send_buffer_size: map["sctpSendBufferSize"],
+        sctp_per_stream_send_queue_limit: map["sctpPerStreamSendQueueLimit"],
+        sctp_max_receiver_window_buffer_size: map["sctpMaxReceiverWindowBufferSize"],
+        sctp_default_stream_buffered_amount_low_threshold:
+          map["sctpDefaultStreamBufferedAmountLowThreshold"]
       }
     end
 

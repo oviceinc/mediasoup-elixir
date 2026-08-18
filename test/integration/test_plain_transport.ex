@@ -243,8 +243,14 @@ defmodule IntegrateTest.PlainTransportTest do
              PlainTransport.tuple(transport)
            )
 
-    assert %{"MIS" => 1024, "OS" => 1024, "maxMessageSize" => 262_144, "port" => 5000} ==
-             PlainTransport.sctp_parameters(transport)
+    sctp_parameters = PlainTransport.sctp_parameters(transport)
+
+    assert sctp_parameters["port"] === 5000
+    assert sctp_parameters["OS"] === 65_535
+    assert sctp_parameters["MIS"] === 65_535
+    assert is_integer(sctp_parameters["maxSendMessageSize"])
+    assert is_integer(sctp_parameters["maxReceiveMessageSize"])
+    assert sctp_parameters["maxMessageSize"] === sctp_parameters["maxReceiveMessageSize"]
 
     assert PlainTransport.sctp_state(transport) == "new"
   end

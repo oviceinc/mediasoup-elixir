@@ -552,10 +552,14 @@ defmodule IntegrateTest.ProducerTest do
                }
              ],
              "mid" => "AUDIO",
+             "msid" => "",
              "rtcp" => %{"cname" => "FOOBAR", "reducedSize" => true}
            }
 
-    assert Producer.rtp_parameters(audio_producer) == dump["rtpParameters"]
+    # dump may include empty "msid"; rtp_parameters omits it via serde skip
+    assert Map.delete(Producer.rtp_parameters(audio_producer), "msid") ==
+             Map.delete(dump["rtpParameters"], "msid")
+
     assert dump["type"] == "simple"
 
     {:ok, video_producer} = WebRtcTransport.produce(transport_2, video_producer_options())
@@ -613,6 +617,7 @@ defmodule IntegrateTest.ProducerTest do
                %{"encrypt" => false, "id" => 13, "uri" => "urn:3gpp:video-orientation"}
              ],
              "mid" => "VIDEO",
+             "msid" => "",
              "rtcp" => %{"cname" => "FOOBAR", "reducedSize" => true}
            }
 
