@@ -26,14 +26,17 @@ pub struct PipeTransportOptionsStruct {
     /// Create a SCTP association.
     /// Default false.
     pub enable_sctp: Option<bool>,
-    /// Maximum allowed size for SCTP messages sent by DataProducers / DataChannels.
+    /// Maximum allowed size for SCTP messages sent by DataConsumers (in bytes).
     pub max_send_message_size: Option<u32>,
-    /// Maximum allowed size for SCTP messages received.
+    /// Maximum allowed size for SCTP messages received by DataProducers (in bytes).
     pub max_receive_message_size: Option<u32>,
     /// Maximum SCTP send buffer used by DataConsumers.
     pub sctp_send_buffer_size: Option<u32>,
+    /// Per stream send queue size limit for DataConsumers.
     pub sctp_per_stream_send_queue_limit: Option<u32>,
+    /// Maximum received window buffer size (in bytes).
     pub sctp_max_receiver_window_buffer_size: Option<u32>,
+    /// Default buffered-amount-low threshold for DataConsumer streams.
     pub sctp_default_stream_buffered_amount_low_threshold: Option<u32>,
     /// Enable RTX and NACK for RTP retransmission. Useful if both Routers are located in different
     /// hosts and there is packet lost in the link. For this to work, both PipeTransports must

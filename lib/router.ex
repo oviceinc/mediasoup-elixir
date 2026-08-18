@@ -59,6 +59,10 @@ defmodule Mediasoup.Router do
       enable_sctp: nil,
       max_send_message_size: nil,
       max_receive_message_size: nil,
+      sctp_send_buffer_size: nil,
+      sctp_per_stream_send_queue_limit: nil,
+      sctp_max_receiver_window_buffer_size: nil,
+      sctp_default_stream_buffered_amount_low_threshold: nil,
       enable_rtx: nil,
       enable_srtp: nil,
       get_remote_node_ip: &Mediasoup.Utility.get_remote_node_ip/2,
@@ -70,6 +74,10 @@ defmodule Mediasoup.Router do
             enable_sctp: boolean() | nil,
             max_send_message_size: integer() | nil,
             max_receive_message_size: integer() | nil,
+            sctp_send_buffer_size: integer() | nil,
+            sctp_per_stream_send_queue_limit: integer() | nil,
+            sctp_max_receiver_window_buffer_size: integer() | nil,
+            sctp_default_stream_buffered_amount_low_threshold: integer() | nil,
             enable_rtx: boolean() | nil,
             enable_srtp: boolean() | nil,
             get_remote_node_ip: (node, node ->
@@ -523,6 +531,11 @@ defmodule Mediasoup.Router do
            enable_sctp: enable_sctp,
            max_send_message_size: max_send_message_size,
            max_receive_message_size: max_receive_message_size,
+           sctp_send_buffer_size: sctp_send_buffer_size,
+           sctp_per_stream_send_queue_limit: sctp_per_stream_send_queue_limit,
+           sctp_max_receiver_window_buffer_size: sctp_max_receiver_window_buffer_size,
+           sctp_default_stream_buffered_amount_low_threshold:
+             sctp_default_stream_buffered_amount_low_threshold,
            enable_rtx: enable_rtx,
            enable_srtp: enable_srtp,
            get_remote_node_ip: get_remote_node_ip,
@@ -542,6 +555,11 @@ defmodule Mediasoup.Router do
              enable_sctp: enable_sctp,
              max_send_message_size: max_send_message_size,
              max_receive_message_size: max_receive_message_size,
+             sctp_send_buffer_size: sctp_send_buffer_size,
+             sctp_per_stream_send_queue_limit: sctp_per_stream_send_queue_limit,
+             sctp_max_receiver_window_buffer_size: sctp_max_receiver_window_buffer_size,
+             sctp_default_stream_buffered_amount_low_threshold:
+               sctp_default_stream_buffered_amount_low_threshold,
              enable_rtx: enable_rtx,
              enable_srtp: enable_srtp
            }),
@@ -551,6 +569,11 @@ defmodule Mediasoup.Router do
              enable_sctp: enable_sctp,
              max_send_message_size: max_send_message_size,
              max_receive_message_size: max_receive_message_size,
+             sctp_send_buffer_size: sctp_send_buffer_size,
+             sctp_per_stream_send_queue_limit: sctp_per_stream_send_queue_limit,
+             sctp_max_receiver_window_buffer_size: sctp_max_receiver_window_buffer_size,
+             sctp_default_stream_buffered_amount_low_threshold:
+               sctp_default_stream_buffered_amount_low_threshold,
              enable_rtx: enable_rtx,
              enable_srtp: enable_srtp
            }) do

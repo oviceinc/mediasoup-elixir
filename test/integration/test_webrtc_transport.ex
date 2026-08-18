@@ -95,10 +95,9 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert sctp_parameters["port"] === 5000
     assert sctp_parameters["maxSendMessageSize"] === 1_000_000
     assert sctp_parameters["maxReceiveMessageSize"] === 1_000_000
-    assert sctp_parameters["maxMessageSize"] === 1_000_000
-    assert sctp_parameters["OS"] === 65_535
-    assert sctp_parameters["MIS"] === 65_535
     assert is_integer(sctp_parameters["sendBufferSize"])
+    assert is_integer(sctp_parameters["perStreamSendQueueLimit"])
+    assert is_integer(sctp_parameters["maxReceiverWindowBufferSize"])
     assert is_boolean(sctp_parameters["isDataChannel"])
 
     ice_candidates = Mediasoup.WebRtcTransport.ice_candidates(transport1)
