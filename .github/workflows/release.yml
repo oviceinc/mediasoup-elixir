@@ -87,8 +87,6 @@ jobs:
           use-cross: ${{ matrix.job.use-cross }}
           cross-version: ${{ matrix.job.cross-version }}
           project-dir: "native/mediasoup_elixir"
-        env:
-          MESON_ARGS: "-Dms_disable_liburing=true"
 
       - name: Artifact upload
         uses: actions/upload-artifact@v4

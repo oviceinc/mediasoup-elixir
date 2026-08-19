@@ -27,7 +27,7 @@ target_runner = `(python3 -c "print('${CROSS_TARGET_RUNNER}'.split())")`\n\
  endian = 'little'" > /opt/meson_toolchain.txt
 
 
-ENV MESON_ARGS="--cross-file /opt/meson_toolchain.txt -Dms_disable_liburing=true"
+ENV MESON_ARGS="--cross-file /opt/meson_toolchain.txt"
 # mediasoup-rust needs CXX environment variables to link C++ standard libraries.
 ENV CXX="${CROSS_TOOLCHAIN_PREFIX}g++"
 ENV CC="${CROSS_TOOLCHAIN_PREFIX}gcc${CROSS_TOOLCHAIN_SUFFIX}"

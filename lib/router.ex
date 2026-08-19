@@ -56,6 +56,7 @@ defmodule Mediasoup.Router do
     @enforce_keys [:router]
     defstruct [
       :router,
+      keep_id: true,
       enable_sctp: nil,
       max_send_message_size: nil,
       max_receive_message_size: nil,
@@ -71,6 +72,7 @@ defmodule Mediasoup.Router do
 
     @type t :: %PipeToRouterOptions{
             router: Mediasoup.Router.t(),
+            keep_id: boolean(),
             enable_sctp: boolean() | nil,
             max_send_message_size: integer() | nil,
             max_receive_message_size: integer() | nil,
@@ -187,9 +189,12 @@ defmodule Mediasoup.Router do
   defp do_pipe_producer_to_router(
          %Router{} = router,
          producer_id,
-         %PipeToRouterOptions{} = option
+         %PipeToRouterOptions{keep_id: keep_id} = option
        ) do
     alias Mediasoup.{Consumer, Producer, Transport}
+
+    # If requested, generate a new id for the pipeProducer.
+    pipe_producer_id = if keep_id, do: producer_id, else: generate_uuid()
 
     with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
            get_or_create_pipe_transport_pair(router, option),
@@ -200,7 +205,7 @@ defmodule Mediasoup.Router do
            }),
          {:ok, pipe_producer} <-
            Transport.produce(remote_pipe_transport, %Producer.Options{
-             id: producer_id,
+             id: pipe_producer_id,
              kind: Consumer.kind(pipe_consumer),
              rtp_parameters: Consumer.rtp_parameters(pipe_consumer),
              paused: Consumer.producer_paused?(pipe_consumer)
@@ -232,9 +237,12 @@ defmodule Mediasoup.Router do
   defp do_pipe_data_producer_to_router(
          %Router{} = router,
          data_producer_id,
-         %PipeToRouterOptions{} = option
+         %PipeToRouterOptions{keep_id: keep_id} = option
        ) do
     alias Mediasoup.{DataConsumer, DataProducer, Transport}
+
+    # If requested, generate a new id for the pipeDataProducer.
+    pipe_data_producer_id = if keep_id, do: data_producer_id, else: generate_uuid()
 
     with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
            get_or_create_pipe_transport_pair(router, option),
@@ -245,12 +253,23 @@ defmodule Mediasoup.Router do
            }),
          {:ok, pipe_producer} <-
            Transport.produce_data(remote_pipe_transport, %DataProducer.Options{
+             id: pipe_data_producer_id,
              sctp_stream_parameters: DataConsumer.sctp_stream_parameters(pipe_consumer)
            }) do
       DataConsumer.link_pipe_producer(pipe_consumer, pipe_producer)
 
       {:ok, %{pipe_data_producer: pipe_producer, pipe_data_consumer: pipe_consumer}}
     end
+  end
+
+  defp generate_uuid do
+    <<u0::48, _::4, u1::12, _::2, u2::62>> = :crypto.strong_rand_bytes(16)
+    <<u0::48, 4::4, u1::12, 2::2, u2::62>>
+    |> Base.encode16(case: :lower)
+    |> then(fn <<a::binary-size(8), b::binary-size(4), c::binary-size(4), d::binary-size(4),
+                 e::binary-size(12)>> ->
+      "#{a}-#{b}-#{c}-#{d}-#{e}"
+    end)
   end
 
   @spec create_pipe_transport(

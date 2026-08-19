@@ -122,6 +122,20 @@ defmodule PipeTransportTest do
     IntegrateTest.PipeTransportTest.no_crash_when_exited_pipe_to_router(worker)
   end
 
+  test "pipe_to_router_with_keep_id_true_fails_on_same_worker", %{
+    worker: worker
+  } do
+    IntegrateTest.PipeTransportTest.pipe_to_router_with_keep_id_true_fails_on_same_worker(worker)
+  end
+
+  test "pipe_to_router_with_keep_id_false_succeeds_on_same_worker", %{
+    worker: worker
+  } do
+    IntegrateTest.PipeTransportTest.pipe_to_router_with_keep_id_false_succeeds_on_same_worker(
+      worker
+    )
+  end
+
   test "id/1 returns the correct id", %{worker: worker} do
     {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
 

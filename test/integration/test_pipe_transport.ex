@@ -1170,4 +1170,69 @@ defmodule IntegrateTest.PipeTransportTest do
         router: router2
       })
   end
+
+  def pipe_to_router_with_keep_id_true_fails_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ]
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+
+    assert {:error, _} =
+             Router.pipe_producer_to_router(
+               router1,
+               video_producer.id,
+               %Router.PipeToRouterOptions{
+                 router: router2,
+                 # Default value is true.
+                 keep_id: true
+               }
+             )
+  end
+
+  def pipe_to_router_with_keep_id_false_succeeds_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ]
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+
+    {:ok, %{pipe_producer: pipe_producer}} =
+      Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
+        router: router2,
+        keep_id: false
+      })
+
+    refute pipe_producer.id === video_producer.id
+  end
 end
