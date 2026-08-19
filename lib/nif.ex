@@ -12,14 +12,15 @@ defmodule Mediasoup.Nif do
       [
         "aarch64-apple-darwin",
         "aarch64-unknown-linux-gnu",
-        "aarch64-unknown-linux-musl",
-        "arm-unknown-linux-gnueabihf",
+        # GCC in the default cross-rs toolchain is too old for mediasoup-sys 0.16 (C++20 concepts).
+        # "aarch64-unknown-linux-musl",
+        # "arm-unknown-linux-gnueabihf",
         "riscv64gc-unknown-linux-gnu",
         "x86_64-apple-darwin",
         #    "x86_64-pc-windows-gnu",
         #    "x86_64-pc-windows-msvc",
-        "x86_64-unknown-linux-gnu",
-        "x86_64-unknown-linux-musl"
+        "x86_64-unknown-linux-gnu"
+        # "x86_64-unknown-linux-musl"
       ]
     end
 
