@@ -505,6 +505,7 @@ defmodule IntegrateTest.PipeTransportTest do
     assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
 
     assert pipe_data_consumer.data_producer_id === data_producer.id
+    assert pipe_data_producer.id === data_producer.id
 
     assert DataProducer.sctp_stream_parameters(pipe_data_producer) === %{
              "streamId" => 0,
@@ -1193,14 +1194,13 @@ defmodule IntegrateTest.PipeTransportTest do
 
     {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
 
+    # keep_id defaults to true, so same-worker piping must fail.
     assert {:error, _} =
              Router.pipe_producer_to_router(
                router1,
                video_producer.id,
                %Router.PipeToRouterOptions{
-                 router: router2,
-                 # Default value is true.
-                 keep_id: true
+                 router: router2
                }
              )
   end
@@ -1234,5 +1234,77 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     refute pipe_producer.id === video_producer.id
+  end
+
+  def pipe_data_to_router_with_default_keep_id_fails_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ],
+        enableSctp: true
+      })
+
+    {:ok, data_producer} = WebRtcTransport.produce_data(transport1, data_producer_options())
+
+    # keep_id defaults to true, so same-worker piping must fail.
+    assert {:error, _} =
+             Router.pipe_data_producer_to_router(
+               router1,
+               data_producer.id,
+               %Router.PipeToRouterOptions{
+                 router: router2,
+                 enable_sctp: true
+               }
+             )
+  end
+
+  def pipe_data_to_router_with_keep_id_false_succeeds_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ],
+        enableSctp: true
+      })
+
+    {:ok, data_producer} = WebRtcTransport.produce_data(transport1, data_producer_options())
+
+    {:ok, %{pipe_data_producer: pipe_data_producer}} =
+      Router.pipe_data_producer_to_router(
+        router1,
+        data_producer.id,
+        %Router.PipeToRouterOptions{
+          router: router2,
+          enable_sctp: true,
+          keep_id: false
+        }
+      )
+
+    refute pipe_data_producer.id === data_producer.id
   end
 end
