@@ -65,14 +65,20 @@ pub fn data_producer_event(
 #[derive(NifStruct)]
 #[module = "Mediasoup.DataProducer.Options"]
 pub struct DataProducerOptionsStruct {
+    pub id: Option<JsonSerdeWrap<DataProducerId>>,
     pub sctp_stream_parameters: Option<JsonSerdeWrap<SctpStreamParameters>>,
 }
 
 impl DataProducerOptionsStruct {
     pub fn to_option(&self) -> DataProducerOptions {
-        match &self.sctp_stream_parameters {
-            Some(sctp_stream_parameters) => DataProducerOptions::new_sctp(**sctp_stream_parameters),
-            None => DataProducerOptions::new_direct(),
+        match (&self.id, &self.sctp_stream_parameters) {
+            (Some(id), Some(sctp_stream_parameters)) => {
+                DataProducerOptions::new_pipe_transport(**id, **sctp_stream_parameters)
+            }
+            (None, Some(sctp_stream_parameters)) => {
+                DataProducerOptions::new_sctp(**sctp_stream_parameters)
+            }
+            _ => DataProducerOptions::new_direct(),
         }
     }
 }

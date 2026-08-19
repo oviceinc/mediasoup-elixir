@@ -31,9 +31,12 @@ defmodule Mediasoup.PipeTransport do
               listen_info: nil,
               port: nil,
               enable_sctp: nil,
-              num_sctp_streams: nil,
-              max_sctp_message_size: nil,
+              max_send_message_size: nil,
+              max_receive_message_size: nil,
               sctp_send_buffer_size: nil,
+              sctp_per_stream_send_queue_limit: nil,
+              sctp_max_receiver_window_buffer_size: nil,
+              sctp_default_stream_buffered_amount_low_threshold: nil,
               enable_rtx: nil,
               enable_srtp: nil
 
@@ -44,9 +47,12 @@ defmodule Mediasoup.PipeTransport do
             # deprecated use listen_info instead
             port: integer() | nil,
             enable_sctp: boolean | nil,
-            num_sctp_streams: Mediasoup.num_sctp_streams() | nil,
-            max_sctp_message_size: integer() | nil,
+            max_send_message_size: integer() | nil,
+            max_receive_message_size: integer() | nil,
             sctp_send_buffer_size: integer() | nil,
+            sctp_per_stream_send_queue_limit: integer() | nil,
+            sctp_max_receiver_window_buffer_size: integer() | nil,
+            sctp_default_stream_buffered_amount_low_threshold: integer() | nil,
             enable_rtx: boolean | nil,
             enable_srtp: boolean | nil
           }

@@ -53,13 +53,17 @@ defmodule Mediasoup.Router do
     without producerId.
     producerId is the argument of the function
     """
-    @type num_sctp_streams :: %{OS: integer(), MIS: integer()}
-
     @enforce_keys [:router]
     defstruct [
       :router,
+      keep_id: true,
       enable_sctp: nil,
-      num_sctp_streams: nil,
+      max_send_message_size: nil,
+      max_receive_message_size: nil,
+      sctp_send_buffer_size: nil,
+      sctp_per_stream_send_queue_limit: nil,
+      sctp_max_receiver_window_buffer_size: nil,
+      sctp_default_stream_buffered_amount_low_threshold: nil,
       enable_rtx: nil,
       enable_srtp: nil,
       get_remote_node_ip: &Mediasoup.Utility.get_remote_node_ip/2,
@@ -68,8 +72,14 @@ defmodule Mediasoup.Router do
 
     @type t :: %PipeToRouterOptions{
             router: Mediasoup.Router.t(),
+            keep_id: boolean(),
             enable_sctp: boolean() | nil,
-            num_sctp_streams: num_sctp_streams() | nil,
+            max_send_message_size: integer() | nil,
+            max_receive_message_size: integer() | nil,
+            sctp_send_buffer_size: integer() | nil,
+            sctp_per_stream_send_queue_limit: integer() | nil,
+            sctp_max_receiver_window_buffer_size: integer() | nil,
+            sctp_default_stream_buffered_amount_low_threshold: integer() | nil,
             enable_rtx: boolean() | nil,
             enable_srtp: boolean() | nil,
             get_remote_node_ip: (node, node ->
@@ -179,9 +189,12 @@ defmodule Mediasoup.Router do
   defp do_pipe_producer_to_router(
          %Router{} = router,
          producer_id,
-         %PipeToRouterOptions{} = option
+         %PipeToRouterOptions{keep_id: keep_id} = option
        ) do
     alias Mediasoup.{Consumer, Producer, Transport}
+
+    # If requested, generate a new id for the pipeProducer.
+    pipe_producer_id = if keep_id, do: producer_id, else: generate_uuid()
 
     with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
            get_or_create_pipe_transport_pair(router, option),
@@ -192,7 +205,7 @@ defmodule Mediasoup.Router do
            }),
          {:ok, pipe_producer} <-
            Transport.produce(remote_pipe_transport, %Producer.Options{
-             id: producer_id,
+             id: pipe_producer_id,
              kind: Consumer.kind(pipe_consumer),
              rtp_parameters: Consumer.rtp_parameters(pipe_consumer),
              paused: Consumer.producer_paused?(pipe_consumer)
@@ -224,9 +237,12 @@ defmodule Mediasoup.Router do
   defp do_pipe_data_producer_to_router(
          %Router{} = router,
          data_producer_id,
-         %PipeToRouterOptions{} = option
+         %PipeToRouterOptions{keep_id: keep_id} = option
        ) do
     alias Mediasoup.{DataConsumer, DataProducer, Transport}
+
+    # If requested, generate a new id for the pipeDataProducer.
+    pipe_data_producer_id = if keep_id, do: data_producer_id, else: generate_uuid()
 
     with {:ok, %{local: local_pipe_transport, remote: remote_pipe_transport}} <-
            get_or_create_pipe_transport_pair(router, option),
@@ -237,11 +253,26 @@ defmodule Mediasoup.Router do
            }),
          {:ok, pipe_producer} <-
            Transport.produce_data(remote_pipe_transport, %DataProducer.Options{
+             id: pipe_data_producer_id,
              sctp_stream_parameters: DataConsumer.sctp_stream_parameters(pipe_consumer)
            }) do
       DataConsumer.link_pipe_producer(pipe_consumer, pipe_producer)
 
       {:ok, %{pipe_data_producer: pipe_producer, pipe_data_consumer: pipe_consumer}}
+    end
+  end
+
+  defp generate_uuid do
+    <<u0::48, _::4, u1::12, _::2, u2::62>> = :crypto.strong_rand_bytes(16)
+
+    encoded =
+      <<u0::48, 4::4, u1::12, 2::2, u2::62>>
+      |> Base.encode16(case: :lower)
+
+    case encoded do
+      <<a::binary-size(8), b::binary-size(4), c::binary-size(4), d::binary-size(4),
+        e::binary-size(12)>> ->
+        "#{a}-#{b}-#{c}-#{d}-#{e}"
     end
   end
 
@@ -521,7 +552,13 @@ defmodule Mediasoup.Router do
          %PipeToRouterOptions{
            router: %Router{pid: _pid2} = remote_router,
            enable_sctp: enable_sctp,
-           num_sctp_streams: num_sctp_streams,
+           max_send_message_size: max_send_message_size,
+           max_receive_message_size: max_receive_message_size,
+           sctp_send_buffer_size: sctp_send_buffer_size,
+           sctp_per_stream_send_queue_limit: sctp_per_stream_send_queue_limit,
+           sctp_max_receiver_window_buffer_size: sctp_max_receiver_window_buffer_size,
+           sctp_default_stream_buffered_amount_low_threshold:
+             sctp_default_stream_buffered_amount_low_threshold,
            enable_rtx: enable_rtx,
            enable_srtp: enable_srtp,
            get_remote_node_ip: get_remote_node_ip,
@@ -539,7 +576,13 @@ defmodule Mediasoup.Router do
            Router.create_pipe_transport(router, %PipeTransport.Options{
              listen_ip: %{ip: local_listen_ip},
              enable_sctp: enable_sctp,
-             num_sctp_streams: num_sctp_streams,
+             max_send_message_size: max_send_message_size,
+             max_receive_message_size: max_receive_message_size,
+             sctp_send_buffer_size: sctp_send_buffer_size,
+             sctp_per_stream_send_queue_limit: sctp_per_stream_send_queue_limit,
+             sctp_max_receiver_window_buffer_size: sctp_max_receiver_window_buffer_size,
+             sctp_default_stream_buffered_amount_low_threshold:
+               sctp_default_stream_buffered_amount_low_threshold,
              enable_rtx: enable_rtx,
              enable_srtp: enable_srtp
            }),
@@ -547,7 +590,13 @@ defmodule Mediasoup.Router do
            Router.create_pipe_transport(remote_router, %PipeTransport.Options{
              listen_ip: %{ip: remote_listen_ip},
              enable_sctp: enable_sctp,
-             num_sctp_streams: num_sctp_streams,
+             max_send_message_size: max_send_message_size,
+             max_receive_message_size: max_receive_message_size,
+             sctp_send_buffer_size: sctp_send_buffer_size,
+             sctp_per_stream_send_queue_limit: sctp_per_stream_send_queue_limit,
+             sctp_max_receiver_window_buffer_size: sctp_max_receiver_window_buffer_size,
+             sctp_default_stream_buffered_amount_low_threshold:
+               sctp_default_stream_buffered_amount_low_threshold,
              enable_rtx: enable_rtx,
              enable_srtp: enable_srtp
            }) do

@@ -98,11 +98,8 @@ defmodule IntegrateTest.WebRtcServerTest do
         enable_sctp: true,
         enable_tcp: true,
         enable_udp: true,
-        num_sctp_streams: %{
-          OS: 2048,
-          MIS: 2048
-        },
-        max_sctp_message_size: 1_000_000
+        max_send_message_size: 1_000_000,
+        max_receive_message_size: 1_000_000
       })
 
     assert WebRtcTransport.ice_role(transport1) === "controlled"

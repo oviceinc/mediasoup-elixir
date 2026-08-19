@@ -297,18 +297,24 @@ defmodule IntegrateTest.PipeTransportTest do
     assert [
              %{
                "encrypt" => false,
-               "id" => 10,
+               "id" => 6,
                "uri" => "urn:ietf:params:rtp-hdrext:ssrc-audio-level"
              },
              %{
                "encrypt" => false,
-               "id" => 13,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+               "id" => 7,
+               "uri" =>
+                 "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
              },
              %{
                "encrypt" => false,
-               "id" => 14,
+               "id" => 11,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 12,
+               "uri" => "urn:mediasoup:params:rtp-hdrext:packet-id"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
@@ -346,18 +352,24 @@ defmodule IntegrateTest.PipeTransportTest do
     assert [
              %{
                "encrypt" => false,
-               "id" => 10,
+               "id" => 6,
                "uri" => "urn:ietf:params:rtp-hdrext:ssrc-audio-level"
              },
              %{
                "encrypt" => false,
-               "id" => 13,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+               "id" => 7,
+               "uri" =>
+                 "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
              },
              %{
                "encrypt" => false,
-               "id" => 14,
+               "id" => 11,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+             },
+             %{
+               "encrypt" => false,
+               "id" => 12,
+               "uri" => "urn:mediasoup:params:rtp-hdrext:packet-id"
              }
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
@@ -402,17 +414,23 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_consumer.rtp_parameters["codecs"]
 
     assert [
-             %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
-             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
                "encrypt" => false,
-               "id" => 13,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+               "id" => 7,
+               "uri" =>
+                 "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+             },
+             %{"encrypt" => false, "id" => 8, "uri" => "urn:3gpp:video-orientation"},
+             %{"encrypt" => false, "id" => 9, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
+             %{
+               "encrypt" => false,
+               "id" => 11,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              },
              %{
                "encrypt" => false,
-               "id" => 14,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+               "id" => 12,
+               "uri" => "urn:mediasoup:params:rtp-hdrext:packet-id"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
@@ -445,17 +463,23 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_producer.rtp_parameters["codecs"]
 
     assert [
-             %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
-             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
                "encrypt" => false,
-               "id" => 13,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+               "id" => 7,
+               "uri" =>
+                 "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+             },
+             %{"encrypt" => false, "id" => 8, "uri" => "urn:3gpp:video-orientation"},
+             %{"encrypt" => false, "id" => 9, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
+             %{
+               "encrypt" => false,
+               "id" => 11,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              },
              %{
                "encrypt" => false,
-               "id" => 14,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+               "id" => 12,
+               "uri" => "urn:mediasoup:params:rtp-hdrext:packet-id"
              }
            ] === pipe_producer.rtp_parameters["headerExtensions"]
 
@@ -481,6 +505,7 @@ defmodule IntegrateTest.PipeTransportTest do
     assert 2 == Mediasoup.Router.dump(router2)["transportIds"] |> length
 
     assert pipe_data_consumer.data_producer_id === data_producer.id
+    assert pipe_data_producer.id === data_producer.id
 
     assert DataProducer.sctp_stream_parameters(pipe_data_producer) === %{
              "streamId" => 0,
@@ -553,17 +578,23 @@ defmodule IntegrateTest.PipeTransportTest do
            ] === pipe_consumer.rtp_parameters["codecs"]
 
     assert [
-             %{"encrypt" => false, "id" => 11, "uri" => "urn:3gpp:video-orientation"},
-             %{"encrypt" => false, "id" => 12, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
              %{
                "encrypt" => false,
-               "id" => 13,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time"
+               "id" => 7,
+               "uri" =>
+                 "https://aomediacodec.github.io/av1-rtp-spec/#dependency-descriptor-rtp-header-extension"
+             },
+             %{"encrypt" => false, "id" => 8, "uri" => "urn:3gpp:video-orientation"},
+             %{"encrypt" => false, "id" => 9, "uri" => "urn:ietf:params:rtp-hdrext:toffset"},
+             %{
+               "encrypt" => false,
+               "id" => 11,
+               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
              },
              %{
                "encrypt" => false,
-               "id" => 14,
-               "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+               "id" => 12,
+               "uri" => "urn:mediasoup:params:rtp-hdrext:packet-id"
              }
            ] === pipe_consumer.rtp_parameters["headerExtensions"]
 
@@ -999,7 +1030,11 @@ defmodule IntegrateTest.PipeTransportTest do
       })
 
     assert match?(
-             %{"maxMessageSize" => _max_message_size, "port" => _port},
+             %{
+               "maxSendMessageSize" => _max_send,
+               "maxReceiveMessageSize" => _max_receive,
+               "port" => _port
+             },
              Transport.sctp_parameters(pipe_transport_local)
            )
 
@@ -1135,5 +1170,141 @@ defmodule IntegrateTest.PipeTransportTest do
       Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
         router: router2
       })
+  end
+
+  def pipe_to_router_with_keep_id_true_fails_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ]
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+
+    # keep_id defaults to true, so same-worker piping must fail.
+    assert {:error, _} =
+             Router.pipe_producer_to_router(
+               router1,
+               video_producer.id,
+               %Router.PipeToRouterOptions{
+                 router: router2
+               }
+             )
+  end
+
+  def pipe_to_router_with_keep_id_false_succeeds_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ]
+      })
+
+    {:ok, video_producer} = WebRtcTransport.produce(transport1, video_producer_options())
+
+    {:ok, %{pipe_producer: pipe_producer}} =
+      Router.pipe_producer_to_router(router1, video_producer.id, %Router.PipeToRouterOptions{
+        router: router2,
+        keep_id: false
+      })
+
+    refute pipe_producer.id === video_producer.id
+  end
+
+  def pipe_data_to_router_with_default_keep_id_fails_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ],
+        enableSctp: true
+      })
+
+    {:ok, data_producer} = WebRtcTransport.produce_data(transport1, data_producer_options())
+
+    # keep_id defaults to true, so same-worker piping must fail.
+    assert {:error, _} =
+             Router.pipe_data_producer_to_router(
+               router1,
+               data_producer.id,
+               %Router.PipeToRouterOptions{
+                 router: router2,
+                 enable_sctp: true
+               }
+             )
+  end
+
+  def pipe_data_to_router_with_keep_id_false_succeeds_on_same_worker(worker) do
+    {:ok, router1} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, router2} =
+      Worker.create_router(worker, %{
+        mediaCodecs: media_codecs()
+      })
+
+    {:ok, transport1} =
+      Router.create_webrtc_transport(router1, %{
+        listenIps: [
+          %{
+            ip: "127.0.0.1"
+          }
+        ],
+        enableSctp: true
+      })
+
+    {:ok, data_producer} = WebRtcTransport.produce_data(transport1, data_producer_options())
+
+    {:ok, %{pipe_data_producer: pipe_data_producer}} =
+      Router.pipe_data_producer_to_router(
+        router1,
+        data_producer.id,
+        %Router.PipeToRouterOptions{
+          router: router2,
+          enable_sctp: true,
+          keep_id: false
+        }
+      )
+
+    refute pipe_data_producer.id === data_producer.id
   end
 end

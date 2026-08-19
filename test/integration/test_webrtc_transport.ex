@@ -83,22 +83,22 @@ defmodule IntegrateTest.WebRtcTransportTest do
         enableTcp: true,
         preferUdp: true,
         enableSctp: true,
-        numSctpStreams: %{
-          OS: 2048,
-          MIS: 2048
-        },
-        maxSctpMessageSize: 1_000_000
+        maxSendMessageSize: 1_000_000,
+        maxReceiveMessageSize: 1_000_000
       })
 
     assert WebRtcTransport.ice_role(transport1) === "controlled"
     assert WebRtcTransport.ice_parameters(transport1)["iceLite"] === true
 
-    assert WebRtcTransport.sctp_parameters(transport1) === %{
-             "MIS" => 2048,
-             "OS" => 2048,
-             "maxMessageSize" => 1_000_000,
-             "port" => 5000
-           }
+    sctp_parameters = WebRtcTransport.sctp_parameters(transport1)
+
+    assert sctp_parameters["port"] === 5000
+    assert sctp_parameters["maxSendMessageSize"] === 1_000_000
+    assert sctp_parameters["maxReceiveMessageSize"] === 1_000_000
+    assert is_integer(sctp_parameters["sendBufferSize"])
+    assert is_integer(sctp_parameters["perStreamSendQueueLimit"])
+    assert is_integer(sctp_parameters["maxReceiverWindowBufferSize"])
+    assert is_boolean(sctp_parameters["isDataChannel"])
 
     ice_candidates = Mediasoup.WebRtcTransport.ice_candidates(transport1)
 
@@ -497,11 +497,8 @@ defmodule IntegrateTest.WebRtcTransportTest do
         enable_sctp: true,
         enable_tcp: true,
         enable_udp: true,
-        num_sctp_streams: %{
-          OS: 2048,
-          MIS: 2048
-        },
-        max_sctp_message_size: 1_000_000
+        max_send_message_size: 1_000_000,
+        max_receive_message_size: 1_000_000
       })
 
     assert WebRtcTransport.ice_role(transport1) === "controlled"
@@ -632,10 +629,10 @@ defmodule IntegrateTest.WebRtcTransportTest do
     assert {:ok} = WebRtcTransport.event(transport_1, self(), [:on_ice_state_change])
 
     # Send internal event directly to test the handler
-    send(transport_1.pid, {:nif_internal_event, :on_ice_state_change})
+    send(transport_1.pid, {:nif_internal_event, :on_ice_state_change, "new"})
 
     # Verify event received
-    assert_receive {:on_ice_state_change, :on_ice_state_change}, 5000
+    assert_receive {:on_ice_state_change, "new"}, 5000
 
     # Cleanup
     WebRtcTransport.close(transport_1)

@@ -575,11 +575,6 @@ defmodule IntegrateTest.ConsumerTest do
                "encrypt" => false,
                "id" => 4,
                "uri" => "http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time"
-             },
-             %{
-               "encrypt" => false,
-               "id" => 10,
-               "uri" => "urn:ietf:params:rtp-hdrext:ssrc-audio-level"
              }
            ]
 

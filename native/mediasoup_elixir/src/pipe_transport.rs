@@ -1,7 +1,6 @@
 use crate::consumer::{ConsumerOptionsStruct, ConsumerRef};
 use crate::data_consumer::{DataConsumerOptionsStruct, DataConsumerRef};
 use crate::data_producer::{DataProducerOptionsStruct, DataProducerRef};
-use crate::data_structure::SerNumSctpStreams;
 use crate::json_serde::JsonSerdeWrap;
 use crate::producer::{ProducerOptionsStruct, ProducerRef};
 use crate::{atoms, send_async_nif_result_with_from, DisposableResourceWrapper};
@@ -27,14 +26,18 @@ pub struct PipeTransportOptionsStruct {
     /// Create a SCTP association.
     /// Default false.
     pub enable_sctp: Option<bool>,
-    /// SCTP streams number.
-    num_sctp_streams: Option<JsonSerdeWrap<SerNumSctpStreams>>,
-    /// Maximum allowed size for SCTP messages sent by DataProducers.
-    /// Default 268_435_456.
-    pub max_sctp_message_size: Option<u32>,
+    /// Maximum allowed size for SCTP messages sent by DataConsumers (in bytes).
+    pub max_send_message_size: Option<u32>,
+    /// Maximum allowed size for SCTP messages received by DataProducers (in bytes).
+    pub max_receive_message_size: Option<u32>,
     /// Maximum SCTP send buffer used by DataConsumers.
-    /// Default 268_435_456.
     pub sctp_send_buffer_size: Option<u32>,
+    /// Per stream send queue size limit for DataConsumers.
+    pub sctp_per_stream_send_queue_limit: Option<u32>,
+    /// Maximum received window buffer size (in bytes).
+    pub sctp_max_receiver_window_buffer_size: Option<u32>,
+    /// Default buffered-amount-low threshold for DataConsumer streams.
+    pub sctp_default_stream_buffered_amount_low_threshold: Option<u32>,
     /// Enable RTX and NACK for RTP retransmission. Useful if both Routers are located in different
     /// hosts and there is packet lost in the link. For this to work, both PipeTransports must
     /// enable this setting.
@@ -53,14 +56,28 @@ impl PipeTransportOptionsStruct {
         if let Some(enable_sctp) = self.enable_sctp {
             option.enable_sctp = enable_sctp;
         }
-        if let Some(num_sctp_streams) = self.num_sctp_streams {
-            option.num_sctp_streams = num_sctp_streams.as_streams();
+        if let Some(max_send_message_size) = self.max_send_message_size {
+            option.max_send_message_size = max_send_message_size;
         }
-        if let Some(max_sctp_message_size) = self.max_sctp_message_size {
-            option.max_sctp_message_size = max_sctp_message_size;
+        if let Some(max_receive_message_size) = self.max_receive_message_size {
+            option.max_receive_message_size = max_receive_message_size;
         }
         if let Some(sctp_send_buffer_size) = self.sctp_send_buffer_size {
             option.sctp_send_buffer_size = sctp_send_buffer_size;
+        }
+        if let Some(sctp_per_stream_send_queue_limit) = self.sctp_per_stream_send_queue_limit {
+            option.sctp_per_stream_send_queue_limit = sctp_per_stream_send_queue_limit;
+        }
+        if let Some(sctp_max_receiver_window_buffer_size) =
+            self.sctp_max_receiver_window_buffer_size
+        {
+            option.sctp_max_receiver_window_buffer_size = sctp_max_receiver_window_buffer_size;
+        }
+        if let Some(sctp_default_stream_buffered_amount_low_threshold) =
+            self.sctp_default_stream_buffered_amount_low_threshold
+        {
+            option.sctp_default_stream_buffered_amount_low_threshold =
+                sctp_default_stream_buffered_amount_low_threshold;
         }
         if let Some(enable_rtx) = self.enable_rtx {
             option.enable_rtx = enable_rtx;

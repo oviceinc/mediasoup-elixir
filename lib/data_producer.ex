@@ -177,11 +177,13 @@ defmodule Mediasoup.DataProducer do
     """
 
     @enforce_keys []
-    defstruct sctp_stream_parameters: nil,
+    defstruct id: nil,
+              sctp_stream_parameters: nil,
               label: nil,
               protocol: nil
 
     @type t :: %Options{
+            id: String.t() | nil,
             label: String.t() | nil,
             protocol: String.t() | nil,
             sctp_stream_parameters: DataProducer.sctpStreamParameters() | nil
@@ -192,6 +194,7 @@ defmodule Mediasoup.DataProducer do
       map = for {key, val} <- map, into: %{}, do: {to_string(key), val}
 
       %Options{
+        id: map["id"],
         label: map["label"],
         protocol: map["protocol"],
         sctp_stream_parameters: map["sctpStreamParameters"]
