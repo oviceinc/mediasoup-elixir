@@ -2,7 +2,7 @@
 #
 #   MIX_ENV=test mix run bench/nif_bench.exs
 #
-alias Mediasoup.{Nif, Worker, Router, WebRtcTransport, Producer, Consumer}
+alias Mediasoup.{Nif, Worker, WebRtcTransport, Producer, Consumer}
 alias IntegrateTest.ConsumerTest
 
 {:ok, worker} = Worker.start_link()
@@ -43,7 +43,7 @@ Benchee.run(
       Consumer.close(consumer)
     end
   },
-  time: 3,
+  time: 5,
   warmup: 1,
   memory_time: 0
 )
