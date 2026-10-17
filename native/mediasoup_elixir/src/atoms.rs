@@ -29,4 +29,5 @@ rustler::atoms! {
     video,
     mediasoup_async_nif_result,
     nif_internal_event,
+    __struct__,
 }
