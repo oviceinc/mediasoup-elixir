@@ -53,8 +53,7 @@ defmodule IntegrateTest.WorkerTest do
   def worker_with_wrong_settings_cert() do
     Process.flag(:trap_exit, true)
 
-    assert match?(
-             {:error, _},
+    assert {:error, reason} =
              Worker.start_link(
                settings: %Worker.Settings{
                  log_level: :none,
@@ -62,21 +61,22 @@ defmodule IntegrateTest.WorkerTest do
                  dtls_private_key_file: "/notfound/priv.pem"
                }
              )
-           )
+
+    assert is_binary(reason)
   end
 
   def worker_with_wrong_settings_port() do
     Process.flag(:trap_exit, true)
 
-    assert match?(
-             {:error, _},
+    assert {:error, reason} =
              Worker.start_link(
                settings: %Worker.Settings{
                  rtc_min_port: 1000,
                  rtc_max_port: 999
                }
              )
-           )
+
+    assert is_binary(reason)
   end
 
   def update_settings_succeeds() do
