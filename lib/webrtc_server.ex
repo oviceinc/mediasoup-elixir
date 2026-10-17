@@ -113,10 +113,7 @@ defmodule Mediasoup.WebRtcServer do
     GenServer.call(pid, :to_ref)
   end
 
-  def start_link(opt) do
-    reference = Keyword.fetch!(opt, :reference)
-    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
-  end
+  def start_link(opt), do: NifWrap.start_link(__MODULE__, opt)
 
   @impl true
   def init(state) do
@@ -134,6 +131,7 @@ defmodule Mediasoup.WebRtcServer do
     dump: &Nif.webrtc_server_dump_async/2
   })
 
+  @impl true
   def handle_call(
         :to_ref,
         _from,
@@ -143,11 +141,5 @@ defmodule Mediasoup.WebRtcServer do
   end
 
   @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {_, from}, result},
-        state
-      ) do
-    GenServer.reply(from, result |> Nif.unwrap_ok())
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_async_reply()
 end

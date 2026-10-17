@@ -223,21 +223,10 @@ defmodule Mediasoup.Worker do
     dump: &Nif.worker_dump_async/2
   })
 
-  def handle_info(
-        {:mediasoup_async_nif_result, {:create_router, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, Router, supervisor))
-    {:noreply, state}
-  end
-
-  def handle_info(
-        {:mediasoup_async_nif_result, {:create_webrtc_server, from}, result},
-        %{supervisor: supervisor} = state
-      ) do
-    GenServer.reply(from, NifWrap.handle_create_result(result, WebRtcServer, supervisor))
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_create_result(%{
+    create_router: Router,
+    create_webrtc_server: WebRtcServer
+  })
 
   def handle_info(
         {:mediasoup_async_nif_result, {:dump, from}, result},
@@ -256,12 +245,7 @@ defmodule Mediasoup.Worker do
     {:noreply, state}
   end
 
-  def handle_info(
-        {:nif_internal_event, :on_close},
-        state
-      ) do
-    {:stop, :normal, state}
-  end
+  NifWrap.def_handle_info_nif_event()
 
   def handle_info(
         {:nif_internal_event, :on_dead, message},
@@ -271,23 +255,9 @@ defmodule Mediasoup.Worker do
     {:stop, :shutdown, state}
   end
 
-  def handle_info(
-        {:DOWN, _monitor_ref, :process, listener, _reason},
-        %{listeners: listeners} = state
-      ) do
-    listeners = EventListener.remove(listeners, listener)
-    {:noreply, Map.put(state, :listeners, listeners)}
-  end
+  NifWrap.def_handle_info_listener_down()
 
-  def handle_call(
-        {:event, listener, event_types},
-        _from,
-        %{listeners: listeners} = state
-      ) do
-    listeners = EventListener.add(listeners, listener, event_types)
-
-    {:reply, :ok, Map.put(state, :listeners, listeners)}
-  end
+  NifWrap.def_handle_call_event(:ok)
 
   def handle_call(
         :debug_stop_worker,
@@ -298,16 +268,7 @@ defmodule Mediasoup.Worker do
     {:reply, :ok, state}
   end
 
-  def terminate(
-        reason,
-        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
-      ) do
-    EventListener.send(listeners, :on_close, {:on_close})
-
-    Mediasoup.Utility.supervisor_clean_stop(supervisor, reason)
-    Nif.worker_close(reference)
-    :ok
-  end
+  def terminate(reason, state), do: NifWrap.terminate(reason, state, &Nif.worker_close/1)
 
   defp create_worker(settings) when is_nil(settings) do
     Nif.create_worker()
