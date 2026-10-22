@@ -22,7 +22,7 @@ defmodule Mediasoup.LoggerProxyTest do
       pid ->
         ref = Process.monitor(pid)
         Process.exit(pid, :kill)
-        assert_receive {:DOWN, ^ref, :process, ^pid, _}
+        assert_receive {:DOWN, ^ref, :process, ^pid, _}, @receive_timeout
     end
 
     test_pid = self()
