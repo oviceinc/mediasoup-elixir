@@ -45,7 +45,7 @@ impl<T> JsonSerdeWrap<T> {
     }
 }
 
-impl<'de, 'a: 'de, T> rustler::Encoder for JsonSerdeWrap<T>
+impl<T> rustler::Encoder for JsonSerdeWrap<T>
 where
     T: serde::Serialize,
 {
