@@ -1,39 +1,85 @@
 use crate::atoms;
-use rustler::{Env, NifResult, Term};
+use rustler::types::atom;
+use rustler::types::map::MapIterator;
+use rustler::types::tuple::get_tuple;
+use rustler::{Encoder, Env, NifResult, Term, TermType};
+use serde_json::{Map, Number, Value};
 
-fn to_json(term: Term) -> Result<std::vec::Vec<u8>, serde_json::Error> {
-    let de = rustler::serde::Deserializer::from(term);
-    let mut writer = Vec::with_capacity(128);
-    let mut se = serde_json::Serializer::new(&mut writer);
-    serde_transcode::transcode(de, &mut se)?;
+// Values are converted with the same shapes as a JSON round trip (string keyed
+// maps, unit variants as strings, ...) without formatting and parsing JSON text.
+// Encoding writes terms directly (see term_ser), decoding goes through serde_json::Value.
 
-    Ok(writer)
+fn key_to_string(term: Term) -> NifResult<String> {
+    match term.get_type() {
+        TermType::Atom => term.atom_to_string(),
+        TermType::Binary => Ok(term.decode::<&str>()?.to_owned()),
+        TermType::Integer => match term.decode::<u64>() {
+            Ok(u) => Ok(u.to_string()),
+            Err(_) => Ok(term.decode::<i64>()?.to_string()),
+        },
+        _ => Err(rustler::Error::BadArg),
+    }
 }
-fn from_json(env: Env, vec: Vec<u8>) -> NifResult<Term> {
-    let mut de = serde_json::Deserializer::from_slice(&vec);
-    let se = rustler::serde::Serializer::from(env);
-    serde_transcode::transcode(&mut de, se).map_err(|err| err.into())
+
+fn term_to_value(term: Term) -> NifResult<Value> {
+    match term.get_type() {
+        TermType::Atom => {
+            if term == atom::nil().to_term(term.get_env()) {
+                Ok(Value::Null)
+            } else if let Ok(b) = term.decode::<bool>() {
+                Ok(Value::Bool(b))
+            } else {
+                Ok(Value::String(term.atom_to_string()?))
+            }
+        }
+        TermType::Integer => match term.decode::<u64>() {
+            Ok(u) => Ok(Value::Number(u.into())),
+            Err(_) => Ok(Value::Number(term.decode::<i64>()?.into())),
+        },
+        TermType::Float => Number::from_f64(term.decode::<f64>()?)
+            .map(Value::Number)
+            .ok_or(rustler::Error::BadArg),
+        TermType::Binary => Ok(Value::String(term.decode::<&str>()?.to_owned())),
+        TermType::List => term
+            .decode::<rustler::ListIterator>()?
+            .map(term_to_value)
+            .collect::<NifResult<Vec<Value>>>()
+            .map(Value::Array),
+        TermType::Tuple => get_tuple(term)?
+            .into_iter()
+            .map(term_to_value)
+            .collect::<NifResult<Vec<Value>>>()
+            .map(Value::Array),
+        TermType::Map => {
+            let struct_key = atoms::__struct__().to_term(term.get_env());
+            let mut object = Map::new();
+            for (k, v) in MapIterator::new(term).ok_or(rustler::Error::BadArg)? {
+                if k == struct_key {
+                    continue;
+                }
+                object.insert(key_to_string(k)?, term_to_value(v)?);
+            }
+            Ok(Value::Object(object))
+        }
+        _ => Err(rustler::Error::BadArg),
+    }
 }
 
 pub fn json_encode<'a, T>(v: &T, env: Env<'a>) -> Term<'a>
 where
     T: serde::Serialize,
 {
-    let json = match serde_json::to_vec(v) {
-        Ok(json) => json,
-        Err(err) => return rustler::Encoder::encode(&err.to_string(), env),
-    };
-    return match from_json(env, json) {
+    match crate::term_ser::to_term(env, v) {
         Ok(term) => term,
-        Err(error) => rustler::Encoder::encode(&(atoms::error(), format!("{:?}", error)), env), // TODO:
-    };
+        Err(err) => err.to_string().encode(env),
+    }
 }
 pub fn json_decode<'de, 'a: 'de, T>(term: Term<'a>) -> NifResult<T>
 where
     T: serde::de::DeserializeOwned + serde::Serialize + 'a,
 {
-    let json = to_json(term).map_err(|_| rustler::Error::BadArg)?;
-    serde_json::from_slice(&json).map_err(|_| rustler::Error::BadArg)
+    let value = term_to_value(term)?;
+    serde_json::from_value(value).map_err(|_| rustler::Error::BadArg)
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
