@@ -64,6 +64,32 @@ defmodule WorkerTest do
     IntegrateTest.WorkerTest.create_many_worker()
   end
 
+  test "log settings accept atoms and strings" do
+    {:ok, worker} =
+      Mediasoup.Worker.start_link(settings: %{logLevel: :error, logTags: [:info, :ice]})
+
+    assert {:ok} = Mediasoup.Worker.update_settings(worker, %{logLevel: "warn", logTags: ["rtp"]})
+    Mediasoup.Worker.close(worker)
+
+    {:ok, worker} =
+      Mediasoup.Worker.start_link(settings: %{logLevel: "debug", logTags: ["sctp", "message"]})
+
+    Mediasoup.Worker.close(worker)
+  end
+
+  test "invalid log settings are rejected" do
+    Process.flag(:trap_exit, true)
+
+    capture_log(fn ->
+      assert {:error, _} = Mediasoup.Worker.start_link(settings: %{logLevel: :verbose})
+      assert {:error, _} = Mediasoup.Worker.start_link(settings: %{logTags: [:unknown]})
+    end)
+
+    {:ok, worker} = Mediasoup.Worker.start_link()
+    assert_raise ErlangError, fn -> Mediasoup.Worker.update_settings(worker, %{logLevel: 1}) end
+    Mediasoup.Worker.close(worker)
+  end
+
   @tag :leakcheck
   test "worker leak check" do
     {:ok, worker} = Mediasoup.Worker.start_link()
