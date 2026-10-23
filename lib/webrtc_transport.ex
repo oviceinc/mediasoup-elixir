@@ -463,10 +463,7 @@ defmodule Mediasoup.WebRtcTransport do
 
   # GenServer callbacks
 
-  def start_link(opt) do
-    reference = Keyword.fetch!(opt, :reference)
-    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
-  end
+  def start_link(opt), do: NifWrap.start_link(__MODULE__, opt)
 
   @impl true
   def init(state) do
@@ -475,23 +472,8 @@ defmodule Mediasoup.WebRtcTransport do
   end
 
   @impl true
-  def handle_call(
-        {:event, listener, event_types},
-        _from,
-        %{listeners: listeners} = state
-      ) do
-    listeners = EventListener.add(listeners, listener, event_types)
-    {:reply, {:ok}, %{state | listeners: listeners}}
-  end
-
-  @impl true
-  def handle_call(
-        {:struct_from_pid, _arg},
-        _from,
-        %{reference: reference} = state
-      ) do
-    {:reply, struct_from_pid_and_ref(self(), reference), state}
-  end
+  NifWrap.def_handle_call_event()
+  NifWrap.def_handle_call_struct_from_pid()
 
   NifWrap.def_handle_call_nif(%{
     close: &Nif.webrtc_transport_close/1,
@@ -520,22 +502,12 @@ defmodule Mediasoup.WebRtcTransport do
     restart_ice: &Nif.webrtc_transport_restart_ice_async/2
   })
 
-  def handle_info(
-        {:mediasoup_async_nif_result, {message_tag, from}, result},
-        %{supervisor: supervisor} = state
-      )
-      when message_tag in [:produce, :consume, :produce_data, :consume_data] do
-    module =
-      case message_tag do
-        :produce -> Producer
-        :consume -> Consumer
-        :produce_data -> DataProducer
-        :consume_data -> DataConsumer
-      end
-
-    GenServer.reply(from, NifWrap.handle_create_result(result, module, supervisor))
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_create_result(%{
+    produce: Producer,
+    consume: Consumer,
+    produce_data: DataProducer,
+    consume_data: DataConsumer
+  })
 
   @impl true
   def handle_info(
@@ -563,43 +535,18 @@ defmodule Mediasoup.WebRtcTransport do
   end
 
   @impl true
-  def handle_info(
-        {:DOWN, _monitor_ref, :process, listener, _reason},
-        %{listeners: listeners} = state
-      ) do
-    listeners = EventListener.remove(listeners, listener)
-    {:noreply, %{state | listeners: listeners}}
-  end
+  NifWrap.def_handle_info_listener_down()
+
+  NifWrap.def_handle_info_nif_event(
+    payload_events: [
+      :on_dtls_state_change,
+      :on_ice_state_change,
+      :on_sctp_state_change,
+      :on_ice_selected_tuple_change
+    ]
+  )
 
   @impl true
-  def handle_info({:nif_internal_event, :on_close}, state) do
-    {:stop, :normal, state}
-  end
-
-  @payload_events [
-    :on_dtls_state_change,
-    :on_ice_state_change,
-    :on_sctp_state_change,
-    :on_ice_selected_tuple_change
-  ]
-
-  @impl true
-  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
-      when event in @payload_events do
-    EventListener.send(listeners, event, {event, payload})
-    {:noreply, state}
-  end
-
-  @impl true
-  def terminate(
-        reason,
-        %{reference: reference, supervisor: supervisor, listeners: listeners} = _state
-      ) do
-    EventListener.send(listeners, :on_close, {:on_close})
-
-    Mediasoup.Utility.supervisor_clean_stop(supervisor, reason)
-
-    Nif.webrtc_transport_close(reference)
-    :ok
-  end
+  def terminate(reason, state),
+    do: NifWrap.terminate(reason, state, &Nif.webrtc_transport_close/1)
 end

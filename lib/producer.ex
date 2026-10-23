@@ -180,10 +180,7 @@ defmodule Mediasoup.Producer do
 
   # GenServer callbacks
 
-  def start_link(opt) do
-    reference = Keyword.fetch!(opt, :reference)
-    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
-  end
+  def start_link(opt), do: NifWrap.start_link(__MODULE__, opt)
 
   @impl true
   def init(%{reference: reference} = state) do
@@ -217,23 +214,8 @@ defmodule Mediasoup.Producer do
   end
 
   @impl true
-  def handle_call(
-        {:event, listener, event_types},
-        _from,
-        %{listeners: listeners} = state
-      ) do
-    listeners = EventListener.add(listeners, listener, event_types)
-    {:reply, {:ok}, %{state | listeners: listeners}}
-  end
-
-  @impl true
-  def handle_call(
-        {:struct_from_pid, _arg},
-        _from,
-        %{reference: reference} = state
-      ) do
-    {:reply, struct_from_pid_and_ref(self(), reference), state}
-  end
+  NifWrap.def_handle_call_event()
+  NifWrap.def_handle_call_struct_from_pid()
 
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.producer_closed/1,
@@ -256,14 +238,7 @@ defmodule Mediasoup.Producer do
     {:noreply, state}
   end
 
-  @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {_, from}, result},
-        state
-      ) do
-    GenServer.reply(from, result |> Nif.unwrap_ok())
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_async_reply()
 
   @impl true
   def handle_info(
@@ -305,40 +280,13 @@ defmodule Mediasoup.Producer do
     {:stop, reason, state}
   end
 
-  @impl true
-  def handle_info({:nif_internal_event, :on_close}, state) do
-    {:stop, :normal, state}
-  end
-
-  @simple_events [
-    :on_resume,
-    :on_pause
-  ]
-
-  @payload_events [
-    :on_video_orientation_change,
-    :on_score
-  ]
-  @impl true
-  def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
-      when event in @simple_events do
-    EventListener.send(listeners, event, {event})
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_nif_event(
+    simple_events: [:on_resume, :on_pause],
+    payload_events: [:on_video_orientation_change, :on_score]
+  )
 
   @impl true
-  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
-      when event in @payload_events do
-    EventListener.send(listeners, event, {event, payload})
-    {:noreply, state}
-  end
-
-  @impl true
-  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
-    EventListener.send(listeners, :on_close, {:on_close})
-    Nif.producer_close(reference)
-    :ok
-  end
+  def terminate(reason, state), do: NifWrap.terminate(reason, state, &Nif.producer_close/1)
 
   defmodule Options do
     @moduledoc """
