@@ -163,16 +163,13 @@ defmodule Mediasoup.NifWrap do
 
   # Stops on the NIF :on_close event and forwards the given NIF events to listeners.
   defmacro def_handle_info_nif_event(opts \\ []) do
-    simple_events = Keyword.get(opts, :simple_events, [])
-    payload_events = Keyword.get(opts, :payload_events, [])
+    quote bind_quoted: [opts: opts] do
+      def handle_info({:nif_internal_event, :on_close}, state), do: {:stop, :normal, state}
 
-    on_close =
-      quote do
-        def handle_info({:nif_internal_event, :on_close}, state), do: {:stop, :normal, state}
-      end
+      simple_events = Keyword.get(opts, :simple_events, [])
+      payload_events = Keyword.get(opts, :payload_events, [])
 
-    simple =
-      quote do
+      if simple_events != [] do
         def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
             when event in unquote(simple_events) do
           Mediasoup.EventListener.send(listeners, event, {event})
@@ -180,25 +177,13 @@ defmodule Mediasoup.NifWrap do
         end
       end
 
-    payload =
-      quote do
+      if payload_events != [] do
         def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
             when event in unquote(payload_events) do
           Mediasoup.EventListener.send(listeners, event, {event, payload})
           {:noreply, state}
         end
       end
-
-    clauses =
-      Enum.reject(
-        [
-          on_close,
-          if(simple_events != [], do: simple),
-          if(payload_events != [], do: payload)
-        ],
-        &is_nil/1
-      )
-
-    {:__block__, [], clauses}
+    end
   end
 end

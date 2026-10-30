@@ -106,4 +106,24 @@ defmodule MediasoupElixirPlainTransportTest do
     assert struct.id == transport.id
     Mediasoup.PlainTransport.close(transport)
   end
+
+  test "handles listener process down", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    {:ok, transport} =
+      Mediasoup.Router.create_plain_transport(router, %{listenIp: %{ip: "127.0.0.1"}})
+
+    listener_pid = spawn(fn -> Process.sleep(:infinity) end)
+    assert {:ok} = Mediasoup.PlainTransport.event(transport, listener_pid, [:on_close])
+
+    Process.exit(listener_pid, :kill)
+
+    transport_pid = transport.pid
+    ref = Process.monitor(transport_pid)
+    refute_receive {:DOWN, ^ref, :process, ^transport_pid, _reason}
+    refute Mediasoup.PlainTransport.closed?(transport)
+    refute Map.has_key?(:sys.get_state(transport_pid).listeners.listeners, listener_pid)
+
+    Mediasoup.PlainTransport.close(transport)
+  end
 end
