@@ -138,7 +138,8 @@ defmodule Mediasoup.Worker do
     NifWrap.call(pid, {:create_webrtc_server, [WebRtcServer.Options.normalize(option)]})
   end
 
-  @spec update_settings(t, update_option) :: {:ok} | {:error} | {:error, :terminated}
+  @spec update_settings(t, update_option) ::
+          {:ok} | {:error, String.t()} | {:error, :terminated}
   @doc """
     Updates the worker settings in runtime. Just a subset of the worker settings can be updated.
     https://mediasoup.org/documentation/v3/mediasoup/api/#worker-updateSettings
@@ -170,7 +171,7 @@ defmodule Mediasoup.Worker do
   @type event_type ::
           :on_close
           | :on_dead
-  @spec event(t, pid, event_types :: [event_type]) :: {:ok} | {:error, :terminated}
+  @spec event(t, pid, event_types :: [event_type]) :: :ok | {:error, :terminated}
   @doc """
   Starts observing event.
   """
@@ -200,16 +201,20 @@ defmodule Mediasoup.Worker do
 
   # GenServer callbacks
   def init(settings) do
-    {:ok, worker} = create_worker(settings)
+    case create_worker(settings) do
+      {:ok, worker} ->
+        if Process.whereis(Mediasoup.Worker.Registry) do
+          Registry.register(Mediasoup.Worker.Registry, :id, Nif.worker_id(worker))
+        end
 
-    if Process.whereis(Mediasoup.Worker.Registry) do
-      Registry.register(Mediasoup.Worker.Registry, :id, Nif.worker_id(worker))
+        {:ok} = Nif.worker_event(worker, self(), [:on_close, :on_dead])
+
+        {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
+        {:ok, %{reference: worker, supervisor: supervisor, listeners: EventListener.new()}}
+
+      {:error, reason} ->
+        {:stop, reason}
     end
-
-    {:ok} = Nif.worker_event(worker, self(), [:on_close, :on_dead])
-
-    {:ok, supervisor} = DynamicSupervisor.start_link(strategy: :one_for_one)
-    {:ok, %{reference: worker, supervisor: supervisor, listeners: EventListener.new()}}
   end
 
   NifWrap.def_handle_call_nif(%{
@@ -240,19 +245,10 @@ defmodule Mediasoup.Worker do
   end
 
   def handle_info(
-        {:mediasoup_async_nif_result, {:dump, from}, result},
-        state
-      ) do
-    GenServer.reply(from, result |> Nif.unwrap_ok())
-
-    {:noreply, state}
-  end
-
-  def handle_info(
         {:mediasoup_async_nif_result, {_, from}, result},
         state
       ) do
-    GenServer.reply(from, result)
+    GenServer.reply(from, result |> Nif.unwrap_ok())
     {:noreply, state}
   end
 

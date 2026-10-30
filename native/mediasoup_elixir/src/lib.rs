@@ -34,33 +34,6 @@ where
     .detach();
 }
 
-pub fn send_async_nif_result<T, E, Fut>(env: Env, future: Fut) -> NifResult<(Atom, Atom)>
-where
-    T: Encoder,
-    E: Encoder,
-    Fut: future::Future<Output = Result<T, E>> + Send + 'static,
-{
-    let pid = env.pid();
-    let mut my_env = OwnedEnv::new();
-    let result_key = atoms::mediasoup_async_nif_result();
-    task::spawn(async move {
-        let result = future.await;
-        match result {
-            Ok(worker) => {
-                let _ = my_env
-                    .send_and_clear(&pid, |env| (result_key, (atoms::ok(), worker)).encode(env));
-            }
-            Err(err) => {
-                let _ = my_env
-                    .send_and_clear(&pid, |env| (result_key, (atoms::error(), err)).encode(env));
-            }
-        }
-    })
-    .detach();
-
-    Ok((atoms::ok(), result_key))
-}
-
 pub fn send_async_nif_result_with_from<T, Fut>(
     env: Env,
     from: rustler::Term,

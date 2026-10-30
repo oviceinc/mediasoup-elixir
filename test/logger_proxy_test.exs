@@ -4,89 +4,143 @@ defmodule Mediasoup.LoggerProxyTest do
 
   alias Mediasoup.LoggerProxy
 
+  # Records are sent from the NIF asynchronously, so tests wait for the proxy to
+  # receive them instead of sleeping.
+  @receive_timeout 1_000
+  # How long to wait for a record that must not reach the proxy.
+  @refute_timeout 50
+
+  # LoggerProxy is registered under a fixed name, and one started with
+  # start_link by an earlier test may still be shutting down. Stop it before
+  # starting ours, otherwise start would fail and the NIF would keep the old
+  # process and max_level.
+  defp start_logger_proxy(config) do
+    case Process.whereis(LoggerProxy) do
+      nil ->
+        :ok
+
+      pid ->
+        ref = Process.monitor(pid)
+        Process.exit(pid, :kill)
+        assert_receive {:DOWN, ^ref, :process, ^pid, _}, @receive_timeout
+    end
+
+    test_pid = self()
+
+    notify = fn msg ->
+      send(test_pid, {:logger_proxy_received, msg.body})
+      :ignore
+    end
+
+    start_supervised!({LoggerProxy, Keyword.update(config, :filters, [notify], &[notify | &1])})
+  end
+
+  # Waits until the proxy has received and handled a record whose body matches.
+  # Records are not guaranteed to arrive in the order they were logged.
+  defp await_proxy_log(%Regex{} = pattern) do
+    receive do
+      {:logger_proxy_received, body} ->
+        if Regex.match?(pattern, body), do: sync_proxy(), else: await_proxy_log(pattern)
+    after
+      @receive_timeout -> flunk("LoggerProxy did not receive #{inspect(pattern)}")
+    end
+  end
+
+  defp await_proxy_log(body) do
+    assert_receive {:logger_proxy_received, ^body}, @receive_timeout
+    sync_proxy()
+  end
+
+  # Ensures handle_info has finished, i.e. Logger.log has been called.
+  defp sync_proxy, do: :sys.get_state(LoggerProxy)
+
+  defp refute_proxy_log(body) do
+    refute_receive {:logger_proxy_received, ^body}, @refute_timeout
+  end
+
   test "max_level off " do
-    LoggerProxy.start_link(max_level: :off)
+    start_logger_proxy(max_level: :off)
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:error, "test")
-             Process.sleep(10)
+             refute_proxy_log("test")
            end) =~ "test"
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:warn, "test")
-             Process.sleep(10)
+             refute_proxy_log("test")
            end) =~ "test"
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:info, "test")
-             Process.sleep(10)
+             refute_proxy_log("test")
            end) =~ "test"
   end
 
   test "max_level error " do
-    LoggerProxy.start_link(max_level: :error)
+    start_logger_proxy(max_level: :error)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:error, "test")
-             Process.sleep(10)
+             await_proxy_log("test")
            end) =~ "test"
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:warn, "test")
-             Process.sleep(10)
+             refute_proxy_log("test")
            end) =~ "test"
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:warn, "test")
-             Process.sleep(10)
+             refute_proxy_log("test")
            end) =~ "test"
   end
 
   test " max_level warn" do
-    LoggerProxy.start_link(max_level: :warn)
+    start_logger_proxy(max_level: :warn)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:warn, "test")
-             Process.sleep(10)
+             await_proxy_log("test")
            end) =~ "test"
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:info, "test")
-             Process.sleep(10)
+             refute_proxy_log("test")
            end) =~ "test"
   end
 
   test " max_level info" do
-    LoggerProxy.start_link(max_level: :info)
+    start_logger_proxy(max_level: :info)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:info, "test")
-             Process.sleep(10)
+             await_proxy_log("test")
            end) =~ "test"
 
     refute capture_log(fn ->
              Mediasoup.Nif.debug_logger(:debug, "test")
-             Process.sleep(10)
+             refute_proxy_log("test")
            end) =~ "test"
   end
 
   test " max_level debug" do
-    LoggerProxy.start_link(max_level: :debug)
+    start_logger_proxy(max_level: :debug)
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:info, "test")
-             Process.sleep(10)
+             await_proxy_log("test")
            end) =~ "test"
 
     assert capture_log(fn ->
              Mediasoup.Nif.debug_logger(:debug, "test")
-             Process.sleep(10)
+             await_proxy_log("test")
            end) =~ "test"
   end
 
   describe "log filter" do
     test "filter debug message" do
-      LoggerProxy.start_link(
+      start_logger_proxy(
         max_level: :debug,
         filters: [
           fn msg ->
@@ -100,12 +154,12 @@ defmodule Mediasoup.LoggerProxyTest do
 
       assert capture_log(fn ->
                Mediasoup.Nif.debug_logger(:info, "test")
-               Process.sleep(10)
+               await_proxy_log("test")
              end) =~ "test"
 
       refute capture_log(fn ->
                Mediasoup.Nif.debug_logger(:debug, "test")
-               Process.sleep(10)
+               await_proxy_log("test")
              end) =~ "test"
     end
 
@@ -121,7 +175,7 @@ defmodule Mediasoup.LoggerProxyTest do
         end
       end
 
-      LoggerProxy.start_link(
+      start_logger_proxy(
         max_level: :warn,
         filters: [filter_can_consume_error]
       )
@@ -141,7 +195,7 @@ defmodule Mediasoup.LoggerProxyTest do
                  fecMechanisms: []
                })
 
-               Process.sleep(10)
+               await_proxy_log(pattern)
              end) =~ "can_consume() | Producer with id "
 
       refute capture_log([level: :error], fn ->
@@ -151,12 +205,12 @@ defmodule Mediasoup.LoggerProxyTest do
                  fecMechanisms: []
                })
 
-               Process.sleep(10)
+               await_proxy_log(pattern)
              end) =~ "can_consume() | Producer with id "
     end
 
     test "multiple filters" do
-      LoggerProxy.start_link(
+      start_logger_proxy(
         max_level: :debug,
         filters: [
           fn msg ->
@@ -186,19 +240,22 @@ defmodule Mediasoup.LoggerProxyTest do
       assert capture_log([level: :info], fn ->
                Mediasoup.Nif.debug_logger(:debug, "debug test")
                Mediasoup.Nif.debug_logger(:warn, "warn test")
-               Process.sleep(10)
+               await_proxy_log("debug test")
+               await_proxy_log("warn test")
              end) =~ "debug test"
 
       refute capture_log(fn ->
                Mediasoup.Nif.debug_logger(:info, "info test")
                Mediasoup.Nif.debug_logger(:warn, "warn test")
-               Process.sleep(10)
+               await_proxy_log("info test")
+               await_proxy_log("warn test")
              end) =~ "warn test"
 
       assert capture_log(fn ->
                Mediasoup.Nif.debug_logger(:warn, "warn test")
                Mediasoup.Nif.debug_logger(:info, "should be logged")
-               Process.sleep(10)
+               await_proxy_log("warn test")
+               await_proxy_log("should be logged")
              end) =~ "should be logged"
     end
   end
