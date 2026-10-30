@@ -64,8 +64,8 @@ defmodule Mediasoup.Nif do
   # async nif functions
 
   ## worker with async
-  defp create_worker_async(), do: :erlang.nif_error(:nif_not_loaded)
-  defp create_worker_async(_option), do: :erlang.nif_error(:nif_not_loaded)
+  defp create_worker_async(_from), do: :erlang.nif_error(:nif_not_loaded)
+  defp create_worker_async(_option, _from), do: :erlang.nif_error(:nif_not_loaded)
 
   # plain transport
   ## properties
@@ -105,8 +105,14 @@ defmodule Mediasoup.Nif do
     do: :erlang.nif_error(:nif_not_loaded)
 
   # construct worker
-  def create_worker(), do: create_worker_async() |> handle_async_nif_result()
-  def create_worker(option), do: create_worker_async(option) |> handle_async_nif_result()
+  @create_worker_timeout 30_000
+
+  @spec create_worker() :: {:ok, reference()} | {:error, term()}
+  def create_worker(), do: await_async_nif_result(&create_worker_async/1)
+
+  @spec create_worker(Worker.Settings.t()) :: {:ok, reference()} | {:error, term()}
+  def create_worker(option),
+    do: await_async_nif_result(&create_worker_async(option, &1))
 
   @spec worker_global_count :: non_neg_integer()
   def worker_global_count(), do: :erlang.nif_error(:nif_not_loaded)
@@ -126,8 +132,8 @@ defmodule Mediasoup.Nif do
   @spec worker_closed(reference) :: boolean
   def worker_closed(_worker), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec worker_update_settings_async(reference, Worker.update_option(), GenServer.from()) ::
-          {:ok} | {:error}
+  @spec worker_update_settings_async(reference, Worker.update_option(), term()) ::
+          :ok | :error
   def worker_update_settings_async(_worker, _option, _from),
     do: :erlang.nif_error(:nif_not_loaded)
 
@@ -395,12 +401,15 @@ defmodule Mediasoup.Nif do
   @spec get_supported_rtp_capabilities() :: map()
   def get_supported_rtp_capabilities(), do: :erlang.nif_error(:nif_not_loaded)
 
-  defp handle_async_nif_result(result) do
-    case result do
-      {:ok, result_key} ->
+  defp await_async_nif_result(async_nif) do
+    ref = make_ref()
+
+    case async_nif.(ref) do
+      :ok ->
         receive do
-          {^result_key, {:ok, {}}} -> {:ok}
-          {^result_key, msg} -> msg
+          {:mediasoup_async_nif_result, ^ref, result} -> result
+        after
+          @create_worker_timeout -> {:error, :timeout}
         end
 
       error ->

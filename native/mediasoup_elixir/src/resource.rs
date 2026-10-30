@@ -17,7 +17,7 @@ where
 {
     fn read(
         &self,
-    ) -> Result<Option<T>, std::sync::PoisonError<std::sync::MutexGuard<std::option::Option<T>>>>
+    ) -> Result<Option<T>, std::sync::PoisonError<std::sync::MutexGuard<'_, std::option::Option<T>>>>
     {
         match self.0.lock() {
             Ok(v) => Ok(v.clone()),

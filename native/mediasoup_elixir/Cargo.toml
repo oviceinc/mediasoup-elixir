@@ -13,8 +13,6 @@ crate-type = ["cdylib"]
 rustler = { version = "0.38.0", default-features = false, features = ["serde"] }
 mediasoup =  "0.27.0"
 futures-lite = "2.3.0"
-once_cell = "1.19.0"
-num_cpus = "1.16.0"
 async-executor = "1.8.0"
 serde = { version = "1.0.200", features = ["derive"] }
 serde-transcode = "1.1"
