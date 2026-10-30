@@ -10,7 +10,8 @@ jobs:
   test:
     timeout-minutes: 40
     name: Build and test
-    runs-on: ubuntu-latest
+    # actions/setup-python has no Python 3.11.5 (.tool-versions) for the ubuntu-latest (26.04) image.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
