@@ -233,13 +233,7 @@ defmodule Mediasoup.Worker do
     create_webrtc_server: WebRtcServer
   })
 
-  def handle_info(
-        {:mediasoup_async_nif_result, {_, from}, result},
-        state
-      ) do
-    GenServer.reply(from, result |> Nif.unwrap_ok())
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_async_reply()
 
   NifWrap.def_handle_info_nif_event()
 
