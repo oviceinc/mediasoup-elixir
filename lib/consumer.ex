@@ -292,10 +292,7 @@ defmodule Mediasoup.Consumer do
 
   # GenServer callbacks
 
-  def start_link(opt) do
-    reference = Keyword.fetch!(opt, :reference)
-    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
-  end
+  def start_link(opt), do: NifWrap.start_link(__MODULE__, opt)
 
   @impl true
   @spec init(%{:reference => reference(), optional(any()) => any()}) ::
@@ -341,23 +338,8 @@ defmodule Mediasoup.Consumer do
   end
 
   @impl true
-  def handle_call(
-        {:event, listener, event_types},
-        _from,
-        %{listeners: listeners} = state
-      ) do
-    listeners = EventListener.add(listeners, listener, event_types)
-    {:reply, {:ok}, Map.put(state, :listeners, listeners)}
-  end
-
-  @impl true
-  def handle_call(
-        {:struct_from_pid, _arg},
-        _from,
-        %{reference: reference} = state
-      ) do
-    {:reply, struct_from_pid_and_ref(self(), reference), state}
-  end
+  NifWrap.def_handle_call_event()
+  NifWrap.def_handle_call_struct_from_pid()
 
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.consumer_closed/1,
@@ -381,17 +363,7 @@ defmodule Mediasoup.Consumer do
   })
 
   @impl true
-  def handle_info(
-        {:mediasoup_async_nif_result, {_func, from}, result},
-        state
-      ) do
-    GenServer.reply(
-      from,
-      Nif.unwrap_ok(result)
-    )
-
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_async_reply()
 
   @impl true
   def handle_info(
@@ -408,11 +380,6 @@ defmodule Mediasoup.Consumer do
   end
 
   @impl true
-  def handle_info({:nif_internal_event, :on_close}, state) do
-    {:stop, :normal, state}
-  end
-
-  @impl true
   def handle_info({:on_close}, state) do
     # piped event
     {:stop, :normal, state}
@@ -424,39 +391,20 @@ defmodule Mediasoup.Consumer do
     {:stop, reason, state}
   end
 
-  @simple_events [
-    :on_pause,
-    :on_resume,
-    :on_producer_resume,
-    :on_producer_pause,
-    :on_producer_close,
-    :on_transport_close
-  ]
-
-  @payload_events [
-    :on_score,
-    :on_layers_change
-  ]
-  @impl true
-  def handle_info({:nif_internal_event, event}, %{listeners: listeners} = state)
-      when event in @simple_events do
-    EventListener.send(listeners, event, {event})
-    {:noreply, state}
-  end
+  NifWrap.def_handle_info_nif_event(
+    simple_events: [
+      :on_pause,
+      :on_resume,
+      :on_producer_resume,
+      :on_producer_pause,
+      :on_producer_close,
+      :on_transport_close
+    ],
+    payload_events: [:on_score, :on_layers_change]
+  )
 
   @impl true
-  def handle_info({:nif_internal_event, event, payload}, %{listeners: listeners} = state)
-      when event in @payload_events do
-    EventListener.send(listeners, event, {event, payload})
-    {:noreply, state}
-  end
-
-  @impl true
-  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
-    EventListener.send(listeners, :on_close, {:on_close})
-    Nif.consumer_close(reference)
-    :ok
-  end
+  def terminate(reason, state), do: NifWrap.terminate(reason, state, &Nif.consumer_close/1)
 
   defmodule Options do
     @moduledoc """

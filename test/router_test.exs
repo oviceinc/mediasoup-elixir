@@ -313,4 +313,21 @@ defmodule RouterTest do
       # Also cover normal terminate
     end)
   end
+
+  test "handles listener process down", %{worker: worker} do
+    {:ok, router} = Mediasoup.Worker.create_router(worker, %{})
+
+    listener_pid = spawn(fn -> Process.sleep(:infinity) end)
+    assert :ok = Mediasoup.Router.event(router, listener_pid, [:on_close])
+
+    Process.exit(listener_pid, :kill)
+
+    router_pid = router.pid
+    ref = Process.monitor(router_pid)
+    refute_receive {:DOWN, ^ref, :process, ^router_pid, _reason}
+    refute Mediasoup.Router.closed?(router)
+    refute Map.has_key?(:sys.get_state(router_pid).listeners.listeners, listener_pid)
+
+    Mediasoup.Router.close(router)
+  end
 end

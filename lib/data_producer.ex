@@ -76,10 +76,7 @@ defmodule Mediasoup.DataProducer do
   end
 
   # GenServer callbacks
-  def start_link(opt) do
-    reference = Keyword.fetch!(opt, :reference)
-    GenServer.start_link(__MODULE__, %{reference: reference}, opt)
-  end
+  def start_link(opt), do: NifWrap.start_link(__MODULE__, opt)
 
   @impl true
   def init(%{reference: reference} = state) do
@@ -109,23 +106,8 @@ defmodule Mediasoup.DataProducer do
   end
 
   @impl true
-  def handle_call(
-        {:event, listener, event_types},
-        _from,
-        %{listeners: listeners} = state
-      ) do
-    listeners = EventListener.add(listeners, listener, event_types)
-    {:reply, {:ok}, %{state | listeners: listeners}}
-  end
-
-  @impl true
-  def handle_call(
-        {:struct_from_pid, _arg},
-        _from,
-        %{reference: reference} = state
-      ) do
-    {:reply, struct_from_pid_and_ref(self(), reference), state}
-  end
+  NifWrap.def_handle_call_event()
+  NifWrap.def_handle_call_struct_from_pid()
 
   @impl true
   def handle_info(
@@ -155,21 +137,14 @@ defmodule Mediasoup.DataProducer do
     {:stop, reason, state}
   end
 
-  @impl true
-  def handle_info({:nif_internal_event, :on_close}, state) do
-    {:stop, :normal, state}
-  end
+  NifWrap.def_handle_info_nif_event()
 
   NifWrap.def_handle_call_nif(%{
     closed?: &Nif.data_producer_closed/1
   })
 
   @impl true
-  def terminate(_reason, %{reference: reference, listeners: listeners} = _state) do
-    EventListener.send(listeners, :on_close, {:on_close})
-    Nif.data_producer_close(reference)
-    :ok
-  end
+  def terminate(reason, state), do: NifWrap.terminate(reason, state, &Nif.data_producer_close/1)
 
   defmodule Options do
     @moduledoc """
