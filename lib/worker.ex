@@ -245,20 +245,10 @@ defmodule Mediasoup.Worker do
   end
 
   def handle_info(
-        {:mediasoup_async_nif_result, {func, from}, result},
-        state
-      )
-      when func in [:dump, :update_settings] do
-    GenServer.reply(from, result |> Nif.unwrap_ok())
-
-    {:noreply, state}
-  end
-
-  def handle_info(
         {:mediasoup_async_nif_result, {_, from}, result},
         state
       ) do
-    GenServer.reply(from, result)
+    GenServer.reply(from, result |> Nif.unwrap_ok())
     {:noreply, state}
   end
 
