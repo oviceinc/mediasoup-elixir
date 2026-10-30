@@ -4,7 +4,7 @@ use crate::router::{RouterOptionsStruct, RouterRef};
 use crate::task;
 use crate::webrtc_server::{WebRtcServerOptionsStruct, WebRtcServerRef};
 use crate::DisposableResourceWrapper;
-use crate::{send_async_nif_result, send_async_nif_result_with_from, send_msg_from_other_thread};
+use crate::{send_async_nif_result_with_from, send_msg_from_other_thread};
 use mediasoup::worker::{
     Worker, WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
     WorkerUpdateSettings,
@@ -111,10 +111,10 @@ pub fn worker_update_settings(
     let settings = settings.try_to_setting()?;
 
     send_async_nif_result_with_from(env, from, async move {
-        match worker.update_settings(settings).await {
-            Ok(_) => (atoms::ok(),),
-            Err(_err) => (atoms::error(),),
-        }
+        worker
+            .update_settings(settings)
+            .await
+            .map_err(|error| format!("{}", error))
     })
 }
 
@@ -172,8 +172,9 @@ pub fn worker_event(
 fn create_worker_impl(
     env: Env,
     settings: WorkerSettings,
-) -> NifResult<(rustler::Atom, rustler::Atom)> {
-    send_async_nif_result(env, async move {
+    from: rustler::Term,
+) -> NifResult<rustler::Atom> {
+    send_async_nif_result_with_from(env, from, async move {
         let worker_manager = task::worker_manager();
         worker_manager
             .create_worker(settings)
@@ -192,17 +193,18 @@ fn create_worker_impl(
 }
 
 #[rustler::nif(name = "create_worker_async")]
-pub fn create_worker_no_arg(env: Env) -> NifResult<(rustler::Atom, rustler::Atom)> {
-    create_worker_impl(env, WorkerSettings::default())
+pub fn create_worker_no_arg(env: Env, from: rustler::Term) -> NifResult<rustler::Atom> {
+    create_worker_impl(env, WorkerSettings::default(), from)
 }
 
 #[rustler::nif(name = "create_worker_async")]
 pub fn create_worker(
     env: Env,
     settings: WorkerSettingsStruct,
-) -> NifResult<(rustler::Atom, rustler::Atom)> {
+    from: rustler::Term,
+) -> NifResult<rustler::Atom> {
     let settings = settings.try_to_setting()?;
-    create_worker_impl(env, settings)
+    create_worker_impl(env, settings, from)
 }
 
 #[derive(NifStruct)]

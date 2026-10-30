@@ -19,10 +19,9 @@ jobs:
           version-file: .tool-versions
           version-type: strict
       - name: Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
           components: rustfmt, clippy
       - name: Restore dependencies cache
         uses: actions/cache@v4

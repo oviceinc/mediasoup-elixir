@@ -1,13 +1,12 @@
 use async_executor::{Executor, Task};
 use futures_lite::future;
 use mediasoup::worker_manager::WorkerManager;
-use once_cell::sync::Lazy;
 use std::future::Future;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
-static EXECUTOR: Lazy<Arc<Executor<'static>>> = Lazy::new(|| {
+static EXECUTOR: LazyLock<Arc<Executor<'static>>> = LazyLock::new(|| {
     let executor = Arc::new(Executor::new());
-    let thread_count = std::cmp::max(2, num_cpus::get());
+    let thread_count = thread_count();
 
     for _ in 0..thread_count {
         create_thread_for_executor(Arc::clone(&executor), "ex-mediasoup-task".into());
@@ -15,9 +14,9 @@ static EXECUTOR: Lazy<Arc<Executor<'static>>> = Lazy::new(|| {
     executor
 });
 
-static WORKER_MANAGER: Lazy<Arc<WorkerManager>> = Lazy::new(|| {
+static WORKER_MANAGER: LazyLock<Arc<WorkerManager>> = LazyLock::new(|| {
     let executor = Arc::new(Executor::new());
-    let thread_count = std::cmp::max(2, num_cpus::get());
+    let thread_count = thread_count();
 
     for _ in 0..thread_count {
         create_thread_for_executor(Arc::clone(&executor), "ex-mediasoup-wm".into());
@@ -38,6 +37,10 @@ where
     T: Future<Output = ()> + Send + 'static,
 {
     executor().spawn(task)
+}
+
+fn thread_count() -> usize {
+    std::thread::available_parallelism().map_or(2, |n| n.get().max(2))
 }
 
 fn create_thread_for_executor(executor: Arc<Executor<'static>>, name: String) {
