@@ -9,7 +9,7 @@ use mediasoup::worker::{
     Worker, WorkerDtlsFiles, WorkerId, WorkerLogLevel, WorkerLogTag, WorkerSettings,
     WorkerUpdateSettings,
 };
-use rustler::{Env, Error, NifResult, NifStruct, ResourceArc};
+use rustler::{Decoder, Encoder, Env, Error, NifResult, NifStruct, ResourceArc, Term};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -210,8 +210,8 @@ pub fn create_worker(
 #[derive(NifStruct)]
 #[module = "Mediasoup.Worker.UpdateableSettings"]
 pub struct WorkerUpdateableSettingsStruct {
-    pub log_level: Option<JsonSerdeWrap<String>>,
-    pub log_tags: Option<JsonSerdeWrap<Vec<String>>>,
+    pub log_level: Option<Name>,
+    pub log_tags: Option<Vec<Name>>,
 }
 
 impl WorkerUpdateableSettingsStruct {
@@ -231,8 +231,8 @@ impl WorkerUpdateableSettingsStruct {
 #[derive(NifStruct)]
 #[module = "Mediasoup.Worker.Settings"]
 pub struct WorkerSettingsStruct {
-    pub log_level: Option<JsonSerdeWrap<String>>,
-    pub log_tags: Option<JsonSerdeWrap<Vec<String>>>,
+    pub log_level: Option<Name>,
+    pub log_tags: Option<Vec<Name>>,
     pub rtc_min_port: Option<u16>,
     pub rtc_max_port: Option<u16>,
     pub dtls_certificate_file: Option<String>,
@@ -270,7 +270,6 @@ fn log_level_from_string(s: &str) -> NifResult<WorkerLogLevel> {
     match s {
         "debug" => Ok(WorkerLogLevel::Debug),
         "error" => Ok(WorkerLogLevel::Error),
-        "Err" => Ok(WorkerLogLevel::Error), // workaround for :error to "Err" by serde
         "none" => Ok(WorkerLogLevel::None),
         "warn" => Ok(WorkerLogLevel::Warn),
         _ => Err(Error::RaiseTerm(Box::new(format!(
@@ -302,6 +301,33 @@ fn log_tag_from_string(s: &str) -> NifResult<WorkerLogTag> {
     }
 }
 
-fn log_tags_from_strings(v: &[String]) -> NifResult<Vec<WorkerLogTag>> {
+fn log_tags_from_strings(v: &[Name]) -> NifResult<Vec<WorkerLogTag>> {
     v.iter().map(|s| log_tag_from_string(s)).collect()
+}
+
+/// A name given either as an atom or as a string, e.g. `:debug` or `"debug"`.
+pub struct Name(String);
+
+impl<'a> Decoder<'a> for Name {
+    fn decode(term: Term<'a>) -> NifResult<Self> {
+        match term.atom_to_string() {
+            // Reject nil so that Option<Name> decodes it as None.
+            Ok(name) if name == "nil" => Err(Error::BadArg),
+            Ok(name) => Ok(Name(name)),
+            Err(_) => term.decode::<String>().map(Name),
+        }
+    }
+}
+
+impl Encoder for Name {
+    fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
+        self.0.encode(env)
+    }
+}
+
+impl std::ops::Deref for Name {
+    type Target = str;
+    fn deref(&self) -> &str {
+        &self.0
+    }
 }
