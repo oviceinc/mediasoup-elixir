@@ -77,6 +77,13 @@ defmodule WorkerTest do
     Mediasoup.Worker.close(worker)
   end
 
+  test "log settings may be omitted" do
+    {:ok, worker} = Mediasoup.Worker.start_link(settings: %{rtcMinPort: 10000, rtcMaxPort: 10010})
+    assert {:ok} = Mediasoup.Worker.update_settings(worker, %{logTags: [:info]})
+    assert {:ok} = Mediasoup.Worker.update_settings(worker, %{logLevel: :warn})
+    Mediasoup.Worker.close(worker)
+  end
+
   test "invalid log settings are rejected" do
     Process.flag(:trap_exit, true)
 

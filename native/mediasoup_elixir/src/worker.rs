@@ -310,9 +310,12 @@ pub struct Name(String);
 
 impl<'a> Decoder<'a> for Name {
     fn decode(term: Term<'a>) -> NifResult<Self> {
-        term.atom_to_string()
-            .or_else(|_| term.decode::<String>())
-            .map(Name)
+        match term.atom_to_string() {
+            // Reject nil so that Option<Name> decodes it as None.
+            Ok(name) if name == "nil" => Err(Error::BadArg),
+            Ok(name) => Ok(Name(name)),
+            Err(_) => term.decode::<String>().map(Name),
+        }
     }
 }
 
