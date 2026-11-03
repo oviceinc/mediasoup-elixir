@@ -106,9 +106,6 @@ pub fn router_can_consume(
     rtp_capabilities: JsonSerdeWrap<RtpCapabilities>,
 ) -> NifResult<bool> {
     let router = router.get_resource()?;
-    let producer_id = *producer_id;
-    let rtp_capabilities = rtp_capabilities.clone();
-
     let can_consume = router.can_consume(&producer_id, &rtp_capabilities);
     Ok(can_consume)
 }

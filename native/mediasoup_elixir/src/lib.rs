@@ -13,6 +13,7 @@ mod router;
 mod supported_rtp_capabilities;
 mod task;
 mod term_box;
+mod term_ser;
 mod webrtc_server;
 mod webrtc_transport;
 mod worker;
